@@ -2,7 +2,11 @@ export function downloadCsv(filename: string, rows: Record<string, string | numb
   if (rows.length === 0) return;
   const headers = Object.keys(rows[0]);
   const escape = (v: string | number) => {
-    const s = String(v ?? "");
+    let s = String(v ?? "");
+    // A cell starting with =, +, -, or @ is read as a formula by Excel/
+    // Sheets — neutralize it so exported data (names, addresses, etc.)
+    // can't smuggle in a formula that runs when someone opens the file.
+    if (/^[=+\-@]/.test(s)) s = `'${s}`;
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = [

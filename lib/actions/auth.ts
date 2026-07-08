@@ -5,6 +5,17 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export type LoginState = { error?: string } | undefined;
 
+// Only allow same-origin relative paths. "//evil.com" and "/\evil.com"
+// both pass a naive `startsWith("/")` check but browsers treat them as
+// protocol-relative absolute URLs — rejecting anything starting with a
+// second slash or backslash closes that off.
+function safeNext(next: string) {
+  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) {
+    return "/";
+  }
+  return next;
+}
+
 export async function login(
   _prevState: LoginState,
   formData: FormData
@@ -31,7 +42,7 @@ export async function login(
     return { error: error.message };
   }
 
-  redirect(next.startsWith("/") ? next : "/");
+  redirect(safeNext(next));
 }
 
 export async function logout() {

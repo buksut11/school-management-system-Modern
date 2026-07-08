@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/types/database";
 
 const SNAPSHOT_VERSION = 1;
 
@@ -21,6 +23,15 @@ export type BackupSnapshot = {
     fee_payments: unknown[];
     expenses: unknown[];
   };
+}
+
+async function isCurrentUserAdmin(supabase: SupabaseClient<Database>) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  return profile?.role === "admin";
 }
 
 export async function createBackupSnapshot(): Promise<BackupSnapshot> {
@@ -61,6 +72,17 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
 
 export type RestoreResult = { error?: string; success?: boolean };
 
+// Deletes are checked individually — an RLS policy silently blocking one
+// (0 rows affected, no thrown error) must not be treated as success, or a
+// restore could leave the database half-wiped, half-restored.
+async function clearTable(supabase: SupabaseClient<Database>, table: string) {
+  const { error } = await supabase
+    .from(table as never)
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000");
+  if (error) throw new Error(`Couldn't clear ${table}: ${error.message}`);
+}
+
 export async function restoreFromBackup(password: string, snapshot: BackupSnapshot): Promise<RestoreResult> {
   if (snapshot.school !== "Sh.Asharow Primary & Secondary School" || !snapshot.data) {
     return { error: "This file doesn't look like a Sh.Asharow backup." };
@@ -72,6 +94,13 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not signed in." };
 
+  // Reauthenticating proves *this* user's password, not that they're
+  // authorized for a whole-system wipe — check role explicitly rather
+  // than relying only on RLS (which may not be locked down yet).
+  if (!(await isCurrentUserAdmin(supabase))) {
+    return { error: "Only an admin account can restore from backup." };
+  }
+
   const { error: authError } = await supabase.auth.signInWithPassword({
     email: user.email,
     password,
@@ -80,42 +109,66 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
 
   const { data } = snapshot;
 
-  // Delete children before parents so foreign keys never dangle mid-restore.
-  await supabase.from("attendance").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("exams").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("fee_payments").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("expenses").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("subjects").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("students").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("teachers").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("classes").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("departments").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
-  // Insert parents before children. Classes and teachers reference each
-  // other, so classes go in with teacher_id cleared, then get patched once
-  // teachers exist.
-  if (data.departments.length) await supabase.from("departments").insert(data.departments as never[]);
-
-  const classesNoTeacher = (data.classes as Array<Record<string, unknown>>).map((c) => ({
-    ...c,
-    teacher_id: null,
-  }));
-  if (classesNoTeacher.length) await supabase.from("classes").insert(classesNoTeacher as never[]);
-
-  if (data.teachers.length) await supabase.from("teachers").insert(data.teachers as never[]);
-
-  for (const c of data.classes as Array<Record<string, unknown>>) {
-    if (c.teacher_id) {
-      await supabase.from("classes").update({ teacher_id: c.teacher_id as string }).eq("id", c.id as string);
+  try {
+    // Delete children before parents so foreign keys never dangle mid-restore.
+    for (const table of [
+      "attendance",
+      "exams",
+      "fee_payments",
+      "expenses",
+      "subjects",
+      "students",
+      "teachers",
+      "classes",
+      "departments",
+    ]) {
+      await clearTable(supabase, table);
     }
-  }
 
-  if (data.subjects.length) await supabase.from("subjects").insert(data.subjects as never[]);
-  if (data.students.length) await supabase.from("students").insert(data.students as never[]);
-  if (data.attendance.length) await supabase.from("attendance").insert(data.attendance as never[]);
-  if (data.exams.length) await supabase.from("exams").insert(data.exams as never[]);
-  if (data.fee_payments.length) await supabase.from("fee_payments").insert(data.fee_payments as never[]);
-  if (data.expenses.length) await supabase.from("expenses").insert(data.expenses as never[]);
+    // Insert parents before children. Classes and teachers reference each
+    // other, so classes go in with teacher_id cleared, then get patched
+    // once teachers exist.
+    if (data.departments.length) {
+      const { error } = await supabase.from("departments").insert(data.departments as never[]);
+      if (error) throw new Error(error.message);
+    }
+
+    const classesNoTeacher = (data.classes as Array<Record<string, unknown>>).map((c) => ({
+      ...c,
+      teacher_id: null,
+    }));
+    if (classesNoTeacher.length) {
+      const { error } = await supabase.from("classes").insert(classesNoTeacher as never[]);
+      if (error) throw new Error(error.message);
+    }
+
+    if (data.teachers.length) {
+      const { error } = await supabase.from("teachers").insert(data.teachers as never[]);
+      if (error) throw new Error(error.message);
+    }
+
+    for (const c of data.classes as Array<Record<string, unknown>>) {
+      if (c.teacher_id) {
+        await supabase.from("classes").update({ teacher_id: c.teacher_id as string }).eq("id", c.id as string);
+      }
+    }
+
+    for (const [table, rows] of [
+      ["subjects", data.subjects],
+      ["students", data.students],
+      ["attendance", data.attendance],
+      ["exams", data.exams],
+      ["fee_payments", data.fee_payments],
+      ["expenses", data.expenses],
+    ] as const) {
+      if (rows.length) {
+        const { error } = await supabase.from(table).insert(rows as never[]);
+        if (error) throw new Error(`Couldn't restore ${table}: ${error.message}`);
+      }
+    }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Restore failed partway through." };
+  }
 
   await logActivity(supabase, "backup", "Restored system from backup");
   revalidatePath("/", "layout");

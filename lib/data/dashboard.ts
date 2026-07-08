@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/utils";
+import { getActiveCounts, getTodayAttendance } from "@/lib/data/shared";
 
 export type SidebarCounts = {
   students: number;
@@ -13,27 +14,15 @@ export type SidebarCounts = {
 
 export async function getSidebarCounts(): Promise<SidebarCounts> {
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
 
-  const [
-    { count: students },
-    { count: teachers },
-    { data: attendance },
-    { data: feeStudents },
-    { data: feePayments },
-    { data: expenses },
-  ] = await Promise.all([
-    supabase.from("students").select("*", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("teachers").select("*", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("attendance").select("status").eq("date", today),
-    supabase.from("students").select("id, base_fees").eq("status", "active"),
-    supabase.from("fee_payments").select("student_id, amount"),
-    supabase.from("expenses").select("amount, paid"),
-  ]);
-
-  const present = attendance?.filter((a) => a.status === "present").length ?? 0;
-  const late = attendance?.filter((a) => a.status === "late").length ?? 0;
-  const absent = attendance?.filter((a) => a.status === "absent").length ?? 0;
+  const [{ students, teachers }, attendance, { data: feeStudents }, { data: feePayments }, { data: expenses }] =
+    await Promise.all([
+      getActiveCounts(),
+      getTodayAttendance(),
+      supabase.from("students").select("id, base_fees").eq("status", "active"),
+      supabase.from("fee_payments").select("student_id, amount"),
+      supabase.from("expenses").select("amount, paid"),
+    ]);
 
   const collectedByStudent = new Map<string, number>();
   (feePayments ?? []).forEach((p) => {
@@ -46,11 +35,11 @@ export async function getSidebarCounts(): Promise<SidebarCounts> {
   const expensesPending = (expenses ?? []).filter((e) => Number(e.paid) < Number(e.amount)).length;
 
   return {
-    students: students ?? 0,
-    teachers: teachers ?? 0,
-    present,
-    late,
-    absent,
+    students,
+    teachers,
+    present: attendance.present,
+    late: attendance.late,
+    absent: attendance.absent,
     feesOwing,
     expensesPending,
   };
@@ -58,30 +47,18 @@ export async function getSidebarCounts(): Promise<SidebarCounts> {
 
 export async function getDashboardData() {
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
 
-  const [
-    { count: studentCount },
-    { count: teacherCount },
-    { data: attendanceToday },
-    { data: recentActivity },
-    { data: feeStudents },
-    { data: feePayments },
-  ] = await Promise.all([
-    supabase.from("students").select("*", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("teachers").select("*", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("attendance").select("status").eq("date", today),
-    supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(8),
-    supabase.from("students").select("base_fees").eq("status", "active"),
-    supabase.from("fee_payments").select("amount"),
-  ]);
+  const [{ students, teachers }, attendance, { data: recentActivity }, { data: feeStudents }, { data: feePayments }] =
+    await Promise.all([
+      getActiveCounts(),
+      getTodayAttendance(),
+      supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(8),
+      supabase.from("students").select("base_fees").eq("status", "active"),
+      supabase.from("fee_payments").select("amount"),
+    ]);
 
-  const present = attendanceToday?.filter((a) => a.status === "present").length ?? 0;
-  const late = attendanceToday?.filter((a) => a.status === "late").length ?? 0;
-  const absent = attendanceToday?.filter((a) => a.status === "absent").length ?? 0;
-  const totalMarked = present + late + absent;
-  const students = studentCount ?? 0;
-  const attendanceRate = students > 0 ? Math.round((present / students) * 100) : 0;
+  const totalMarked = attendance.present + attendance.late + attendance.absent;
+  const attendanceRate = students > 0 ? Math.round((attendance.present / students) * 100) : 0;
 
   const feesExpected = (feeStudents ?? []).reduce((sum, s) => sum + Number(s.base_fees), 0);
   const feesCollected = (feePayments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
@@ -89,10 +66,10 @@ export async function getDashboardData() {
 
   return {
     studentCount: students,
-    teacherCount: teacherCount ?? 0,
-    present,
-    late,
-    absent,
+    teacherCount: teachers,
+    present: attendance.present,
+    late: attendance.late,
+    absent: attendance.absent,
     totalMarked,
     attendanceRate,
     feesCollected,
