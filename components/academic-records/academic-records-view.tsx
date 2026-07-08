@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Download, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Search, Download, TrendingUp, TrendingDown, Minus, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Segmented } from "@/components/ui/segmented";
 import { downloadCsv } from "@/lib/csv";
+import { downloadReportCard } from "@/lib/pdf/report-card";
 
 type AcademicRecordRow = {
   student_id: string;
@@ -100,6 +101,7 @@ export function AcademicRecordsView({
                 <th className="px-3 py-3 border-b border-line text-center min-w-[90px] bg-card-2/50">Average</th>
                 <th className="px-3 py-3 border-b border-line text-center min-w-[70px]">Grade</th>
                 <th className="px-3 py-3 border-b border-line text-center min-w-[70px]">Trend</th>
+                <th className="px-3 py-3 border-b border-line text-right min-w-[70px]">Report</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line/60">
@@ -120,6 +122,15 @@ export function AcademicRecordsView({
                     </td>
                     <td className="px-3 py-2.5">
                       <TrendIcon size={15} className={`mx-auto ${TREND_COLOR[r.trend]}`} />
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      <button
+                        onClick={() => downloadReportCard(r)}
+                        className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
+                        aria-label="Download report card"
+                      >
+                        <FileText size={14} />
+                      </button>
                     </td>
                   </tr>
                 );

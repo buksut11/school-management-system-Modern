@@ -1,9 +1,10 @@
 "use client";
 
-import { CircleDollarSign } from "lucide-react";
+import { CircleDollarSign, Receipt } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/utils";
+import { downloadFeeReceipt } from "@/lib/pdf/fee-receipt";
 import type { FeeRow } from "@/lib/data/fees";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
@@ -18,7 +19,7 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
         <div className="w-24 flex-none fcol-paid">Paid</div>
         <div className="w-24 flex-none">Balance</div>
         <div className="w-24 flex-none">Status</div>
-        <div className="w-32 flex-none text-right">Action</div>
+        <div className="w-40 flex-none text-right">Action</div>
       </div>
 
       <div className="divide-y divide-line/60">
@@ -48,7 +49,14 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
                 {r.status[0].toUpperCase() + r.status.slice(1)}
               </Badge>
             </div>
-            <div className="r-actions w-32 flex-none flex justify-end">
+            <div className="r-actions w-40 flex-none flex justify-end gap-1.5">
+              <button
+                onClick={() => downloadFeeReceipt(r)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
+                aria-label="Download receipt"
+              >
+                <Receipt size={14} />
+              </button>
               <button
                 onClick={() => onPay(r)}
                 disabled={r.status === "paid"}
