@@ -1,0 +1,404 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+:root {
+  --bg: #f5f5f7;
+  --card: rgba(255, 255, 255, 0.6);
+  --card-2: rgba(120, 120, 128, 0.1);
+  --input: rgba(118, 118, 128, 0.1);
+  --solid: #ffffff;
+  --text: #1d1d1f;
+  --text-2: #86868b;
+  --border: rgba(0, 0, 0, 0.08);
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-side: rgba(245, 245, 247, 0.6);
+  --hover: rgba(0, 0, 0, 0.04);
+  --blue: #007aff;
+  --blue-soft: rgba(0, 122, 255, 0.1);
+  --shadow: 0 4px 22px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.16);
+  --green: #34c759;
+  --orange: #ff9500;
+  --purple: #af52de;
+  --red: #ff3b30;
+  --teal: #30b0c7;
+}
+
+[data-theme="dark"] {
+  --bg: #1c1c1e;
+  --card: rgba(60, 60, 64, 0.55);
+  --card-2: rgba(255, 255, 255, 0.06);
+  --input: rgba(118, 118, 128, 0.24);
+  --solid: #2c2c2e;
+  --text: #f5f5f7;
+  --text-2: #98989d;
+  --border: rgba(255, 255, 255, 0.1);
+  --glass: rgba(40, 40, 42, 0.6);
+  --glass-side: rgba(28, 28, 30, 0.58);
+  --hover: rgba(255, 255, 255, 0.07);
+  --blue-soft: rgba(10, 132, 255, 0.2);
+  --shadow: 0 4px 22px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+@theme inline {
+  --color-app-bg: var(--bg);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-input: var(--input);
+  --color-solid: var(--solid);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-line: var(--border);
+  --color-glass: var(--glass);
+  --color-glass-side: var(--glass-side);
+  --color-hover: var(--hover);
+  --color-blue: var(--blue);
+  --color-blue-soft: var(--blue-soft);
+  --color-green: var(--green);
+  --color-orange: var(--orange);
+  --color-purple: var(--purple);
+  --color-red: var(--red);
+  --color-teal: var(--teal);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --shadow-card: var(--shadow);
+  --shadow-card-lg: var(--shadow-lg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--text);
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+::-webkit-scrollbar {
+  height: 11px;
+  width: 11px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 140, 0.45);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-modal-in {
+  animation: modalIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.animate-fade-in {
+  animation: fadeIn 0.18s ease;
+}
+.animate-toast-in {
+  animation: toastIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.animate-pop-in {
+  animation: popIn 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ===== mobile-first app shell ===== */
+.app-sidebar {
+  width: 80vw;
+  max-width: 300px;
+  transform: translateX(-104%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.app-sidebar.open {
+  transform: none;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.25);
+}
+@media (min-width: 900px) {
+  .app-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: 248px;
+    max-width: none;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ===== responsive table helpers (container queries keyed to each table's own width) ===== */
+.r-table {
+  container-type: inline-size;
+  container-name: lrow;
+}
+@container lrow (max-width: 560px) {
+  .r-head {
+    display: none !important;
+  }
+  .r-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 9px !important;
+    padding: 14px 16px !important;
+  }
+  .r-card > div {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+  .r-ident {
+    width: 100% !important;
+    padding-bottom: 11px !important;
+    border-bottom: 1px solid var(--border);
+  }
+  .r-cell {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px;
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+  .r-cell::before {
+    content: attr(data-label);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex: none;
+  }
+  .r-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding-top: 5px;
+  }
+}
+.students-table {
+  container-name: lrow slist;
+}
+@container slist (max-width: 900px) {
+  .lcol-smob {
+    display: none !important;
+  }
+}
+@container slist (max-width: 760px) {
+  .lcol-dob {
+    display: none !important;
+  }
+}
+@container slist (max-width: 620px) {
+  .lcol-pmob {
+    display: none !important;
+  }
+}
+@container slist (max-width: 480px) {
+  .lcol-fees {
+    display: none !important;
+  }
+}
+.teachers-table {
+  container-name: lrow tlist;
+}
+@container tlist (max-width: 560px) {
+  .tcol-mob {
+    display: none !important;
+  }
+}
+@container tlist (max-width: 430px) {
+  .tcol-subj {
+    display: none !important;
+  }
+}
+.att-table {
+  container-name: lrow atable;
+}
+@container atable (max-width: 640px) {
+  .acol-id {
+    display: none !important;
+  }
+}
+@container atable (max-width: 500px) {
+  .acol-date {
+    display: none !important;
+  }
+}
+.cls-table {
+  container-name: lrow ctable;
+}
+@container ctable (max-width: 940px) {
+  .ccol-occ {
+    display: none !important;
+  }
+}
+@container ctable (max-width: 840px) {
+  .ccol-girls {
+    display: none !important;
+  }
+}
+@container ctable (max-width: 740px) {
+  .ccol-boys {
+    display: none !important;
+  }
+}
+@container ctable (max-width: 620px) {
+  .ccol-teacher {
+    display: none !important;
+  }
+}
+.subj-table {
+  container-name: lrow stable;
+}
+@container stable (max-width: 700px) {
+  .scol-dept {
+    display: none !important;
+  }
+}
+@container stable (max-width: 560px) {
+  .scol-periods {
+    display: none !important;
+  }
+}
+@container stable (max-width: 460px) {
+  .scol-type {
+    display: none !important;
+  }
+}
+.dept-table {
+  container-name: lrow dtable;
+}
+@container dtable (max-width: 760px) {
+  .dcol-teachers {
+    display: none !important;
+  }
+}
+@container dtable (max-width: 600px) {
+  .dcol-periods {
+    display: none !important;
+  }
+}
+@container dtable (max-width: 460px) {
+  .dcol-subj {
+    display: none !important;
+  }
+}
+.exam-table {
+  container-name: lrow examtable;
+}
+.fee-table {
+  container-name: lrow ftable;
+}
+@container ftable (max-width: 900px) {
+  .fcol-paid {
+    display: none !important;
+  }
+}
+@container ftable (max-width: 800px) {
+  .fcol-due {
+    display: none !important;
+  }
+}
+@container ftable (max-width: 560px) {
+  .fcol-class {
+    display: none !important;
+  }
+}
+.exp-table {
+  container-name: lrow etable;
+}
+@container etable (max-width: 980px) {
+  .ecol-method {
+    display: none !important;
+  }
+}
+@container etable (max-width: 860px) {
+  .ecol-paid {
+    display: none !important;
+  }
+}
+@container etable (max-width: 760px) {
+  .ecol-date {
+    display: none !important;
+  }
+}
+@container etable (max-width: 640px) {
+  .ecol-cat {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .view-toggle {
+    display: none !important;
+  }
+}
