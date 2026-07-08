@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { SubjectType } from "@/lib/types/database";
 
@@ -24,10 +25,7 @@ export async function saveDepartment(_prev: FormState, formData: FormData): Prom
   const { error } = await query;
   if (error) return { error: error.message };
 
-  await supabase.from("activity_log").insert({
-    kind: "department",
-    message: `${id ? "Updated" : "New"} department · ${name}`,
-  });
+  await logActivity(supabase, "department", `${id ? "Updated" : "New"} department · ${name}`);
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -36,7 +34,7 @@ export async function deleteDepartment(id: string, name: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("departments").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  await supabase.from("activity_log").insert({ kind: "department", message: `Removed department · ${name}` });
+  await logActivity(supabase, "department", `Removed department · ${name}`);
   revalidatePath("/", "layout");
 }
 
@@ -61,10 +59,7 @@ export async function saveSubject(_prev: FormState, formData: FormData): Promise
   const { error } = await query;
   if (error) return { error: error.message };
 
-  await supabase.from("activity_log").insert({
-    kind: "subject",
-    message: `${id ? "Updated" : "New"} subject · ${name}`,
-  });
+  await logActivity(supabase, "subject", `${id ? "Updated" : "New"} subject · ${name}`);
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -73,6 +68,6 @@ export async function deleteSubject(id: string, name: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("subjects").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  await supabase.from("activity_log").insert({ kind: "subject", message: `Removed subject · ${name}` });
+  await logActivity(supabase, "subject", `Removed subject · ${name}`);
   revalidatePath("/", "layout");
 }

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { PaymentMethod } from "@/lib/types/database";
 
@@ -26,10 +27,7 @@ export async function recordFeePayment(_prev: FormState, formData: FormData): Pr
   if (error) return { error: error.message };
 
   const { data: student } = await supabase.from("students").select("full_name").eq("id", studentId).single();
-  await supabase.from("activity_log").insert({
-    kind: "fee",
-    message: `Fee payment received · ${student?.full_name ?? "Student"} · $${amount}`,
-  });
+  await logActivity(supabase, "fee", `Fee payment received · ${student?.full_name ?? "Student"} · $${amount}`);
 
   revalidatePath("/", "layout");
   return { success: true };

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity";
 import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
 import { computeTotal, computeGrade } from "@/lib/grades";
 import type { FormState } from "@/lib/actions/students";
@@ -47,10 +48,11 @@ export async function saveExam(_prev: FormState, formData: FormData): Promise<Fo
   const { error } = await query;
   if (error) return { error: error.message };
 
-  await supabase.from("activity_log").insert({
-    kind: "exam",
-    message: `${id ? "Updated" : "Recorded"} exam · ${student?.full_name ?? "Student"} · ${record.term}`,
-  });
+  await logActivity(
+    supabase,
+    "exam",
+    `${id ? "Updated" : "Recorded"} exam · ${student?.full_name ?? "Student"} · ${record.term}`
+  );
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -59,6 +61,6 @@ export async function deleteExam(id: string, studentName: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("exams").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  await supabase.from("activity_log").insert({ kind: "exam", message: `Removed exam record · ${studentName}` });
+  await logActivity(supabase, "exam", `Removed exam record · ${studentName}`);
   revalidatePath("/", "layout");
 }

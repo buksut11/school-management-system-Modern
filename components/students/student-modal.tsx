@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,10 +37,11 @@ export function StudentModal({
   open: boolean;
   onClose: () => void;
   student: StudentWithClass | null;
-  classes: { id: string; name: string }[];
+  classes: { id: string; name: string; base_fees: number }[];
 }) {
   const [state, formAction, pending] = useActionState(saveStudent, undefined);
   const { show } = useToast();
+  const feesRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (state?.success) {
@@ -104,7 +105,19 @@ export function StudentModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="class_id">Class</Label>
-            <Select id="class_id" name="class_id" defaultValue={student?.class_id ?? ""}>
+            <Select
+              id="class_id"
+              name="class_id"
+              defaultValue={student?.class_id ?? ""}
+              onChange={(e) => {
+                // Only auto-fill fees for a brand-new student — editing an
+                // existing one shouldn't clobber a fee that may have been
+                // customized (scholarship, sibling discount, etc).
+                if (student || !feesRef.current) return;
+                const picked = classes.find((c) => c.id === e.target.value);
+                if (picked) feesRef.current.value = String(picked.base_fees);
+              }}
+            >
               <option value="">— Select —</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -116,6 +129,7 @@ export function StudentModal({
           <div>
             <Label htmlFor="base_fees">Term fees ($)</Label>
             <Input
+              ref={feesRef}
               id="base_fees"
               name="base_fees"
               type="number"
@@ -123,6 +137,9 @@ export function StudentModal({
               step="1"
               defaultValue={student?.base_fees ?? 0}
             />
+            {!student && (
+              <p className="text-[11.5px] text-text-2 mt-1">Auto-fills from the class fee — edit if needed.</p>
+            )}
           </div>
         </div>
 

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { ExpenseCategory, PaymentMethod } from "@/lib/types/database";
 
@@ -29,10 +30,7 @@ export async function saveExpense(_prev: FormState, formData: FormData): Promise
   const { error } = await query;
   if (error) return { error: error.message };
 
-  await supabase.from("activity_log").insert({
-    kind: "expense",
-    message: `${id ? "Updated" : "New"} expense · ${payee}`,
-  });
+  await logActivity(supabase, "expense", `${id ? "Updated" : "New"} expense · ${payee}`);
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -41,7 +39,7 @@ export async function deleteExpense(id: string, payee: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("expenses").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  await supabase.from("activity_log").insert({ kind: "expense", message: `Removed expense · ${payee}` });
+  await logActivity(supabase, "expense", `Removed expense · ${payee}`);
   revalidatePath("/", "layout");
 }
 
@@ -59,10 +57,7 @@ export async function recordExpensePayment(_prev: FormState, formData: FormData)
   const { error } = await supabase.from("expenses").update({ paid: newPaid }).eq("id", id);
   if (error) return { error: error.message };
 
-  await supabase.from("activity_log").insert({
-    kind: "expense",
-    message: `Paid $${amount} · ${expense.payee}`,
-  });
+  await logActivity(supabase, "expense", `Paid $${amount} · ${expense.payee}`);
   revalidatePath("/", "layout");
   return { success: true };
 }

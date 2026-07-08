@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity";
 import type { Gender, PersonStatus } from "@/lib/types/database";
 
 export type FormState = { error?: string; success?: boolean } | undefined;
@@ -33,17 +34,11 @@ export async function saveStudent(_prev: FormState, formData: FormData): Promise
   if (id) {
     const { error } = await supabase.from("students").update(record).eq("id", id);
     if (error) return { error: error.message };
-    await supabase.from("activity_log").insert({
-      kind: "student",
-      message: `Updated student · ${fullName}`,
-    });
+    await logActivity(supabase, "student", `Updated student · ${fullName}`);
   } else {
     const { error } = await supabase.from("students").insert(record);
     if (error) return { error: error.message };
-    await supabase.from("activity_log").insert({
-      kind: "student",
-      message: `New student enrolled · ${fullName}`,
-    });
+    await logActivity(supabase, "student", `New student enrolled · ${fullName}`);
   }
 
   revalidatePath("/", "layout");
@@ -54,9 +49,6 @@ export async function deleteStudent(id: string, fullName: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("students").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  await supabase.from("activity_log").insert({
-    kind: "student",
-    message: `Removed student · ${fullName}`,
-  });
+  await logActivity(supabase, "student", `Removed student · ${fullName}`);
   revalidatePath("/", "layout");
 }

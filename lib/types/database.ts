@@ -57,7 +57,6 @@ export interface Database {
           address: string | null;
           mobile: string | null;
           subjects: string[];
-          class_id: string | null;
           photo_url: string | null;
           status: PersonStatus;
           created_at: string;
@@ -94,6 +93,7 @@ export interface Database {
         Row: {
           id: string;
           student_id: string;
+          class_id: string | null;
           date: string;
           status: AttendanceStatus;
           created_at: string;
@@ -109,6 +109,8 @@ export interface Database {
           id: number;
           kind: string;
           message: string;
+          actor_id: string | null;
+          actor_name: string | null;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["activity_log"]["Row"]> & {

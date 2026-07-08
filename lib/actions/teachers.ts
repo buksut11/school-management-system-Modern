@@ -2,12 +2,29 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { Gender, PersonStatus } from "@/lib/types/database";
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);
   return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+// classes.teacher_id is the only stored copy of "which teacher runs this
+// class" — teachers has no class_id column. Assigning a class to a teacher
+// here means: point that class's teacher_id at this teacher, and clear
+// teacher_id on any other class that used to point at them (a teacher
+// can lead at most one class).
+async function assignTeacherClass(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  teacherId: string,
+  classId: string | null
+) {
+  await supabase.from("classes").update({ teacher_id: null }).eq("teacher_id", teacherId);
+  if (classId) {
+    await supabase.from("classes").update({ teacher_id: teacherId }).eq("id", classId);
+  }
 }
 
 export async function saveTeacher(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -20,6 +37,7 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+  const classId = str(formData, "class_id");
 
   const record = {
     full_name: fullName,
@@ -28,7 +46,6 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
     address: str(formData, "address"),
     mobile: str(formData, "mobile"),
     subjects,
-    class_id: str(formData, "class_id"),
     photo_url: str(formData, "photo_url"),
     status: (str(formData, "status") ?? "active") as PersonStatus,
   };
@@ -36,17 +53,13 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
   if (id) {
     const { error } = await supabase.from("teachers").update(record).eq("id", id);
     if (error) return { error: error.message };
-    await supabase.from("activity_log").insert({
-      kind: "teacher",
-      message: `Updated teacher · ${fullName}`,
-    });
+    await assignTeacherClass(supabase, id, classId);
+    await logActivity(supabase, "teacher", `Updated teacher · ${fullName}`);
   } else {
-    const { error } = await supabase.from("teachers").insert(record);
+    const { data: inserted, error } = await supabase.from("teachers").insert(record).select("id").single();
     if (error) return { error: error.message };
-    await supabase.from("activity_log").insert({
-      kind: "teacher",
-      message: `New teacher added · ${fullName}`,
-    });
+    await assignTeacherClass(supabase, inserted.id, classId);
+    await logActivity(supabase, "teacher", `New teacher added · ${fullName}`);
   }
 
   revalidatePath("/", "layout");
@@ -57,9 +70,6 @@ export async function deleteTeacher(id: string, fullName: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("teachers").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  await supabase.from("activity_log").insert({
-    kind: "teacher",
-    message: `Removed teacher · ${fullName}`,
-  });
+  await logActivity(supabase, "teacher", `Removed teacher · ${fullName}`);
   revalidatePath("/", "layout");
 }

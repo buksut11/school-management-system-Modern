@@ -10,7 +10,7 @@ const ICONS: Record<string, typeof UserPlus> = {
 export function ActivityFeed({
   items,
 }: {
-  items: { id: number; message: string; kind: string; time: string }[];
+  items: { id: number; message: string; kind: string; time: string; actorName: string | null }[];
 }) {
   return (
     <Card className="p-5">
@@ -31,7 +31,12 @@ export function ActivityFeed({
                 <div className="w-8 h-8 rounded-full bg-blue-soft text-blue flex items-center justify-center flex-none">
                   <Icon size={15} />
                 </div>
-                <p className="flex-1 text-[13px] text-text truncate">{item.message}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-text truncate">{item.message}</p>
+                  {item.actorName && (
+                    <p className="text-[11px] text-text-2 truncate">by {item.actorName}</p>
+                  )}
+                </div>
                 <span className="text-[11.5px] text-text-2 flex-none">{item.time}</span>
               </div>
             );

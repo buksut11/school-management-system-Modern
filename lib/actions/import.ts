@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity";
 import type { Gender } from "@/lib/types/database";
 
 export type ImportStudentRow = {
@@ -40,10 +41,11 @@ export async function bulkImportStudents(rows: ImportStudentRow[]) {
   const { error } = await supabase.from("students").insert(records);
   if (error) return { error: error.message };
 
-  await supabase.from("activity_log").insert({
-    kind: "import",
-    message: `Imported ${records.length} student record${records.length === 1 ? "" : "s"} from CSV`,
-  });
+  await logActivity(
+    supabase,
+    "import",
+    `Imported ${records.length} student record${records.length === 1 ? "" : "s"} from CSV`
+  );
   revalidatePath("/", "layout");
   return { success: true, count: records.length };
 }

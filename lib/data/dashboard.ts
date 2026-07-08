@@ -102,6 +102,7 @@ export async function getDashboardData() {
       message: a.message,
       kind: a.kind,
       time: relativeTime(a.created_at),
+      actorName: a.actor_name,
     })),
   };
 }

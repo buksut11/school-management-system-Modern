@@ -19,7 +19,7 @@ export function StudentsView({
   classes,
 }: {
   students: StudentWithClass[];
-  classes: { id: string; name: string }[];
+  classes: { id: string; name: string; base_fees: number }[];
 }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");

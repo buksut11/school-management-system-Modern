@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity";
 
 const SNAPSHOT_VERSION = 1;
 
@@ -38,7 +39,7 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
       supabase.from("expenses").select("*"),
     ]);
 
-  await supabase.from("activity_log").insert({ kind: "backup", message: "Downloaded system backup" });
+  await logActivity(supabase, "backup", "Downloaded system backup");
 
   return {
     version: SNAPSHOT_VERSION,
@@ -116,7 +117,7 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
   if (data.fee_payments.length) await supabase.from("fee_payments").insert(data.fee_payments as never[]);
   if (data.expenses.length) await supabase.from("expenses").insert(data.expenses as never[]);
 
-  await supabase.from("activity_log").insert({ kind: "backup", message: "Restored system from backup" });
+  await logActivity(supabase, "backup", "Restored system from backup");
   revalidatePath("/", "layout");
   return { success: true };
 }

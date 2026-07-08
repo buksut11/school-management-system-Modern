@@ -55,6 +55,6 @@ export async function listStudents(): Promise<StudentWithClass[]> {
 
 export async function listClassOptions() {
   const supabase = await createClient();
-  const { data } = await supabase.from("classes").select("id, name").order("name");
-  return data ?? [];
+  const { data } = await supabase.from("classes").select("id, name, base_fees").order("name");
+  return (data ?? []).map((c) => ({ ...c, base_fees: Number(c.base_fees) }));
 }
