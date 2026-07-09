@@ -243,6 +243,11 @@ select {
     min-width: 0;
   }
 
+  /* value text reads a touch stronger than its label */
+  .r-cell:not(.r-ident) {
+    font-weight: 500;
+  }
+
   /* identity is a header (avatar + title/subtitle), NOT a label→value row.
      These rules come after .r-cell and use !important so they win the
      cascade over the generic treatment above. */
@@ -251,17 +256,37 @@ select {
     flex-direction: row !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    gap: 11px !important;
+    gap: 12px !important;
     width: 100% !important;
-    padding: 1px 0 14px !important;
-    margin-bottom: 5px;
-    border-bottom: 1px solid var(--border);
+    padding: 1px 0 15px !important;
+    margin-bottom: 6px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
   }
   .r-ident::before {
     content: none !important;
   }
   .r-ident > * {
     text-align: left;
+  }
+  /* avatar gains a soft ring + drop shadow so it lifts off the card */
+  .r-ident > img,
+  .r-ident > .rounded-full {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 15px !important;
+    box-shadow:
+      0 0 0 2px var(--solid),
+      0 3px 8px -1px rgba(0, 0, 0, 0.22);
+  }
+  /* stronger title, calmer subtitle */
+  .r-ident .min-w-0 > :first-child {
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em;
+  }
+  .r-ident .min-w-0 > :nth-child(2) {
+    font-size: 12px !important;
+    margin-top: 1px;
   }
 
   /* touch-friendly action row — the identity's bottom border is the card's
@@ -272,17 +297,50 @@ select {
     width: 100% !important;
     justify-content: flex-start !important;
     gap: 10px !important;
-    padding-top: 12px !important;
+    padding-top: 13px !important;
   }
   .r-actions button {
-    width: 38px !important;
-    height: 38px !important;
-    background: var(--input);
+    width: 40px !important;
+    height: 40px !important;
+    background: var(--solid);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: transform 0.12s ease, background 0.15s ease;
+  }
+  .r-actions button:active {
+    transform: scale(0.92);
   }
 
   /* class already appears under the person's name in the card header */
   .s-classcell {
     display: none !important;
+  }
+}
+
+/* ===== phone: rows become individual floating glass cards =====
+   A viewport media query (not a container query) so it can restyle the
+   .r-table wrapper itself — a container can't query its own size. On
+   phones the sidebar is a drawer, so viewport width ≈ the table width,
+   and this lines up with the card layout above. */
+@media (max-width: 640px) {
+  .r-table {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+  }
+  .r-table .divide-y {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .r-card {
+    border: 1px solid var(--border) !important;
+    border-radius: 18px !important;
+    background: var(--card) !important;
+    backdrop-filter: blur(20px) saturate(1.5);
+    box-shadow: var(--shadow) !important;
   }
 }
 .students-table {
