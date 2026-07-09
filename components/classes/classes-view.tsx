@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ViewToggle } from "@/components/ui/view-toggle";
+import { useIsCompact } from "@/lib/use-media-query";
 import { ClassesTable } from "./classes-table";
 import { ClassesGrid } from "./classes-grid";
 import { ClassModal } from "./class-modal";
@@ -23,6 +24,8 @@ export function ClassesView({
 }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
+  const isCompact = useIsCompact();
+  const activeView = isCompact ? "grid" : view;
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ClassWithStats | null>(null);
   const [, startTransition] = useTransition();
@@ -83,7 +86,7 @@ export function ClassesView({
             className="pl-9"
           />
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
           <Download size={15} /> Export
         </Button>
@@ -97,7 +100,7 @@ export function ClassesView({
         </Button>
       </div>
 
-      {view === "list" ? (
+      {activeView === "list" ? (
         <ClassesTable
           classes={filtered}
           onEdit={(c) => {

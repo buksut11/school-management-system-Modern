@@ -5,6 +5,7 @@ import { Search, Plus, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ViewToggle } from "@/components/ui/view-toggle";
+import { useIsCompact } from "@/lib/use-media-query";
 import { StudentsTable } from "./students-table";
 import { StudentsGrid } from "./students-grid";
 import { StudentModal } from "./student-modal";
@@ -23,6 +24,8 @@ export function StudentsView({
 }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
+  const isCompact = useIsCompact();
+  const activeView = isCompact ? "grid" : view;
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<StudentWithClass | null>(null);
   const [, startTransition] = useTransition();
@@ -87,7 +90,7 @@ export function StudentsView({
             className="pl-9"
           />
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
           <Download size={15} /> Export
         </Button>
@@ -96,7 +99,7 @@ export function StudentsView({
         </Button>
       </div>
 
-      {view === "list" ? (
+      {activeView === "list" ? (
         <StudentsTable students={filtered} onEdit={openEdit} onDelete={onDelete} />
       ) : (
         <StudentsGrid students={filtered} onEdit={openEdit} onDelete={onDelete} />

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ViewToggle } from "@/components/ui/view-toggle";
+import { useIsCompact } from "@/lib/use-media-query";
 import { DepartmentsTable } from "./departments-table";
 import { DepartmentsGrid } from "./departments-grid";
 import { DepartmentModal } from "./department-modal";
@@ -23,6 +24,8 @@ export function DepartmentsView({
 }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
+  const isCompact = useIsCompact();
+  const activeView = isCompact ? "grid" : view;
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<DepartmentRow | null>(null);
   const [, startTransition] = useTransition();
@@ -79,7 +82,7 @@ export function DepartmentsView({
             className="pl-9"
           />
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
           <Download size={15} /> Export
         </Button>
@@ -93,7 +96,7 @@ export function DepartmentsView({
         </Button>
       </div>
 
-      {view === "list" ? (
+      {activeView === "list" ? (
         <DepartmentsTable
           departments={filtered}
           onEdit={(d) => {

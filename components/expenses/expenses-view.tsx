@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
 import { ViewToggle } from "@/components/ui/view-toggle";
+import { useIsCompact } from "@/lib/use-media-query";
 import { ExpensesTable } from "./expenses-table";
 import { ExpensesGrid } from "./expenses-grid";
 import { ExpenseModal } from "./expense-modal";
@@ -24,6 +25,8 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
   const [status, setStatus] = useState("all");
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
+  const isCompact = useIsCompact();
+  const activeView = isCompact ? "grid" : view;
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ExpenseRow | null>(null);
   const [payTarget, setPayTarget] = useState<ExpenseRow | null>(null);
@@ -106,7 +109,7 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
             className="pl-9"
           />
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
           <Download size={15} /> Export
         </Button>
@@ -120,7 +123,7 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
         </Button>
       </div>
 
-      {view === "list" ? (
+      {activeView === "list" ? (
         <ExpensesTable
           expenses={filtered}
           onEdit={(e) => {

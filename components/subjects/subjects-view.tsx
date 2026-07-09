@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
 import { ViewToggle } from "@/components/ui/view-toggle";
+import { useIsCompact } from "@/lib/use-media-query";
 import { SubjectsTable } from "./subjects-table";
 import { SubjectsGrid } from "./subjects-grid";
 import { SubjectModal } from "./subject-modal";
@@ -27,6 +28,8 @@ export function SubjectsView({
   const [query, setQuery] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
   const [view, setView] = useState<"list" | "grid">("list");
+  const isCompact = useIsCompact();
+  const activeView = isCompact ? "grid" : view;
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<SubjectRow | null>(null);
   const [, startTransition] = useTransition();
@@ -90,7 +93,7 @@ export function SubjectsView({
             className="pl-9"
           />
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
           <Download size={15} /> Export
         </Button>
@@ -104,7 +107,7 @@ export function SubjectsView({
         </Button>
       </div>
 
-      {view === "list" ? (
+      {activeView === "list" ? (
         <SubjectsTable
           subjects={filtered}
           onEdit={(s) => {
