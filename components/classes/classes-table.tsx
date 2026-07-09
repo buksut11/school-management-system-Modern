@@ -30,8 +30,10 @@ export function ClassesTable({
         {classes.map((c) => (
           <div key={c.id} className="r-card flex items-center gap-3 px-5 py-3">
             <div className="r-ident r-cell flex-1 min-w-[140px]">
-              <div className="text-[13.5px] font-medium">{c.name}</div>
-              <div className="text-[11.5px] text-text-2">{c.room ?? "No room set"} · {c.enrolled} students</div>
+              <div className="min-w-0">
+                <div className="text-[13.5px] font-medium">{c.name}</div>
+                <div className="text-[11.5px] text-text-2">{c.room ?? "No room set"} · {c.enrolled} students</div>
+              </div>
             </div>
             <div className="r-cell ccol-teacher w-32 flex-none text-[13px] text-text-2 truncate" data-label="Class Teacher">
               {c.teacher_name ?? "Unassigned"}

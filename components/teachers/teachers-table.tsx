@@ -42,7 +42,7 @@ export function TeachersTable({
                 <div className="text-[11.5px] text-text-2 truncate">{t.class_name ?? "Unassigned"}</div>
               </div>
             </div>
-            <div className="r-cell w-24 flex-none text-[13px] text-text-2" data-label="Class">
+            <div className="r-cell s-classcell w-24 flex-none text-[13px] text-text-2" data-label="Class">
               {t.class_name ?? "—"}
             </div>
             <div className="r-cell tcol-subj w-40 flex-none text-[13px] text-text-2 truncate" data-label="Subjects">
