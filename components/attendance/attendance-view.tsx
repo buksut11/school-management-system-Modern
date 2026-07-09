@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
 import { ViewToggle } from "@/components/ui/view-toggle";
+import { useIsCompact } from "@/lib/use-media-query";
 import { AttendanceTable } from "./attendance-table";
 import { AttendanceGrid } from "./attendance-grid";
 import { setAttendance } from "@/lib/actions/attendance";
@@ -28,6 +29,8 @@ export function AttendanceView({
   const [classFilter, setClassFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
+  const isCompact = useIsCompact();
+  const activeView = isCompact ? "grid" : view;
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -94,13 +97,13 @@ export function AttendanceView({
             className="pl-9"
           />
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
           <Download size={15} /> Export
         </Button>
       </div>
 
-      {view === "list" ? (
+      {activeView === "list" ? (
         <AttendanceTable rows={filtered} onChange={onChange} pendingId={pendingId} />
       ) : (
         <AttendanceGrid rows={filtered} onChange={onChange} pendingId={pendingId} />
