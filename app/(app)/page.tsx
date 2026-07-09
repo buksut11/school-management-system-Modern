@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const data = await getDashboardData();
 
   return (
-    <div className="space-y-5 max-w-6xl">
+    <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard label="Total Students" value={String(data.studentCount)} icon={Users} tone="blue" />
         <MetricCard label="Total Teachers" value={String(data.teacherCount)} icon={GraduationCap} tone="purple" />

@@ -67,7 +67,7 @@ export function AcademicRecordsView({
   }
 
   return (
-    <div className="space-y-4 max-w-6xl">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2.5">
         <Segmented
           value={classFilter}

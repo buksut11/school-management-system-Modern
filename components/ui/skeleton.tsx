@@ -6,7 +6,7 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function PageSkeleton() {
   return (
-    <div className="space-y-4 max-w-6xl">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2.5">
         <Skeleton className="h-10 flex-1 min-w-[200px]" />
         <Skeleton className="h-10 w-24" />

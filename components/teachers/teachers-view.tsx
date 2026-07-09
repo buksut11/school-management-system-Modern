@@ -72,7 +72,7 @@ export function TeachersView({
   }
 
   return (
-    <div className="space-y-4 max-w-6xl">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2" />
