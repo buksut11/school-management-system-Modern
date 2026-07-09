@@ -4,7 +4,6 @@ import { CircleDollarSign, Receipt } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/utils";
-import { downloadFeeReceipt } from "@/lib/pdf/fee-receipt";
 import type { FeeRow } from "@/lib/data/fees";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
@@ -51,7 +50,7 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
             </div>
             <div className="r-actions w-40 flex-none flex justify-end gap-1.5">
               <button
-                onClick={() => downloadFeeReceipt(r)}
+                onClick={() => import("@/lib/pdf/fee-receipt").then((m) => m.downloadFeeReceipt(r))}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
                 aria-label="Download receipt"
               >

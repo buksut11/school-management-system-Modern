@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Segmented } from "@/components/ui/segmented";
 import { downloadCsv } from "@/lib/csv";
-import { downloadReportCard } from "@/lib/pdf/report-card";
 
 type AcademicRecordRow = {
   student_id: string;
@@ -125,7 +124,7 @@ export function AcademicRecordsView({
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       <button
-                        onClick={() => downloadReportCard(r)}
+                        onClick={() => import("@/lib/pdf/report-card").then((m) => m.downloadReportCard(r))}
                         className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
                         aria-label="Download report card"
                       >
