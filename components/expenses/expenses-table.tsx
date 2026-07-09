@@ -35,8 +35,10 @@ export function ExpensesTable({
         {expenses.map((e) => (
           <div key={e.id} className="r-card flex items-center gap-3 px-5 py-3">
             <div className="r-ident r-cell flex-1 min-w-[170px]">
-              <div className="text-[13.5px] font-medium truncate">{e.payee}</div>
-              {e.description && <div className="text-[11.5px] text-text-2 truncate">{e.description}</div>}
+              <div className="min-w-0">
+                <div className="text-[13.5px] font-medium truncate">{e.payee}</div>
+                {e.description && <div className="text-[11.5px] text-text-2 truncate">{e.description}</div>}
+              </div>
             </div>
             <div className="r-cell ecol-cat w-28 flex-none" data-label="Category">
               <Badge tone="gray">{e.category[0].toUpperCase() + e.category.slice(1)}</Badge>

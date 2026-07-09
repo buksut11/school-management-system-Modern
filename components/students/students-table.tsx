@@ -47,7 +47,7 @@ export function StudentsTable({
                 <div className="text-[11.5px] text-text-2 truncate">{s.class_name ?? "—"}</div>
               </div>
             </div>
-            <div className="r-cell w-24 flex-none text-[13px] text-text-2" data-label="Class">
+            <div className="r-cell s-classcell w-24 flex-none text-[13px] text-text-2" data-label="Class">
               {s.class_name ?? "—"}
             </div>
             <div className="r-cell lcol-pmob w-36 flex-none text-[13px] text-text-2 truncate" data-label="Parent Mobile">

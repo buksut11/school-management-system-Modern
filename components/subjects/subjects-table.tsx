@@ -31,8 +31,10 @@ export function SubjectsTable({
               <Badge tone="teal">SUB-{String(s.seq).padStart(2, "0")}</Badge>
             </div>
             <div className="r-ident r-cell flex-1 min-w-[150px]">
-              <div className="text-[13.5px] font-medium">{s.name}</div>
-              <div className="text-[11.5px] text-text-2 truncate">{s.teacher_name ?? "Unassigned"}</div>
+              <div className="min-w-0">
+                <div className="text-[13.5px] font-medium">{s.name}</div>
+                <div className="text-[11.5px] text-text-2 truncate">{s.teacher_name ?? "Unassigned"}</div>
+              </div>
             </div>
             <div className="r-cell scol-dept w-32 flex-none text-[13px] text-text-2 truncate" data-label="Department">
               {s.department_name ?? "—"}

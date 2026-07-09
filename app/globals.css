@@ -207,8 +207,8 @@ select {
   .r-card {
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 9px !important;
-    padding: 14px 16px !important;
+    gap: 0 !important;
+    padding: 15px 17px !important;
   }
   .r-card > div {
     width: auto !important;
@@ -216,16 +216,15 @@ select {
     min-width: 0 !important;
     text-align: left !important;
   }
-  .r-ident {
-    width: 100% !important;
-    padding-bottom: 11px !important;
-    border-bottom: 1px solid var(--border);
-  }
+
+  /* generic cell becomes a label → value row */
   .r-cell {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     gap: 16px;
+    padding: 7px 0 !important;
+    min-height: 34px;
     white-space: normal !important;
     overflow: visible !important;
   }
@@ -238,10 +237,52 @@ select {
     letter-spacing: 0.04em;
     flex: none;
   }
+  /* the value side sits on the right, wraps cleanly, never collides with the label */
+  .r-cell > * {
+    text-align: right;
+    min-width: 0;
+  }
+
+  /* identity is a header (avatar + title/subtitle), NOT a label→value row.
+     These rules come after .r-cell and use !important so they win the
+     cascade over the generic treatment above. */
+  .r-ident {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 11px !important;
+    width: 100% !important;
+    padding: 1px 0 14px !important;
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .r-ident::before {
+    content: none !important;
+  }
+  .r-ident > * {
+    text-align: left;
+  }
+
+  /* touch-friendly action row — the identity's bottom border is the card's
+     structural divider, so actions separate with spacing + button chips
+     rather than a second rule (which would leave an empty band on cards
+     whose middle columns are all hidden at this width) */
   .r-actions {
     width: 100% !important;
     justify-content: flex-start !important;
-    padding-top: 5px;
+    gap: 10px !important;
+    padding-top: 12px !important;
+  }
+  .r-actions button {
+    width: 38px !important;
+    height: 38px !important;
+    background: var(--input);
+  }
+
+  /* class already appears under the person's name in the card header */
+  .s-classcell {
+    display: none !important;
   }
 }
 .students-table {
