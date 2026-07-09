@@ -65,6 +65,7 @@ export function ReportsView({
           { key: "late", label: "Late", color: "var(--chart-3)" },
           { key: "absent", label: "Absent", color: "var(--chart-6)" },
         ]}
+        annotatePeakKey="present"
       />
 
       <AreaTrendChart
@@ -72,6 +73,7 @@ export function ReportsView({
         data={fees}
         series={[{ key: "collected", label: "Collected", color: "var(--chart-1)" }]}
         valueFormatter={(v) => formatMoney(v)}
+        annotatePeakKey="collected"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

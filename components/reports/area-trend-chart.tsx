@@ -11,11 +11,16 @@ export function AreaTrendChart({
   data,
   series,
   valueFormatter = (v: number) => String(v),
+  annotatePeakKey,
 }: {
   title: string;
   data: Array<Record<string, number | string>>;
   series: Series[];
   valueFormatter?: (v: number) => string;
+  /** Series key to call out with a direct "Peak <value> · <date>" label —
+   * kept to one annotation so it can't collide with the others (see the
+   * end-label collision note further down). */
+  annotatePeakKey?: string;
 }) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
@@ -24,7 +29,7 @@ export function AreaTrendChart({
   const height = 220;
   const padL = 36;
   const padR = 12;
-  const padT = 16;
+  const padT = 28;
   const padB = 28;
   const plotW = width - padL - padR;
   const plotH = height - padT - padB;
@@ -46,8 +51,27 @@ export function AreaTrendChart({
     return { key: s.key, line, area, last: pts[pts.length - 1] };
   });
 
+  const peak = useMemo(() => {
+    if (!annotatePeakKey || data.length < 2) return null;
+    let bestIdx = 0;
+    let bestVal = -Infinity;
+    data.forEach((d, i) => {
+      const v = Number(d[annotatePeakKey]) || 0;
+      if (v > bestVal) {
+        bestVal = v;
+        bestIdx = i;
+      }
+    });
+    // The endpoint already carries its own label for single-series charts —
+    // skip a second, redundant annotation if the peak IS the endpoint.
+    if (bestIdx === data.length - 1) return null;
+    return { idx: bestIdx, value: bestVal };
+  }, [data, annotatePeakKey]);
+
   const gridSteps = 4;
   const labelEvery = Math.max(1, Math.ceil(data.length / 7));
+  const rowTotal = (row: Record<string, number | string>) =>
+    series.reduce((sum, s) => sum + (Number(row[s.key]) || 0), 0);
 
   return (
     <div className="rounded-2xl bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card p-5">
@@ -163,6 +187,30 @@ export function AreaTrendChart({
                 strokeLinecap="round"
               />
             ))}
+
+            {peak && (() => {
+              const s = series.find((s) => s.key === annotatePeakKey)!;
+              const px = x(peak.idx);
+              const py = y(peak.value);
+              const labelAbove = py > padT + 14;
+              return (
+                <g>
+                  <line x1={px} x2={px} y1={labelAbove ? py - 8 : py + 8} y2={py} stroke={s.color} strokeWidth={1} opacity={0.5} />
+                  <circle cx={px} cy={py} r={3.5} fill={s.color} stroke="var(--solid)" strokeWidth={1.5} />
+                  <text
+                    x={Math.min(width - padR - 2, Math.max(padL + 2, px))}
+                    y={labelAbove ? py - 12 : py + 20}
+                    textAnchor={px > width - 80 ? "end" : "middle"}
+                    fontSize={10}
+                    fontWeight={600}
+                    className="fill-text"
+                  >
+                    Peak {valueFormatter(peak.value)} · {formatDate(String(data[peak.idx].date)).replace(/,.*/, "")}
+                  </text>
+                </g>
+              );
+            })()}
+
             {paths.map((p, idx) => (
               <g key={p.key}>
                 <circle cx={p.last[0]} cy={p.last[1]} r={4} fill={series[idx].color} stroke="var(--solid)" strokeWidth={2} />
@@ -189,15 +237,26 @@ export function AreaTrendChart({
               <g>
                 <line x1={x(hoverIdx)} x2={x(hoverIdx)} y1={padT} y2={padT + plotH} stroke="var(--border)" strokeWidth={1} />
                 {series.map((s) => (
-                  <circle
-                    key={s.key}
-                    cx={x(hoverIdx)}
-                    cy={y(Number(data[hoverIdx][s.key]) || 0)}
-                    r={4}
-                    fill={s.color}
-                    stroke="var(--solid)"
-                    strokeWidth={2}
-                  />
+                  <g key={s.key}>
+                    {/* Tasteful hover glow — a soft, low-opacity halo behind
+                        the point, not a loud effect that competes with the
+                        data (see marks-and-anatomy.md on saturated blocks). */}
+                    <circle
+                      cx={x(hoverIdx)}
+                      cy={y(Number(data[hoverIdx][s.key]) || 0)}
+                      r={9}
+                      fill={s.color}
+                      opacity={0.18}
+                    />
+                    <circle
+                      cx={x(hoverIdx)}
+                      cy={y(Number(data[hoverIdx][s.key]) || 0)}
+                      r={4}
+                      fill={s.color}
+                      stroke="var(--solid)"
+                      strokeWidth={2}
+                    />
+                  </g>
                 ))}
               </g>
             )}
@@ -212,13 +271,21 @@ export function AreaTrendChart({
               }}
             >
               <div className="text-text-2 mb-1">{formatDate(String(data[hoverIdx].date))}</div>
-              {series.map((s) => (
-                <div key={s.key} className="flex items-center gap-1.5">
-                  <span className="inline-block w-2.5 h-0.5 rounded-full" style={{ background: s.color }} />
-                  <span className="font-semibold">{valueFormatter(Number(data[hoverIdx][s.key]) || 0)}</span>
-                  <span className="text-text-2">{s.label}</span>
-                </div>
-              ))}
+              {series.map((s) => {
+                const value = Number(data[hoverIdx][s.key]) || 0;
+                const total = rowTotal(data[hoverIdx]);
+                const pct = series.length > 1 && total > 0 ? Math.round((value / total) * 100) : null;
+                return (
+                  <div key={s.key} className="flex items-center gap-1.5">
+                    <span className="inline-block w-2.5 h-0.5 rounded-full" style={{ background: s.color }} />
+                    <span className="font-semibold">{valueFormatter(value)}</span>
+                    <span className="text-text-2">
+                      {s.label}
+                      {pct !== null && ` (${pct}%)`}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
