@@ -25,7 +25,7 @@ export function ReportsView({
   const router = useRouter();
 
   return (
-    <div className="viz-root space-y-4 max-w-6xl">
+    <div className="viz-root space-y-4">
       {/* Chart-mark colors, scoped locally rather than in the global
           stylesheet — custom properties that are only ever consumed via
           inline style (var(--chart-1) from a JS string, not a CSS rule)

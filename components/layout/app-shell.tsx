@@ -39,7 +39,9 @@ export function AppShell({
 
       <div className="relative z-[1] flex-1 min-w-0 flex flex-col">
         <Topbar fullName={fullName} onMenuClick={() => setDrawerOpen(true)} />
-        <main className="flex-1 min-w-0 px-4 py-5 sm:px-6 sm:py-6">{children}</main>
+        <main className="flex-1 min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+        </main>
       </div>
     </div>
   );

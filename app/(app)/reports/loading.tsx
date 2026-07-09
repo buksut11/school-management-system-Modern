@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 
 export default function Loading() {
   return (
-    <div className="space-y-4 max-w-6xl">
+    <div className="space-y-4">
       <Skeleton className="h-10 w-64" />
       <Card className="p-5 space-y-3">
         <Skeleton className="h-4 w-32" />

@@ -66,7 +66,7 @@ export function AttendanceView({
   }
 
   return (
-    <div className="space-y-4 max-w-6xl">
+    <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3 sm:max-w-md">
         <Stat label="Present" value={present} color="var(--green)" />
         <Stat label="Late" value={late} color="var(--orange)" />

@@ -68,7 +68,7 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
   }
 
   return (
-    <div className="space-y-4 max-w-6xl">
+    <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Total expenses" value={formatMoney(total)} />
         <Stat label="Paid out" value={formatMoney(paidOut)} color="var(--green)" />
