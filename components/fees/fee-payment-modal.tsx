@@ -24,7 +24,7 @@ export function FeePaymentModal({
 
   useEffect(() => {
     if (state?.success) {
-      show("Payment recorded");
+      show("Payment recorded — receipt issued");
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
