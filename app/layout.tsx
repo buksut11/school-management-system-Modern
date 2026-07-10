@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeScript } from "@/components/theme-script";
 import { ToastProvider } from "@/components/ui/toast";
+import { ConfirmProvider } from "@/components/ui/confirm";
 
 export const metadata: Metadata = {
   title: "Sh.Asharow LMS",
@@ -19,7 +20,9 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body className="min-h-full bg-app-bg text-text">
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <ConfirmProvider>{children}</ConfirmProvider>
+        </ToastProvider>
       </body>
     </html>
   );

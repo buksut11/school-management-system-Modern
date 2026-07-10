@@ -13,6 +13,7 @@ import { SubjectsGrid } from "./subjects-grid";
 import { SubjectModal } from "./subject-modal";
 import { deleteSubject } from "@/lib/actions/academics";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import type { SubjectRow } from "@/lib/data/academics";
 
@@ -34,6 +35,7 @@ export function SubjectsView({
   const [editing, setEditing] = useState<SubjectRow | null>(null);
   const [, startTransition] = useTransition();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -47,8 +49,9 @@ export function SubjectsView({
   const coreCount = subjects.filter((s) => s.type === "core").length;
   const totalPeriods = subjects.reduce((sum, s) => sum + s.periods_per_week, 0);
 
-  function onDelete(s: SubjectRow) {
-    if (!confirm(`Remove ${s.name}?`)) return;
+  async function onDelete(s: SubjectRow) {
+    const ok = await confirm({ title: `Remove ${s.name}?`, confirmLabel: "Remove" });
+    if (!ok) return;
     startTransition(async () => {
       await deleteSubject(s.id, s.name);
       show("Subject removed");

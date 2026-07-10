@@ -13,6 +13,7 @@ import { InvoicePaymentModal } from "./invoice-payment-modal";
 import { ReceiptModal } from "./receipt-modal";
 import { deleteInvoice, deleteReceipt } from "@/lib/actions/invoices";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { formatMoney } from "@/lib/utils";
 import type { InvoiceRow, ReceiptRow, StudentOption } from "@/lib/data/invoices";
@@ -40,6 +41,7 @@ export function InvoicesView({
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [, startTransition] = useTransition();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const q = query.trim().toLowerCase();
 
@@ -72,16 +74,26 @@ export function InvoicesView({
   const moneyIn = receipts.filter((r) => r.party_type === "student").reduce((s, r) => s + r.amount, 0);
   const moneyOut = receipts.filter((r) => r.party_type !== "student").reduce((s, r) => s + r.amount, 0);
 
-  function onDeleteInvoice(inv: InvoiceRow) {
-    if (!confirm(`Remove invoice ${inv.invoice_no} for ${inv.party_name}?`)) return;
+  async function onDeleteInvoice(inv: InvoiceRow) {
+    const ok = await confirm({
+      title: `Remove invoice ${inv.invoice_no}?`,
+      message: `This invoice for ${inv.party_name} will be permanently removed.`,
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     startTransition(async () => {
       await deleteInvoice(inv.id, inv.party_name);
       show("Invoice removed");
     });
   }
 
-  function onDeleteReceipt(r: ReceiptRow) {
-    if (!confirm(`Remove receipt ${r.receipt_no} for ${r.party_name}?`)) return;
+  async function onDeleteReceipt(r: ReceiptRow) {
+    const ok = await confirm({
+      title: `Remove receipt ${r.receipt_no}?`,
+      message: `This receipt for ${r.party_name} will be permanently removed.`,
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     startTransition(async () => {
       await deleteReceipt(r.id, r.party_name);
       show("Receipt removed");

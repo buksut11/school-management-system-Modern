@@ -10,6 +10,7 @@ import { ExamsTable } from "./exams-table";
 import { ExamModal } from "./exam-modal";
 import { deleteExam } from "@/lib/actions/exams";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { TERMS } from "@/lib/constants";
 import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
@@ -34,6 +35,7 @@ export function ExamsView({
   const [editing, setEditing] = useState<ExamRow | null>(null);
   const [, startTransition] = useTransition();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -43,8 +45,9 @@ export function ExamsView({
     });
   }, [rows, classFilter, query]);
 
-  function onDelete(r: ExamRow) {
-    if (!confirm(`Remove ${r.student_name}'s ${term} record?`)) return;
+  async function onDelete(r: ExamRow) {
+    const ok = await confirm({ title: `Remove ${r.student_name}'s ${term} record?`, confirmLabel: "Remove" });
+    if (!ok) return;
     startTransition(async () => {
       await deleteExam(r.id, r.student_name);
       show("Exam record removed");

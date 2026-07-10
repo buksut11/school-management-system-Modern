@@ -6,13 +6,21 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { seedDemoData } from "@/lib/actions/demo";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 export function DemoDataPanel() {
   const [busy, setBusy] = useState(false);
   const { show } = useToast();
+  const confirm = useConfirm();
 
   async function load() {
-    if (!confirm("Load sample teachers, students, attendance, exams, fees and expenses into the database?")) return;
+    const ok = await confirm({
+      title: "Load demo data?",
+      message: "Sample teachers, students, attendance, exams, fees and expenses will be added to the database.",
+      confirmLabel: "Load",
+      tone: "primary",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const result = await seedDemoData();

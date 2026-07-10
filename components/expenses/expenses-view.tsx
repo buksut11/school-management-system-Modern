@@ -14,6 +14,7 @@ import { ExpenseModal } from "./expense-modal";
 import { ExpensePaymentModal } from "./expense-payment-modal";
 import { deleteExpense } from "@/lib/actions/expenses";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { formatMoney } from "@/lib/utils";
 import type { ExpenseRow } from "@/lib/data/expenses";
@@ -32,6 +33,7 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
   const [payTarget, setPayTarget] = useState<ExpenseRow | null>(null);
   const [, startTransition] = useTransition();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const filtered = useMemo(() => {
     return expenses.filter((e) => {
@@ -47,8 +49,9 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
   const outstanding = Math.max(0, total - paidOut);
   const pending = expenses.filter((e) => e.status !== "paid").length;
 
-  function onDelete(e: ExpenseRow) {
-    if (!confirm(`Remove the ${e.payee} expense?`)) return;
+  async function onDelete(e: ExpenseRow) {
+    const ok = await confirm({ title: `Remove the ${e.payee} expense?`, confirmLabel: "Remove" });
+    if (!ok) return;
     startTransition(async () => {
       await deleteExpense(e.id, e.payee);
       show("Expense removed");

@@ -12,6 +12,7 @@ import { DepartmentsGrid } from "./departments-grid";
 import { DepartmentModal } from "./department-modal";
 import { deleteDepartment } from "@/lib/actions/academics";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import type { DepartmentRow } from "@/lib/data/academics";
 
@@ -30,6 +31,7 @@ export function DepartmentsView({
   const [editing, setEditing] = useState<DepartmentRow | null>(null);
   const [, startTransition] = useTransition();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -41,8 +43,13 @@ export function DepartmentsView({
   const headsAssigned = departments.filter((d) => d.head_teacher_id).length;
   const totalPeriods = departments.reduce((sum, d) => sum + d.periods_per_week, 0);
 
-  function onDelete(d: DepartmentRow) {
-    if (!confirm(`Remove ${d.name}? Its subjects will become unassigned.`)) return;
+  async function onDelete(d: DepartmentRow) {
+    const ok = await confirm({
+      title: `Remove ${d.name}?`,
+      message: "Its subjects will become unassigned.",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     startTransition(async () => {
       await deleteDepartment(d.id, d.name);
       show("Department removed");

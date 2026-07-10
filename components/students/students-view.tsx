@@ -11,6 +11,7 @@ import { StudentsGrid } from "./students-grid";
 import { StudentModal } from "./student-modal";
 import { deleteStudent } from "@/lib/actions/students";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate } from "@/lib/utils";
 import type { StudentWithClass } from "@/lib/data/students";
@@ -30,6 +31,7 @@ export function StudentsView({
   const [editing, setEditing] = useState<StudentWithClass | null>(null);
   const [, startTransition] = useTransition();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -52,8 +54,13 @@ export function StudentsView({
     setModalOpen(true);
   }
 
-  function onDelete(s: StudentWithClass) {
-    if (!confirm(`Remove ${s.full_name}? This also removes their attendance history.`)) return;
+  async function onDelete(s: StudentWithClass) {
+    const ok = await confirm({
+      title: `Remove ${s.full_name}?`,
+      message: "This also removes their attendance history.",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     startTransition(async () => {
       await deleteStudent(s.id, s.full_name);
       show("Student removed");

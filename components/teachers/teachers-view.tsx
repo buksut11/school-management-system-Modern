@@ -11,6 +11,7 @@ import { TeachersGrid } from "./teachers-grid";
 import { TeacherModal } from "./teacher-modal";
 import { deleteTeacher } from "@/lib/actions/teachers";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import type { TeacherWithClass } from "@/lib/data/teachers";
 
@@ -29,6 +30,7 @@ export function TeachersView({
   const [editing, setEditing] = useState<TeacherWithClass | null>(null);
   const [, startTransition] = useTransition();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -51,8 +53,9 @@ export function TeachersView({
     setModalOpen(true);
   }
 
-  function onDelete(t: TeacherWithClass) {
-    if (!confirm(`Remove ${t.full_name}?`)) return;
+  async function onDelete(t: TeacherWithClass) {
+    const ok = await confirm({ title: `Remove ${t.full_name}?`, confirmLabel: "Remove" });
+    if (!ok) return;
     startTransition(async () => {
       await deleteTeacher(t.id, t.full_name);
       show("Teacher removed");

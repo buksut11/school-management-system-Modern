@@ -12,6 +12,7 @@ import { ClassesGrid } from "./classes-grid";
 import { ClassModal } from "./class-modal";
 import { deleteClass } from "@/lib/actions/classes";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import type { ClassWithStats } from "@/lib/data/classes";
 
@@ -30,6 +31,7 @@ export function ClassesView({
   const [editing, setEditing] = useState<ClassWithStats | null>(null);
   const [, startTransition] = useTransition();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -43,8 +45,13 @@ export function ClassesView({
   const avgSize = classes.length ? Math.round(totalStudents / classes.length) : 0;
   const freeSeats = classes.reduce((sum, c) => sum + Math.max(0, c.capacity - c.enrolled), 0);
 
-  function onDelete(c: ClassWithStats) {
-    if (!confirm(`Remove ${c.name}? Students assigned to it will become unassigned.`)) return;
+  async function onDelete(c: ClassWithStats) {
+    const ok = await confirm({
+      title: `Remove ${c.name}?`,
+      message: "Students assigned to it will become unassigned.",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     startTransition(async () => {
       await deleteClass(c.id, c.name);
       show("Class removed");
