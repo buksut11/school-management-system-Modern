@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CircleDollarSign, Eye, FileDown, Pencil, Trash2 } from "lucide-react";
+import { CircleDollarSign, FileDown, Pencil, Printer, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { PdfPreviewModal } from "@/components/ui/pdf-preview-modal";
 import { formatMoney, formatDate } from "@/lib/utils";
 import type { InvoiceRow } from "@/lib/data/invoices";
 
@@ -22,10 +20,16 @@ export function InvoicesTable({
   onDelete: (inv: InvoiceRow) => void;
   onPay: (inv: InvoiceRow) => void;
 }) {
-  const [preview, setPreview] = useState<InvoiceRow | null>(null);
-
   function download(inv: InvoiceRow) {
     import("@/lib/pdf/invoice").then((m) => m.downloadInvoicePdf(inv));
+  }
+
+  async function print(inv: InvoiceRow) {
+    const [{ buildInvoicePdf }, { printPdf }] = await Promise.all([
+      import("@/lib/pdf/invoice"),
+      import("@/lib/pdf/print"),
+    ]);
+    printPdf(buildInvoicePdf(inv));
   }
 
   return (
@@ -79,11 +83,11 @@ export function InvoicesTable({
             </div>
             <div className="r-actions w-40 flex-none flex items-center justify-end gap-1">
               <button
-                onClick={() => setPreview(inv)}
+                onClick={() => print(inv)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                aria-label="View invoice"
+                aria-label="Print invoice"
               >
-                <Eye size={14} />
+                <Printer size={14} />
               </button>
               <button
                 onClick={() => download(inv)}
@@ -124,18 +128,6 @@ export function InvoicesTable({
           </div>
         )}
       </div>
-
-      {preview && (
-        <PdfPreviewModal
-          open
-          onClose={() => setPreview(null)}
-          title={`Invoice ${preview.invoice_no} · ${preview.party_name}`}
-          load={async () => {
-            const m = await import("@/lib/pdf/invoice");
-            return { doc: m.buildInvoicePdf(preview), filename: m.invoicePdfFilename(preview) };
-          }}
-        />
-      )}
     </div>
   );
 }

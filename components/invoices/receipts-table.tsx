@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, FileDown, Trash2 } from "lucide-react";
+import { FileDown, Printer, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { PdfPreviewModal } from "@/components/ui/pdf-preview-modal";
 import { formatMoney, formatDate } from "@/lib/utils";
 import type { ReceiptRow } from "@/lib/data/invoices";
 
@@ -23,10 +21,16 @@ export function ReceiptsTable({
   receipts: ReceiptRow[];
   onDelete: (r: ReceiptRow) => void;
 }) {
-  const [preview, setPreview] = useState<ReceiptRow | null>(null);
-
   function download(r: ReceiptRow) {
     import("@/lib/pdf/receipt").then((m) => m.downloadReceiptPdf(r));
+  }
+
+  async function print(r: ReceiptRow) {
+    const [{ buildReceiptPdf }, { printPdf }] = await Promise.all([
+      import("@/lib/pdf/receipt"),
+      import("@/lib/pdf/print"),
+    ]);
+    printPdf(buildReceiptPdf(r));
   }
 
   return (
@@ -70,11 +74,11 @@ export function ReceiptsTable({
             </div>
             <div className="r-actions w-28 flex-none flex items-center justify-end gap-1">
               <button
-                onClick={() => setPreview(r)}
+                onClick={() => print(r)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                aria-label="View receipt"
+                aria-label="Print receipt"
               >
-                <Eye size={14} />
+                <Printer size={14} />
               </button>
               <button
                 onClick={() => download(r)}
@@ -99,18 +103,6 @@ export function ReceiptsTable({
           </div>
         )}
       </div>
-
-      {preview && (
-        <PdfPreviewModal
-          open
-          onClose={() => setPreview(null)}
-          title={`Receipt ${preview.receipt_no} · ${preview.party_name}`}
-          load={async () => {
-            const m = await import("@/lib/pdf/receipt");
-            return { doc: m.buildReceiptPdf(preview), filename: m.receiptPdfFilename(preview) };
-          }}
-        />
-      )}
     </div>
   );
 }

@@ -1,17 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { CircleDollarSign, Eye, Receipt } from "lucide-react";
+import { CircleDollarSign, Printer, Receipt } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { PdfPreviewModal } from "@/components/ui/pdf-preview-modal";
 import { formatMoney } from "@/lib/utils";
 import type { FeeRow } from "@/lib/data/fees";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
 
 export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) => void }) {
-  const [preview, setPreview] = useState<FeeRow | null>(null);
+  async function print(r: FeeRow) {
+    const [{ buildFeeReceipt }, { printPdf }] = await Promise.all([
+      import("@/lib/pdf/fee-receipt"),
+      import("@/lib/pdf/print"),
+    ]);
+    printPdf(buildFeeReceipt(r));
+  }
 
   return (
     <div className="r-table fee-table rounded-2xl bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card overflow-hidden">
@@ -54,11 +58,11 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
             </div>
             <div className="r-actions w-48 flex-none flex justify-end gap-1.5">
               <button
-                onClick={() => setPreview(r)}
+                onClick={() => print(r)}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                aria-label="View receipt"
+                aria-label="Print receipt"
               >
-                <Eye size={14} />
+                <Printer size={14} />
               </button>
               <button
                 onClick={() => import("@/lib/pdf/fee-receipt").then((m) => m.downloadFeeReceipt(r))}
@@ -81,18 +85,6 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
           <div className="py-12 text-center text-[13px] text-text-2">No students found.</div>
         )}
       </div>
-
-      {preview && (
-        <PdfPreviewModal
-          open
-          onClose={() => setPreview(null)}
-          title={`Fee Receipt · ${preview.student_name}`}
-          load={async () => {
-            const m = await import("@/lib/pdf/fee-receipt");
-            return { doc: m.buildFeeReceipt(preview), filename: m.feeReceiptFilename(preview) };
-          }}
-        />
-      )}
     </div>
   );
 }
