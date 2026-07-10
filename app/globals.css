@@ -346,22 +346,22 @@ select {
 .students-table {
   container-name: lrow slist;
 }
-@container slist (max-width: 900px) {
+@container slist (max-width: 1104px) {
   .lcol-smob {
     display: none !important;
   }
 }
-@container slist (max-width: 760px) {
+@container slist (max-width: 980px) {
   .lcol-dob {
     display: none !important;
   }
 }
-@container slist (max-width: 620px) {
+@container slist (max-width: 856px) {
   .lcol-pmob {
     display: none !important;
   }
 }
-@container slist (max-width: 480px) {
+@container slist (max-width: 740px) {
   .lcol-fees {
     display: none !important;
   }
