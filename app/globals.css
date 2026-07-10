@@ -369,12 +369,12 @@ select {
 .teachers-table {
   container-name: lrow tlist;
 }
-@container tlist (max-width: 560px) {
+@container tlist (max-width: 944px) {
   .tcol-mob {
     display: none !important;
   }
 }
-@container tlist (max-width: 430px) {
+@container tlist (max-width: 820px) {
   .tcol-subj {
     display: none !important;
   }

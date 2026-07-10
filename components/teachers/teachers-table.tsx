@@ -20,8 +20,8 @@ export function TeachersTable({
         <div className="w-20 flex-none">ID</div>
         <div className="flex-1 min-w-[160px]">Teacher</div>
         <div className="w-24 flex-none">Class</div>
-        <div className="w-40 flex-none tcol-subj">Subjects</div>
-        <div className="w-32 flex-none tcol-mob">Mobile</div>
+        <div className="w-36 flex-none tcol-subj">Subjects</div>
+        <div className="w-28 flex-none tcol-mob">Mobile</div>
         <div className="w-24 flex-none">Status</div>
         <div className="w-20 flex-none text-right">Actions</div>
       </div>
@@ -45,10 +45,10 @@ export function TeachersTable({
             <div className="r-cell s-classcell w-24 flex-none text-[13px] text-text-2" data-label="Class">
               {t.class_name ?? "—"}
             </div>
-            <div className="r-cell tcol-subj w-40 flex-none text-[13px] text-text-2 truncate" data-label="Subjects">
+            <div className="r-cell tcol-subj w-36 flex-none text-[13px] text-text-2 truncate" data-label="Subjects">
               {t.subjects.length ? t.subjects.join(", ") : "—"}
             </div>
-            <div className="r-cell tcol-mob w-32 flex-none text-[13px] text-text-2 truncate" data-label="Mobile">
+            <div className="r-cell tcol-mob w-28 flex-none text-[13px] text-text-2 truncate" data-label="Mobile">
               {t.mobile ?? "—"}
             </div>
             <div className="r-cell w-24 flex-none" data-label="Status">
