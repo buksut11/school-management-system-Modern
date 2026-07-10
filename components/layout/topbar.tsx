@@ -19,6 +19,7 @@ const TITLES: Record<string, string> = {
   "/academic-records": "Academic Records",
   "/fees": "Fees",
   "/expenses": "Expenses",
+  "/invoices": "Invoices & Receipts",
   "/reports": "Reports",
   "/settings": "Data & Settings",
 };

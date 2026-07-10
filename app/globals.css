@@ -495,6 +495,52 @@ select {
     display: none !important;
   }
 }
+.inv-table {
+  container-name: lrow itable;
+}
+@container itable (max-width: 1060px) {
+  .icol-paid {
+    display: none !important;
+  }
+}
+@container itable (max-width: 960px) {
+  .icol-due {
+    display: none !important;
+  }
+}
+@container itable (max-width: 860px) {
+  .icol-issued {
+    display: none !important;
+  }
+}
+@container itable (max-width: 700px) {
+  .icol-type {
+    display: none !important;
+  }
+}
+@container itable (max-width: 640px) {
+  .icol-total {
+    display: none !important;
+  }
+}
+.rct-table {
+  container-name: lrow rtable;
+}
+@container rtable (max-width: 900px) {
+  .rcol-method {
+    display: none !important;
+  }
+}
+@container rtable (max-width: 780px) {
+  .rcol-invoice {
+    display: none !important;
+  }
+}
+@container rtable (max-width: 660px) {
+  .rcol-type {
+    display: none !important;
+  }
+}
 
 @media (max-width: 640px) {
   .view-toggle {

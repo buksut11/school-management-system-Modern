@@ -24,7 +24,11 @@ export function ExpensePaymentModal({
 
   useEffect(() => {
     if (state?.success) {
-      show("Payment recorded");
+      show(
+        expense?.category === "salaries"
+          ? "Payment recorded — receipt issued"
+          : "Payment recorded"
+      );
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
