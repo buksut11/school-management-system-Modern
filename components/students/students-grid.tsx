@@ -55,6 +55,12 @@ export function StudentsGrid({
               <span>Fees</span>
               <span className="text-text font-medium">{formatMoney(s.base_fees)}</span>
             </div>
+            <div className="flex justify-between items-center">
+              <span>Status</span>
+              <Badge tone={s.status === "active" ? "green" : "gray"}>
+                {s.status === "active" ? "Active" : "Inactive"}
+              </Badge>
+            </div>
           </div>
           <div className="flex gap-2">
             <button

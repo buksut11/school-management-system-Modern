@@ -346,6 +346,11 @@ select {
 .students-table {
   container-name: lrow slist;
 }
+@container slist (max-width: 1180px) {
+  .lcol-att {
+    display: none !important;
+  }
+}
 @container slist (max-width: 1104px) {
   .lcol-smob {
     display: none !important;

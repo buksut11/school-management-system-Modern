@@ -27,6 +27,7 @@ export function StudentsTable({
         <div className="w-28 flex-none lcol-smob">Mobile</div>
         <div className="w-24 flex-none lcol-dob">DOB</div>
         <div className="w-20 flex-none lcol-fees">Fees</div>
+        <div className="w-24 flex-none lcol-att">Attendance</div>
         <div className="w-24 flex-none">Status</div>
         <div className="w-20 flex-none text-right">Actions</div>
       </div>
@@ -40,10 +41,7 @@ export function StudentsTable({
             <div className="r-ident r-cell flex-1 min-w-[160px] flex items-center gap-2.5">
               <Avatar name={s.full_name} photoUrl={s.photo_url} size={32} />
               <div className="min-w-0">
-                <div className="text-[13.5px] font-medium truncate flex items-center gap-1.5">
-                  {s.full_name}
-                  {s.status === "inactive" && <Badge tone="gray">Inactive</Badge>}
-                </div>
+                <div className="text-[13.5px] font-medium truncate">{s.full_name}</div>
                 <div className="text-[11.5px] text-text-2 truncate">{s.class_name ?? "—"}</div>
               </div>
             </div>
@@ -62,7 +60,7 @@ export function StudentsTable({
             <div className="r-cell lcol-fees w-20 flex-none text-[13px] text-text-2" data-label="Fees">
               {formatMoney(s.base_fees)}
             </div>
-            <div className="r-cell w-24 flex-none" data-label="Status">
+            <div className="r-cell lcol-att w-24 flex-none" data-label="Attendance">
               {s.today_status ? (
                 <Badge tone={STATUS_TONE[s.today_status]}>
                   {s.today_status[0].toUpperCase() + s.today_status.slice(1)}
@@ -70,6 +68,11 @@ export function StudentsTable({
               ) : (
                 <Badge tone="gray">—</Badge>
               )}
+            </div>
+            <div className="r-cell w-24 flex-none" data-label="Status">
+              <Badge tone={s.status === "active" ? "green" : "gray"}>
+                {s.status === "active" ? "Active" : "Inactive"}
+              </Badge>
             </div>
             <div className="r-actions w-20 flex-none flex items-center justify-end gap-1">
               <button
