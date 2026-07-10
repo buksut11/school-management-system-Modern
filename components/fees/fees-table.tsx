@@ -1,14 +1,18 @@
 "use client";
 
-import { CircleDollarSign, Receipt } from "lucide-react";
+import { useState } from "react";
+import { CircleDollarSign, Eye, Receipt } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { PdfPreviewModal } from "@/components/ui/pdf-preview-modal";
 import { formatMoney } from "@/lib/utils";
 import type { FeeRow } from "@/lib/data/fees";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
 
 export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) => void }) {
+  const [preview, setPreview] = useState<FeeRow | null>(null);
+
   return (
     <div className="r-table fee-table rounded-2xl bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card overflow-hidden">
       <div className="r-head flex items-center gap-3 px-5 py-3 border-b border-line text-[11px] font-semibold text-text-2 uppercase tracking-wide">
@@ -18,7 +22,7 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
         <div className="w-24 flex-none fcol-paid">Paid</div>
         <div className="w-24 flex-none">Balance</div>
         <div className="w-24 flex-none">Status</div>
-        <div className="w-40 flex-none text-right">Action</div>
+        <div className="w-48 flex-none text-right">Action</div>
       </div>
 
       <div className="divide-y divide-line/60">
@@ -48,7 +52,14 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
                 {r.status[0].toUpperCase() + r.status.slice(1)}
               </Badge>
             </div>
-            <div className="r-actions w-40 flex-none flex justify-end gap-1.5">
+            <div className="r-actions w-48 flex-none flex justify-end gap-1.5">
+              <button
+                onClick={() => setPreview(r)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
+                aria-label="View receipt"
+              >
+                <Eye size={14} />
+              </button>
               <button
                 onClick={() => import("@/lib/pdf/fee-receipt").then((m) => m.downloadFeeReceipt(r))}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
@@ -70,6 +81,18 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
           <div className="py-12 text-center text-[13px] text-text-2">No students found.</div>
         )}
       </div>
+
+      {preview && (
+        <PdfPreviewModal
+          open
+          onClose={() => setPreview(null)}
+          title={`Fee Receipt · ${preview.student_name}`}
+          load={async () => {
+            const m = await import("@/lib/pdf/fee-receipt");
+            return { doc: m.buildFeeReceipt(preview), filename: m.feeReceiptFilename(preview) };
+          }}
+        />
+      )}
     </div>
   );
 }
