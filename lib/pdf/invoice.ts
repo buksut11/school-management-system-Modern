@@ -9,6 +9,10 @@ export type InvoicePdfData = {
   party_type: PartyType;
   party_name: string;
   party_detail: string | null;
+  party_phone: string | null;
+  party_address: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
   items: InvoiceItem[];
   total: number;
   paid: number;
@@ -31,7 +35,13 @@ export function downloadInvoicePdf(inv: InvoicePdfData) {
   doc.setFont("helvetica", "normal");
   doc.text(inv.party_name, 14, 46);
   doc.setTextColor(100);
-  doc.text(inv.party_detail ?? partyTypeLabel(inv.party_type), 14, 52);
+  const partyLines = contactLines(inv);
+  let py = 52;
+  doc.text(inv.party_detail ?? partyTypeLabel(inv.party_type), 14, py);
+  partyLines.forEach((line) => {
+    py += 5;
+    doc.text(line, 14, py);
+  });
   doc.setTextColor(0);
 
   doc.setFont("helvetica", "bold");
@@ -42,8 +52,12 @@ export function downloadInvoicePdf(inv: InvoicePdfData) {
   if (inv.due_date) doc.text(`Due: ${formatDate(inv.due_date)}`, 196, 52, { align: "right" });
   doc.setTextColor(0);
 
+  // Line-item table starts below whichever column (party block vs. the
+  // invoice meta on the right) runs longer.
+  const startY = Math.max(66, py + 8);
+
   autoTable(doc, {
-    startY: 60,
+    startY,
     head: [["#", "Description", "Qty", "Unit price", "Amount"]],
     body: inv.items.map((it, i) => [
       String(i + 1),
@@ -104,6 +118,25 @@ export function downloadInvoicePdf(inv: InvoicePdfData) {
 
 function partyTypeLabel(type: PartyType) {
   return type === "student" ? "Student" : type === "teacher" ? "Teacher" : "Staff";
+}
+
+// Contact + parent lines rendered under the party name. Kept short so the
+// block stays inside the header area; parent details are student-only.
+function contactLines(inv: {
+  party_type: PartyType;
+  party_phone: string | null;
+  party_address: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
+}) {
+  const lines: string[] = [];
+  if (inv.party_phone) lines.push(`Phone: ${inv.party_phone}`);
+  if (inv.party_address) lines.push(`Address: ${inv.party_address}`);
+  if (inv.party_type === "student") {
+    const parent = [inv.parent_name, inv.parent_phone].filter(Boolean).join(" · ");
+    if (parent) lines.push(`Parent/guardian: ${parent}`);
+  }
+  return lines;
 }
 
 function slug(name: string) {

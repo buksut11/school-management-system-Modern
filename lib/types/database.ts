@@ -221,6 +221,10 @@ export interface Database {
           party_id: string | null;
           party_name: string;
           party_detail: string | null;
+          party_phone: string | null;
+          party_address: string | null;
+          parent_name: string | null;
+          parent_phone: string | null;
           items: InvoiceItem[];
           total: number;
           issued_date: string;
@@ -244,6 +248,10 @@ export interface Database {
           party_id: string | null;
           party_name: string;
           party_detail: string | null;
+          party_phone: string | null;
+          party_address: string | null;
+          parent_name: string | null;
+          parent_phone: string | null;
           amount: number;
           method: PaymentMethod;
           note: string | null;

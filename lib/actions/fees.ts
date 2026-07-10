@@ -31,18 +31,28 @@ export async function recordFeePayment(_prev: FormState, formData: FormData): Pr
 
   const { data: student } = await supabase
     .from("students")
-    .select("full_name, classes(name)")
+    .select("full_name, mobile, address, parent_mobile, classes(name)")
     .eq("id", studentId)
-    .single<{ full_name: string; classes: { name: string } | null }>();
+    .single<{
+      full_name: string;
+      mobile: string | null;
+      address: string | null;
+      parent_mobile: string | null;
+      classes: { name: string } | null;
+    }>();
 
   // Every fee payment also issues a numbered receipt (Invoices & Receipts
-  // page). Best-effort: if the receipts migration (0011) hasn't been
-  // applied yet, the payment itself still goes through.
+  // page), carrying the student's contact + parent details. Best-effort:
+  // if the receipts migration (0011/0012) hasn't been applied yet, the
+  // payment itself still goes through.
   await supabase.from("receipts").insert({
     party_type: "student",
     party_id: studentId,
     party_name: student?.full_name ?? "Student",
     party_detail: student?.classes?.name ?? null,
+    party_phone: student?.mobile ?? null,
+    party_address: student?.address ?? null,
+    parent_phone: student?.parent_mobile ?? null,
     amount,
     method,
     note: note ?? "School fees",

@@ -13,12 +13,18 @@ function str(formData: FormData, key: string) {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
-function parseParty(formData: FormData): { error: string } | {
+type ParsedParty = {
   party_type: PartyType;
   party_id: string | null;
   party_name: string;
   party_detail: string | null;
-} {
+  party_phone: string | null;
+  party_address: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
+};
+
+function parseParty(formData: FormData): { error: string } | ParsedParty {
   const partyType = str(formData, "party_type") as PartyType | null;
   if (!partyType || !PARTY_TYPES.includes(partyType)) return { error: "Pick who this is for." };
   const partyName = str(formData, "party_name");
@@ -33,6 +39,11 @@ function parseParty(formData: FormData): { error: string } | {
     party_id: str(formData, "party_id"),
     party_name: partyName,
     party_detail: str(formData, "party_detail"),
+    party_phone: str(formData, "party_phone"),
+    party_address: str(formData, "party_address"),
+    // Parent/guardian details only make sense for students.
+    parent_name: partyType === "student" ? str(formData, "parent_name") : null,
+    parent_phone: partyType === "student" ? str(formData, "parent_phone") : null,
   };
 }
 
@@ -110,7 +121,9 @@ export async function recordInvoicePayment(_prev: FormState, formData: FormData)
   const supabase = await createClient();
   const { data: invoice } = await supabase
     .from("invoices")
-    .select("party_type, party_id, party_name, party_detail")
+    .select(
+      "party_type, party_id, party_name, party_detail, party_phone, party_address, parent_name, parent_phone"
+    )
     .eq("id", invoiceId)
     .single();
   if (!invoice) return { error: "Invoice not found." };
@@ -121,6 +134,10 @@ export async function recordInvoicePayment(_prev: FormState, formData: FormData)
     party_id: invoice.party_id,
     party_name: invoice.party_name,
     party_detail: invoice.party_detail,
+    party_phone: invoice.party_phone,
+    party_address: invoice.party_address,
+    parent_name: invoice.parent_name,
+    parent_phone: invoice.parent_phone,
     amount,
     method: (str(formData, "method") ?? "cash") as PaymentMethod,
     note: str(formData, "note"),
