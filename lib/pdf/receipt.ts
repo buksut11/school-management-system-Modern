@@ -10,6 +10,10 @@ export type ReceiptPdfData = {
   party_type: PartyType;
   party_name: string;
   party_detail: string | null;
+  party_phone: string | null;
+  party_address: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
   amount: number;
   method: PaymentMethod;
   note: string | null;
@@ -35,7 +39,12 @@ export function downloadReceiptPdf(rct: ReceiptPdfData) {
   doc.setFont("helvetica", "normal");
   doc.text(rct.party_name, 14, 46);
   doc.setTextColor(100);
-  doc.text(rct.party_detail ?? partyTypeLabel(rct.party_type), 14, 52);
+  let py = 52;
+  doc.text(rct.party_detail ?? partyTypeLabel(rct.party_type), 14, py);
+  contactLines(rct).forEach((line) => {
+    py += 5;
+    doc.text(line, 14, py);
+  });
   doc.setTextColor(0);
 
   doc.setFont("helvetica", "bold");
@@ -47,7 +56,7 @@ export function downloadReceiptPdf(rct: ReceiptPdfData) {
   doc.setTextColor(0);
 
   autoTable(doc, {
-    startY: 60,
+    startY: Math.max(66, py + 8),
     head: [["Description", "Method", "Amount"]],
     body: [
       [
@@ -81,6 +90,25 @@ export function downloadReceiptPdf(rct: ReceiptPdfData) {
 
 function partyTypeLabel(type: PartyType) {
   return type === "student" ? "Student" : type === "teacher" ? "Teacher" : "Staff";
+}
+
+// Contact + parent lines under the party name; parent details are
+// student-only.
+function contactLines(rct: {
+  party_type: PartyType;
+  party_phone: string | null;
+  party_address: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
+}) {
+  const lines: string[] = [];
+  if (rct.party_phone) lines.push(`Phone: ${rct.party_phone}`);
+  if (rct.party_address) lines.push(`Address: ${rct.party_address}`);
+  if (rct.party_type === "student") {
+    const parent = [rct.parent_name, rct.parent_phone].filter(Boolean).join(" · ");
+    if (parent) lines.push(`Parent/guardian: ${parent}`);
+  }
+  return lines;
 }
 
 function slug(name: string) {

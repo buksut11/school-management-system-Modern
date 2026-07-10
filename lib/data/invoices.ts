@@ -73,17 +73,28 @@ export type StudentOption = {
   full_name: string;
   class_name: string | null;
   base_fees: number;
+  mobile: string | null;
+  address: string | null;
+  parent_mobile: string | null;
 };
 
 export async function listStudentOptions(): Promise<StudentOption[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("students")
-    .select("id, full_name, base_fees, classes(name)")
+    .select("id, full_name, base_fees, mobile, address, parent_mobile, classes(name)")
     .eq("status", "active")
     .order("full_name")
     .returns<
-      Array<{ id: string; full_name: string; base_fees: number; classes: { name: string } | null }>
+      Array<{
+        id: string;
+        full_name: string;
+        base_fees: number;
+        mobile: string | null;
+        address: string | null;
+        parent_mobile: string | null;
+        classes: { name: string } | null;
+      }>
     >();
 
   return (data ?? []).map((s) => ({
@@ -91,5 +102,25 @@ export async function listStudentOptions(): Promise<StudentOption[]> {
     full_name: s.full_name,
     class_name: s.classes?.name ?? null,
     base_fees: Number(s.base_fees),
+    mobile: s.mobile,
+    address: s.address,
+    parent_mobile: s.parent_mobile,
   }));
+}
+
+export type TeacherOption = {
+  id: string;
+  full_name: string;
+  mobile: string | null;
+  address: string | null;
+};
+
+export async function listTeacherContactOptions(): Promise<TeacherOption[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("teachers")
+    .select("id, full_name, mobile, address")
+    .eq("status", "active")
+    .order("full_name");
+  return (data ?? []) as TeacherOption[];
 }

@@ -38,6 +38,10 @@ export function InvoiceModal({
           id: invoice.party_id,
           name: invoice.party_name,
           detail: invoice.party_detail ?? "",
+          phone: invoice.party_phone ?? "",
+          address: invoice.party_address ?? "",
+          parentName: invoice.parent_name ?? "",
+          parentPhone: invoice.parent_phone ?? "",
         }
       : EMPTY_PARTY
   );
