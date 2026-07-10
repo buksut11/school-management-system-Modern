@@ -12,6 +12,8 @@ export async function getTableCounts() {
     "departments",
     "fee_payments",
     "expenses",
+    "invoices",
+    "receipts",
   ] as const;
 
   const results = await Promise.all(

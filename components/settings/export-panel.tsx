@@ -17,6 +17,8 @@ const TABLES = [
   { key: "departments", label: "Departments" },
   { key: "fee_payments", label: "Fee Payments" },
   { key: "expenses", label: "Expenses" },
+  { key: "invoices", label: "Invoices" },
+  { key: "receipts", label: "Receipts" },
 ] as const;
 
 export function ExportPanel({ counts }: { counts: Record<string, number> }) {

@@ -12,6 +12,12 @@ export type ExpenseCategory =
   | "maintenance"
   | "transport"
   | "other";
+export type PartyType = "student" | "teacher" | "staff";
+export interface InvoiceItem {
+  description: string;
+  qty: number;
+  unit_price: number;
+}
 
 export interface Database {
   public: {
@@ -207,6 +213,50 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["expenses"]["Row"]>;
         Relationships: [];
       };
+      invoices: {
+        Row: {
+          id: string;
+          seq: number;
+          party_type: PartyType;
+          party_id: string | null;
+          party_name: string;
+          party_detail: string | null;
+          items: InvoiceItem[];
+          total: number;
+          issued_date: string;
+          due_date: string | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["invoices"]["Row"]> & {
+          party_type: PartyType;
+          party_name: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["invoices"]["Row"]>;
+        Relationships: [];
+      };
+      receipts: {
+        Row: {
+          id: string;
+          seq: number;
+          invoice_id: string | null;
+          party_type: PartyType;
+          party_id: string | null;
+          party_name: string;
+          party_detail: string | null;
+          amount: number;
+          method: PaymentMethod;
+          note: string | null;
+          received_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["receipts"]["Row"]> & {
+          party_type: PartyType;
+          party_name: string;
+          amount: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["receipts"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -224,3 +274,5 @@ export type Subject = Database["public"]["Tables"]["subjects"]["Row"];
 export type Exam = Database["public"]["Tables"]["exams"]["Row"];
 export type FeePayment = Database["public"]["Tables"]["fee_payments"]["Row"];
 export type Expense = Database["public"]["Tables"]["expenses"]["Row"];
+export type Invoice = Database["public"]["Tables"]["invoices"]["Row"];
+export type Receipt = Database["public"]["Tables"]["receipts"]["Row"];

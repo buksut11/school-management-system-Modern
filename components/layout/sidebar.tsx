@@ -15,6 +15,7 @@ import {
   FileBarChart,
   Wallet,
   Receipt,
+  FileText,
   BarChart3,
   Settings,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const NAV = [
   { href: "/academic-records", label: "Academic Records", icon: FileBarChart },
   { href: "/fees", label: "Fees", icon: Wallet, badgeKey: "fees" as const },
   { href: "/expenses", label: "Expenses", icon: Receipt, badgeKey: "expenses" as const },
+  { href: "/invoices", label: "Invoices & Receipts", icon: FileText },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Data & Settings", icon: Settings },
 ];

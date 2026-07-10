@@ -22,6 +22,9 @@ export type BackupSnapshot = {
     exams: unknown[];
     fee_payments: unknown[];
     expenses: unknown[];
+    // Added later — older backup files won't have these keys.
+    invoices?: unknown[];
+    receipts?: unknown[];
   };
 }
 
@@ -37,7 +40,7 @@ async function isCurrentUserAdmin(supabase: SupabaseClient<Database>) {
 export async function createBackupSnapshot(): Promise<BackupSnapshot> {
   const supabase = await createClient();
 
-  const [departments, classes, teachers, subjects, students, attendance, exams, feePayments, expenses] =
+  const [departments, classes, teachers, subjects, students, attendance, exams, feePayments, expenses, invoices, receipts] =
     await Promise.all([
       supabase.from("departments").select("*"),
       supabase.from("classes").select("*"),
@@ -48,6 +51,8 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
       supabase.from("exams").select("*"),
       supabase.from("fee_payments").select("*"),
       supabase.from("expenses").select("*"),
+      supabase.from("invoices").select("*"),
+      supabase.from("receipts").select("*"),
     ]);
 
   await logActivity(supabase, "backup", "Downloaded system backup");
@@ -66,6 +71,8 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
       exams: exams.data ?? [],
       fee_payments: feePayments.data ?? [],
       expenses: expenses.data ?? [],
+      invoices: invoices.data ?? [],
+      receipts: receipts.data ?? [],
     },
   };
 }
@@ -112,6 +119,8 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
   try {
     // Delete children before parents so foreign keys never dangle mid-restore.
     for (const table of [
+      "receipts",
+      "invoices",
       "attendance",
       "exams",
       "fee_payments",
@@ -160,6 +169,8 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
       ["exams", data.exams],
       ["fee_payments", data.fee_payments],
       ["expenses", data.expenses],
+      ["invoices", data.invoices ?? []],
+      ["receipts", data.receipts ?? []],
     ] as const) {
       if (rows.length) {
         const { error } = await supabase.from(table).insert(rows as never[]);
