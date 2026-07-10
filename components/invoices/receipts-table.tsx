@@ -1,7 +1,9 @@
 "use client";
 
-import { FileDown, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Eye, FileDown, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PdfPreviewModal } from "@/components/ui/pdf-preview-modal";
 import { formatMoney, formatDate } from "@/lib/utils";
 import type { ReceiptRow } from "@/lib/data/invoices";
 
@@ -21,6 +23,8 @@ export function ReceiptsTable({
   receipts: ReceiptRow[];
   onDelete: (r: ReceiptRow) => void;
 }) {
+  const [preview, setPreview] = useState<ReceiptRow | null>(null);
+
   function download(r: ReceiptRow) {
     import("@/lib/pdf/receipt").then((m) => m.downloadReceiptPdf(r));
   }
@@ -34,7 +38,7 @@ export function ReceiptsTable({
         <div className="w-24 flex-none rcol-date">Date</div>
         <div className="w-28 flex-none rcol-method">Method</div>
         <div className="w-24 flex-none">Amount</div>
-        <div className="w-20 flex-none text-right">Actions</div>
+        <div className="w-28 flex-none text-right">Actions</div>
       </div>
 
       <div className="divide-y divide-line/60">
@@ -64,7 +68,14 @@ export function ReceiptsTable({
             <div className="r-cell w-24 flex-none text-[13px] font-medium" data-label="Amount">
               {formatMoney(r.amount)}
             </div>
-            <div className="r-actions w-20 flex-none flex items-center justify-end gap-1">
+            <div className="r-actions w-28 flex-none flex items-center justify-end gap-1">
+              <button
+                onClick={() => setPreview(r)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
+                aria-label="View receipt"
+              >
+                <Eye size={14} />
+              </button>
               <button
                 onClick={() => download(r)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
@@ -88,6 +99,18 @@ export function ReceiptsTable({
           </div>
         )}
       </div>
+
+      {preview && (
+        <PdfPreviewModal
+          open
+          onClose={() => setPreview(null)}
+          title={`Receipt ${preview.receipt_no} · ${preview.party_name}`}
+          load={async () => {
+            const m = await import("@/lib/pdf/receipt");
+            return { doc: m.buildReceiptPdf(preview), filename: m.receiptPdfFilename(preview) };
+          }}
+        />
+      )}
     </div>
   );
 }

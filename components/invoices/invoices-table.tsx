@@ -1,7 +1,9 @@
 "use client";
 
-import { CircleDollarSign, FileDown, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { CircleDollarSign, Eye, FileDown, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PdfPreviewModal } from "@/components/ui/pdf-preview-modal";
 import { formatMoney, formatDate } from "@/lib/utils";
 import type { InvoiceRow } from "@/lib/data/invoices";
 
@@ -20,6 +22,8 @@ export function InvoicesTable({
   onDelete: (inv: InvoiceRow) => void;
   onPay: (inv: InvoiceRow) => void;
 }) {
+  const [preview, setPreview] = useState<InvoiceRow | null>(null);
+
   function download(inv: InvoiceRow) {
     import("@/lib/pdf/invoice").then((m) => m.downloadInvoicePdf(inv));
   }
@@ -35,7 +39,7 @@ export function InvoicesTable({
         <div className="w-24 flex-none icol-paid">Paid</div>
         <div className="w-24 flex-none">Balance</div>
         <div className="w-24 flex-none">Status</div>
-        <div className="w-32 flex-none text-right">Actions</div>
+        <div className="w-40 flex-none text-right">Actions</div>
       </div>
 
       <div className="divide-y divide-line/60">
@@ -73,7 +77,14 @@ export function InvoicesTable({
                 {inv.status[0].toUpperCase() + inv.status.slice(1)}
               </Badge>
             </div>
-            <div className="r-actions w-32 flex-none flex items-center justify-end gap-1">
+            <div className="r-actions w-40 flex-none flex items-center justify-end gap-1">
+              <button
+                onClick={() => setPreview(inv)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
+                aria-label="View invoice"
+              >
+                <Eye size={14} />
+              </button>
               <button
                 onClick={() => download(inv)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
@@ -113,6 +124,18 @@ export function InvoicesTable({
           </div>
         )}
       </div>
+
+      {preview && (
+        <PdfPreviewModal
+          open
+          onClose={() => setPreview(null)}
+          title={`Invoice ${preview.invoice_no} · ${preview.party_name}`}
+          load={async () => {
+            const m = await import("@/lib/pdf/invoice");
+            return { doc: m.buildInvoicePdf(preview), filename: m.invoicePdfFilename(preview) };
+          }}
+        />
+      )}
     </div>
   );
 }
