@@ -23,9 +23,9 @@ export function StudentsTable({
         <div className="w-20 flex-none">ID</div>
         <div className="flex-1 min-w-[160px]">Student</div>
         <div className="w-24 flex-none">Class</div>
-        <div className="w-36 flex-none lcol-pmob">Parent Mobile</div>
-        <div className="w-32 flex-none lcol-smob">Mobile</div>
-        <div className="w-28 flex-none lcol-dob">DOB</div>
+        <div className="w-28 flex-none lcol-pmob">Parent Mobile</div>
+        <div className="w-28 flex-none lcol-smob">Mobile</div>
+        <div className="w-24 flex-none lcol-dob">DOB</div>
         <div className="w-20 flex-none lcol-fees">Fees</div>
         <div className="w-24 flex-none">Status</div>
         <div className="w-20 flex-none text-right">Actions</div>
@@ -50,13 +50,13 @@ export function StudentsTable({
             <div className="r-cell s-classcell w-24 flex-none text-[13px] text-text-2" data-label="Class">
               {s.class_name ?? "—"}
             </div>
-            <div className="r-cell lcol-pmob w-36 flex-none text-[13px] text-text-2 truncate" data-label="Parent Mobile">
+            <div className="r-cell lcol-pmob w-28 flex-none text-[13px] text-text-2 truncate" data-label="Parent Mobile">
               {s.parent_mobile ?? "—"}
             </div>
-            <div className="r-cell lcol-smob w-32 flex-none text-[13px] text-text-2 truncate" data-label="Mobile">
+            <div className="r-cell lcol-smob w-28 flex-none text-[13px] text-text-2 truncate" data-label="Mobile">
               {s.mobile ?? "—"}
             </div>
-            <div className="r-cell lcol-dob w-28 flex-none text-[13px] text-text-2" data-label="DOB">
+            <div className="r-cell lcol-dob w-24 flex-none text-[13px] text-text-2" data-label="DOB">
               {s.dob ? formatDate(s.dob) : "—"}
             </div>
             <div className="r-cell lcol-fees w-20 flex-none text-[13px] text-text-2" data-label="Fees">
