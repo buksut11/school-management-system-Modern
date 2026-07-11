@@ -297,7 +297,23 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      student_fee_balances: {
+        Row: {
+          student_id: string;
+          full_name: string;
+          photo_url: string | null;
+          class_id: string | null;
+          class_name: string | null;
+          student_status: PersonStatus;
+          due: number;
+          paid: number;
+          balance: number;
+          fee_status: "paid" | "partial" | "unpaid";
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       record_fee_payment: {
         Args: {

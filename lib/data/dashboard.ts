@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/utils";
 import { getActiveCounts, getTodayAttendance } from "@/lib/data/shared";
-import { getCurrentYearId } from "@/lib/data/years";
 
 export type SidebarCounts = {
   students: number;
@@ -16,27 +15,19 @@ export type SidebarCounts = {
 export async function getSidebarCounts(): Promise<SidebarCounts> {
   const supabase = await createClient();
 
-  // Fee balances count only the current academic year's payments.
-  const yearId = await getCurrentYearId();
-  let paymentsQuery = supabase.from("fee_payments").select("student_id, amount");
-  if (yearId) paymentsQuery = paymentsQuery.eq("year_id", yearId);
-
-  const [{ students, teachers }, attendance, { data: feeStudents }, { data: feePayments }, { data: expenses }] =
+  // Balances come pre-aggregated per student from the database view,
+  // already scoped to the current academic year (migration 0017).
+  const [{ students, teachers }, attendance, { count: feesOwing }, { data: expenses }] =
     await Promise.all([
       getActiveCounts(),
       getTodayAttendance(),
-      supabase.from("students").select("id, base_fees").eq("status", "active"),
-      paymentsQuery,
+      supabase
+        .from("student_fee_balances")
+        .select("*", { count: "exact", head: true })
+        .eq("student_status", "active")
+        .gt("balance", 0),
       supabase.from("expenses").select("amount, paid"),
     ]);
-
-  const collectedByStudent = new Map<string, number>();
-  (feePayments ?? []).forEach((p) => {
-    collectedByStudent.set(p.student_id, (collectedByStudent.get(p.student_id) ?? 0) + Number(p.amount));
-  });
-  const feesOwing = (feeStudents ?? []).filter(
-    (s) => Number(s.base_fees) - (collectedByStudent.get(s.id) ?? 0) > 0
-  ).length;
 
   const expensesPending = (expenses ?? []).filter((e) => Number(e.paid) < Number(e.amount)).length;
 
@@ -46,7 +37,7 @@ export async function getSidebarCounts(): Promise<SidebarCounts> {
     present: attendance.present,
     late: attendance.late,
     absent: attendance.absent,
-    feesOwing,
+    feesOwing: feesOwing ?? 0,
     expensesPending,
   };
 }
@@ -54,25 +45,21 @@ export async function getSidebarCounts(): Promise<SidebarCounts> {
 export async function getDashboardData() {
   const supabase = await createClient();
 
-  // Collection figures are for the current academic year.
-  const yearId = await getCurrentYearId();
-  let paymentsQuery = supabase.from("fee_payments").select("amount");
-  if (yearId) paymentsQuery = paymentsQuery.eq("year_id", yearId);
-
-  const [{ students, teachers }, attendance, { data: recentActivity }, { data: feeStudents }, { data: feePayments }] =
+  // Collection figures are for the current academic year, pre-aggregated
+  // per student by the student_fee_balances view (migration 0017).
+  const [{ students, teachers }, attendance, { data: recentActivity }, { data: feeBalances }] =
     await Promise.all([
       getActiveCounts(),
       getTodayAttendance(),
       supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(8),
-      supabase.from("students").select("base_fees").eq("status", "active"),
-      paymentsQuery,
+      supabase.from("student_fee_balances").select("due, paid").eq("student_status", "active"),
     ]);
 
   const totalMarked = attendance.present + attendance.late + attendance.absent;
   const attendanceRate = students > 0 ? Math.round((attendance.present / students) * 100) : 0;
 
-  const feesExpected = (feeStudents ?? []).reduce((sum, s) => sum + Number(s.base_fees), 0);
-  const feesCollected = (feePayments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
+  const feesExpected = (feeBalances ?? []).reduce((sum, r) => sum + Number(r.due), 0);
+  const feesCollected = (feeBalances ?? []).reduce((sum, r) => sum + Number(r.paid), 0);
   const feesRate = feesExpected > 0 ? Math.round((feesCollected / feesExpected) * 100) : 0;
 
   return {

@@ -25,7 +25,7 @@ export function ExportPanel({ counts }: { counts: Record<string, number> }) {
   const [loading, setLoading] = useState<string | null>(null);
   const { show } = useToast();
 
-  async function exportTable(table: string) {
+  async function exportTable(table: (typeof TABLES)[number]["key"]) {
     setLoading(table);
     try {
       const supabase = createClient();

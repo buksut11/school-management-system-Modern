@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentYearId } from "@/lib/data/years";
 
 export type FeeRow = {
   student_id: string;
@@ -16,53 +15,26 @@ export type FeeRow = {
 export async function listFees(): Promise<FeeRow[]> {
   const supabase = await createClient();
 
-  // base_fees is what a student owes per academic year, so balances only
-  // count the current year's payments — prior years stay on record but
-  // don't make a returning student look paid.
-  const yearId = await getCurrentYearId();
-  let paymentsQuery = supabase.from("fee_payments").select("student_id, amount");
-  if (yearId) paymentsQuery = paymentsQuery.eq("year_id", yearId);
+  // Sums happen in Postgres (student_fee_balances view, migration 0017):
+  // exact numeric math, one row per student, already scoped to the
+  // current academic year.
+  const { data } = await supabase
+    .from("student_fee_balances")
+    .select("*")
+    .eq("student_status", "active")
+    .order("full_name");
 
-  const [{ data: students }, { data: payments }] = await Promise.all([
-    supabase
-      .from("students")
-      .select("id, full_name, photo_url, class_id, base_fees, classes(name)")
-      .eq("status", "active")
-      .returns<
-        Array<{
-          id: string;
-          full_name: string;
-          photo_url: string | null;
-          class_id: string | null;
-          base_fees: number;
-          classes: { name: string } | null;
-        }>
-      >(),
-    paymentsQuery,
-  ]);
-
-  const paidByStudent = new Map<string, number>();
-  (payments ?? []).forEach((p) => {
-    paidByStudent.set(p.student_id, (paidByStudent.get(p.student_id) ?? 0) + Number(p.amount));
-  });
-
-  return (students ?? []).map((s) => {
-    const due = Number(s.base_fees);
-    const paid = paidByStudent.get(s.id) ?? 0;
-    const balance = Math.max(0, due - paid);
-    const status: FeeRow["status"] = balance <= 0 ? "paid" : paid > 0 ? "partial" : "unpaid";
-    return {
-      student_id: s.id,
-      student_name: s.full_name,
-      photo_url: s.photo_url,
-      class_id: s.class_id,
-      class_name: s.classes?.name ?? null,
-      due,
-      paid,
-      balance,
-      status,
-    };
-  });
+  return (data ?? []).map((r) => ({
+    student_id: r.student_id,
+    student_name: r.full_name,
+    photo_url: r.photo_url,
+    class_id: r.class_id,
+    class_name: r.class_name,
+    due: Number(r.due),
+    paid: Number(r.paid),
+    balance: Number(r.balance),
+    status: r.fee_status,
+  }));
 }
 
 export async function getFeeSummary(rows: FeeRow[]) {
