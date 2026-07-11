@@ -204,6 +204,22 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["exams"]["Row"]>;
         Relationships: [];
       };
+      enrollments: {
+        Row: {
+          id: string;
+          student_id: string;
+          class_id: string | null;
+          year_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["enrollments"]["Row"]> & {
+          student_id: string;
+          year_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["enrollments"]["Row"]>;
+        Relationships: [];
+      };
       fee_payments: {
         Row: {
           id: string;
@@ -315,6 +331,10 @@ export interface Database {
       };
     };
     Functions: {
+      set_current_academic_year: {
+        Args: { p_year_id: string };
+        Returns: { name: string; enrolled: number };
+      };
       record_fee_payment: {
         Args: {
           p_student_id: string;
@@ -335,6 +355,7 @@ export interface Database {
 }
 
 export type AcademicYear = Database["public"]["Tables"]["academic_years"]["Row"];
+export type Enrollment = Database["public"]["Tables"]["enrollments"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ClassRow = Database["public"]["Tables"]["classes"]["Row"];
 export type Teacher = Database["public"]["Tables"]["teachers"]["Row"];

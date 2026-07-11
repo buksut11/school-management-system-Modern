@@ -26,6 +26,7 @@ export type BackupSnapshot = {
     invoices?: unknown[];
     receipts?: unknown[];
     academic_years?: unknown[];
+    enrollments?: unknown[];
   };
 }
 
@@ -41,7 +42,7 @@ async function isCurrentUserAdmin(supabase: SupabaseClient<Database>) {
 export async function createBackupSnapshot(): Promise<BackupSnapshot> {
   const supabase = await createClient();
 
-  const [departments, classes, teachers, subjects, students, attendance, exams, feePayments, expenses, invoices, receipts, academicYears] =
+  const [departments, classes, teachers, subjects, students, attendance, exams, feePayments, expenses, invoices, receipts, academicYears, enrollments] =
     await Promise.all([
       supabase.from("departments").select("*"),
       supabase.from("classes").select("*"),
@@ -55,6 +56,7 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
       supabase.from("invoices").select("*"),
       supabase.from("receipts").select("*"),
       supabase.from("academic_years").select("*"),
+      supabase.from("enrollments").select("*"),
     ]);
 
   await logActivity(supabase, "backup", "Downloaded system backup");
@@ -76,6 +78,7 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
       invoices: invoices.data ?? [],
       receipts: receipts.data ?? [],
       academic_years: academicYears.data ?? [],
+      enrollments: enrollments.data ?? [],
     },
   };
 }
@@ -128,6 +131,7 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
       "exams",
       "fee_payments",
       "expenses",
+      "enrollments",
       "subjects",
       "students",
       "teachers",
@@ -197,6 +201,16 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
         const { error } = await supabase.from(table).insert(rows as never[]);
         if (error) throw new Error(`Couldn't restore ${table}: ${error.message}`);
       }
+    }
+
+    // Restoring students just re-created current-year enrollment rows via
+    // the sync trigger — clear those so the backup's own history (which
+    // includes them, plus prior years) lands without unique conflicts.
+    const enrollmentRows = (data.enrollments ?? []) as never[];
+    if (enrollmentRows.length) {
+      await clearTable(supabase, "enrollments");
+      const { error } = await supabase.from("enrollments").insert(enrollmentRows);
+      if (error) throw new Error(`Couldn't restore enrollments: ${error.message}`);
     }
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Restore failed partway through." };

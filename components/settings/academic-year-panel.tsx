@@ -38,7 +38,7 @@ export function AcademicYearPanel({ years }: { years: AcademicYear[] }) {
     const ok = await confirm({
       title: `Switch to ${y.name}?`,
       message:
-        "Exams and fee balances are tracked per academic year. Switching resets every student's outstanding balance for the new year — prior years stay on record.",
+        "Exams and fee balances are tracked per academic year. Switching resets every student's outstanding balance for the new year, and each active student's class is carried over as their starting enrollment — prior years stay on record.",
       confirmLabel: "Switch",
       tone: "primary",
     });

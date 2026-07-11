@@ -33,27 +33,17 @@ export async function addAcademicYear(_prev: FormState, formData: FormData): Pro
 export async function setCurrentAcademicYear(id: string, name: string): Promise<FormState> {
   const supabase = await createClient();
 
-  // Two steps because the partial unique index allows at most one current
-  // year — the old flag must clear before the new one can be set. If the
-  // second step fails we're briefly current-less, which the database and
-  // app both tolerate (they fall back to the newest year).
-  const { error: clearError } = await supabase
-    .from("academic_years")
-    .update({ is_current: false })
-    .eq("is_current", true);
-  if (clearError) return { error: clearError.message };
-
-  // .select() so an RLS-blocked update (0 rows, no error) doesn't pass
-  // as success — only admins may switch years.
-  const { data, error } = await supabase
-    .from("academic_years")
-    .update({ is_current: true })
-    .eq("id", id)
-    .select("id");
+  // One transaction in the database (migration 0018): flips the current
+  // flag atomically, verifies the caller is an admin, and carries every
+  // active student's class into the new year as their starting enrollment.
+  const { data, error } = await supabase.rpc("set_current_academic_year", { p_year_id: id });
   if (error) return { error: error.message };
-  if (!data?.length) return { error: "Only an admin account can switch the academic year." };
 
-  await logActivity(supabase, "settings", `Switched current academic year · ${name}`);
+  await logActivity(
+    supabase,
+    "settings",
+    `Switched current academic year · ${name} · ${data?.enrolled ?? 0} students carried over`
+  );
   revalidatePath("/", "layout");
   return { success: true };
 }
