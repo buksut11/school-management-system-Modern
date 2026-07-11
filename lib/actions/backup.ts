@@ -85,6 +85,20 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
 
 export type RestoreResult = { error?: string; success?: boolean };
 
+// seq columns are GENERATED ALWAYS identities: Postgres rejects inserts
+// that carry an explicit value, so snapshot rows (dumped with select *)
+// must lose the key before going back in. seq regenerates; ids — what
+// every foreign key points at — are preserved. Without this, restore
+// failed on its very first insert (departments), AFTER the wipe, leaving
+// the database empty.
+function stripSeq(rows: unknown[]) {
+  return (rows as Array<Record<string, unknown>>).map((r) => {
+    const rest = { ...r };
+    delete rest.seq;
+    return rest;
+  });
+}
+
 // Deletes are checked individually — an RLS policy silently blocking one
 // (0 rows affected, no thrown error) must not be treated as success, or a
 // restore could leave the database half-wiped, half-restored.
@@ -145,17 +159,10 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
     // Older backups don't, and their exams/fee_payments rows have no
     // year_id — those fall back to the database's current year via the
     // column default, which needs the existing years left in place.
-    const academicYears = (data.academic_years ?? []) as Array<Record<string, unknown>>;
+    const academicYears = data.academic_years ?? [];
     if (academicYears.length) {
       await clearTable(supabase, "academic_years");
-      // seq is GENERATED ALWAYS — Postgres rejects explicit values, so it
-      // regenerates; ids (what the FKs point at) are preserved.
-      const rows = academicYears.map((y) => {
-        const rest = { ...y };
-        delete rest.seq;
-        return rest;
-      });
-      const { error } = await supabase.from("academic_years").insert(rows as never[]);
+      const { error } = await supabase.from("academic_years").insert(stripSeq(academicYears) as never[]);
       if (error) throw new Error(`Couldn't restore academic_years: ${error.message}`);
     }
 
@@ -163,11 +170,11 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
     // other, so classes go in with teacher_id cleared, then get patched
     // once teachers exist.
     if (data.departments.length) {
-      const { error } = await supabase.from("departments").insert(data.departments as never[]);
+      const { error } = await supabase.from("departments").insert(stripSeq(data.departments) as never[]);
       if (error) throw new Error(error.message);
     }
 
-    const classesNoTeacher = (data.classes as Array<Record<string, unknown>>).map((c) => ({
+    const classesNoTeacher = stripSeq(data.classes).map((c) => ({
       ...c,
       teacher_id: null,
     }));
@@ -177,7 +184,7 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
     }
 
     if (data.teachers.length) {
-      const { error } = await supabase.from("teachers").insert(data.teachers as never[]);
+      const { error } = await supabase.from("teachers").insert(stripSeq(data.teachers) as never[]);
       if (error) throw new Error(error.message);
     }
 
@@ -198,7 +205,7 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
       ["receipts", data.receipts ?? []],
     ] as const) {
       if (rows.length) {
-        const { error } = await supabase.from(table).insert(rows as never[]);
+        const { error } = await supabase.from(table).insert(stripSeq(rows) as never[]);
         if (error) throw new Error(`Couldn't restore ${table}: ${error.message}`);
       }
     }
@@ -206,10 +213,10 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
     // Restoring students just re-created current-year enrollment rows via
     // the sync trigger — clear those so the backup's own history (which
     // includes them, plus prior years) lands without unique conflicts.
-    const enrollmentRows = (data.enrollments ?? []) as never[];
+    const enrollmentRows = data.enrollments ?? [];
     if (enrollmentRows.length) {
       await clearTable(supabase, "enrollments");
-      const { error } = await supabase.from("enrollments").insert(enrollmentRows);
+      const { error } = await supabase.from("enrollments").insert(stripSeq(enrollmentRows) as never[]);
       if (error) throw new Error(`Couldn't restore enrollments: ${error.message}`);
     }
   } catch (e) {
