@@ -91,10 +91,16 @@ export type RestoreResult = { error?: string; success?: boolean };
 // every foreign key points at — are preserved. Without this, restore
 // failed on its very first insert (departments), AFTER the wipe, leaving
 // the database empty.
+//
+// school_id is stripped too: a backup always restores into the caller's
+// OWN school (the column default re-stamps it), so a snapshot taken
+// before a rename/migration — or handed to a different school — can't
+// smuggle rows into another tenant, and RLS would reject them anyway.
 function stripSeq(rows: unknown[]) {
   return (rows as Array<Record<string, unknown>>).map((r) => {
     const rest = { ...r };
     delete rest.seq;
+    delete rest.school_id;
     return rest;
   });
 }

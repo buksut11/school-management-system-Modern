@@ -21,7 +21,21 @@ export async function uploadAvatar(file: File, folder: "students" | "teachers") 
   }
 
   const supabase = createClient();
-  const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+
+  // Objects live under a per-school prefix; storage policies (0020) only
+  // allow writes inside the caller's own school folder.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in.");
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("school_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.school_id) throw new Error("Join or create a school before uploading photos.");
+
+  const path = `${profile.school_id}/${folder}/${crypto.randomUUID()}.${ext}`;
 
   const { error } = await supabase.storage.from("avatars").upload(path, file, {
     cacheControl: "3600",

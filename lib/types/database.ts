@@ -30,6 +30,7 @@ export interface Database {
           starts_on: string | null;
           ends_on: string | null;
           is_current: boolean;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -39,12 +40,27 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["academic_years"]["Row"]>;
         Relationships: [];
       };
+      schools: {
+        Row: {
+          id: string;
+          name: string;
+          join_code: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["schools"]["Row"]> & {
+          name: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["schools"]["Row"]>;
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
           role: "admin" | "staff";
           full_name: string;
           phone: string | null;
+          school_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -63,6 +79,7 @@ export interface Database {
           base_fees: number;
           capacity: number;
           teacher_id: string | null;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -84,6 +101,7 @@ export interface Database {
           subjects: string[];
           photo_url: string | null;
           status: PersonStatus;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -107,6 +125,7 @@ export interface Database {
           base_fees: number;
           photo_url: string | null;
           status: PersonStatus;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -123,6 +142,7 @@ export interface Database {
           class_id: string | null;
           date: string;
           status: AttendanceStatus;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -139,6 +159,7 @@ export interface Database {
           message: string;
           actor_id: string | null;
           actor_name: string | null;
+          school_id: string;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["activity_log"]["Row"]> & {
@@ -154,6 +175,7 @@ export interface Database {
           seq: number;
           name: string;
           head_teacher_id: string | null;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -173,6 +195,7 @@ export interface Database {
           type: SubjectType;
           periods_per_week: number;
           description: string | null;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -195,6 +218,7 @@ export interface Database {
           subject_scores: Record<string, number>;
           total_score: number;
           grade: string;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -210,6 +234,7 @@ export interface Database {
           student_id: string;
           class_id: string | null;
           year_id: string;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -229,6 +254,7 @@ export interface Database {
           method: PaymentMethod;
           note: string | null;
           paid_at: string;
+          school_id: string;
           updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["fee_payments"]["Row"]> & {
@@ -249,6 +275,7 @@ export interface Database {
           paid: number;
           date: string;
           method: PaymentMethod;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -275,6 +302,7 @@ export interface Database {
           issued_date: string;
           due_date: string | null;
           note: string | null;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -302,6 +330,7 @@ export interface Database {
           method: PaymentMethod;
           note: string | null;
           received_at: string;
+          school_id: string;
           updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["receipts"]["Row"]> & {
@@ -331,6 +360,14 @@ export interface Database {
       };
     };
     Functions: {
+      create_school: {
+        Args: { p_name: string };
+        Returns: { school_id: string; join_code: string };
+      };
+      join_school: {
+        Args: { p_code: string };
+        Returns: { school_id: string; name: string };
+      };
       set_current_academic_year: {
         Args: { p_year_id: string };
         Returns: { name: string; enrolled: number };
@@ -354,6 +391,7 @@ export interface Database {
   };
 }
 
+export type School = Database["public"]["Tables"]["schools"]["Row"];
 export type AcademicYear = Database["public"]["Tables"]["academic_years"]["Row"];
 export type Enrollment = Database["public"]["Tables"]["enrollments"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];

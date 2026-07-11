@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getSidebarCounts, type SidebarCounts } from "@/lib/data/dashboard";
 import { AppShell } from "@/components/layout/app-shell";
+import { SchoolOnboarding } from "@/components/onboarding/school-onboarding";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   let fullName = "Admin";
@@ -25,11 +26,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, school_id")
       .eq("id", user.id)
       .single();
 
     fullName = profile?.full_name || user.email || "Admin";
+
+    // Multi-tenant gate: a signed-in user without a school sees the
+    // create/join onboarding instead of an empty app.
+    if (!profile?.school_id) {
+      return <SchoolOnboarding fullName={profile?.full_name || ""} />;
+    }
+
     counts = await getSidebarCounts();
   }
 

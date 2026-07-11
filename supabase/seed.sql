@@ -37,6 +37,10 @@ begin
     return;
   end if;
 
+  -- Multi-tenant (0019): the seed runs with the service role (no signed-in
+  -- user), so tell current_school_id() which school these rows belong to.
+  perform set_config('app.school_id', (select id::text from public.schools limit 1), true);
+
   -- ---- teachers ---------------------------------------------------------
   insert into public.teachers (full_name, gender, dob, mobile, address, subjects) values
     ('Axmed Cali Xasan',        'male',   '1985-03-12', '0615551201', 'Wadajir, Mogadishu',     array['Maths','Physics']),

@@ -1,12 +1,48 @@
 "use client";
 
-import { useActionState } from "react";
-import { login } from "@/lib/actions/auth";
+import { useActionState, useState } from "react";
+import { login, signup } from "@/lib/actions/auth";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export function LoginForm({ next }: { next: string }) {
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [state, formAction, pending] = useActionState(login, undefined);
+  const [signupState, signupAction, signingUp] = useActionState(signup, undefined);
+
+  if (mode === "signup") {
+    return (
+      <form action={signupAction} className="space-y-4">
+        <div>
+          <Label htmlFor="full_name">Full name</Label>
+          <Input id="full_name" name="full_name" placeholder="Your name" autoComplete="name" required />
+        </div>
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
+        </div>
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <Input id="password" name="password" type="password" placeholder="At least 8 characters" autoComplete="new-password" required />
+        </div>
+        {signupState?.error && (
+          <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2">{signupState.error}</p>
+        )}
+        {signupState?.message && (
+          <p className="text-[13px] text-green bg-green/10 rounded-lg px-3 py-2">{signupState.message}</p>
+        )}
+        <Button type="submit" disabled={signingUp} className="w-full">
+          {signingUp ? "Creating account…" : "Create account"}
+        </Button>
+        <p className="text-[12.5px] text-text-2 text-center">
+          Already have an account?{" "}
+          <button type="button" onClick={() => setMode("login")} className="text-blue hover:underline">
+            Sign in
+          </button>
+        </p>
+      </form>
+    );
+  }
 
   return (
     <form action={formAction} className="space-y-4">
@@ -25,6 +61,12 @@ export function LoginForm({ next }: { next: string }) {
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Signing in…" : "Sign in"}
       </Button>
+      <p className="text-[12.5px] text-text-2 text-center">
+        New school?{" "}
+        <button type="button" onClick={() => setMode("signup")} className="text-blue hover:underline">
+          Create an account
+        </button>
+      </p>
     </form>
   );
 }
