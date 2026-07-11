@@ -31,6 +31,7 @@ export interface Database {
           ends_on: string | null;
           is_current: boolean;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["academic_years"]["Row"]> & {
           name: string;
@@ -45,6 +46,7 @@ export interface Database {
           full_name: string;
           phone: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & {
           id: string;
@@ -62,6 +64,7 @@ export interface Database {
           capacity: number;
           teacher_id: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["classes"]["Row"]> & {
           name: string;
@@ -82,6 +85,7 @@ export interface Database {
           photo_url: string | null;
           status: PersonStatus;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["teachers"]["Row"]> & {
           full_name: string;
@@ -104,6 +108,7 @@ export interface Database {
           photo_url: string | null;
           status: PersonStatus;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["students"]["Row"]> & {
           full_name: string;
@@ -119,6 +124,7 @@ export interface Database {
           date: string;
           status: AttendanceStatus;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["attendance"]["Row"]> & {
           student_id: string;
@@ -149,6 +155,7 @@ export interface Database {
           name: string;
           head_teacher_id: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["departments"]["Row"]> & {
           name: string;
@@ -167,6 +174,7 @@ export interface Database {
           periods_per_week: number;
           description: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["subjects"]["Row"]> & {
           name: string;
@@ -188,6 +196,7 @@ export interface Database {
           total_score: number;
           grade: string;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["exams"]["Row"]> & {
           student_id: string;
@@ -204,6 +213,7 @@ export interface Database {
           method: PaymentMethod;
           note: string | null;
           paid_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["fee_payments"]["Row"]> & {
           student_id: string;
@@ -224,6 +234,7 @@ export interface Database {
           date: string;
           method: PaymentMethod;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["expenses"]["Row"]> & {
           payee: string;
@@ -249,6 +260,7 @@ export interface Database {
           due_date: string | null;
           note: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["invoices"]["Row"]> & {
           party_type: PartyType;
@@ -274,6 +286,7 @@ export interface Database {
           method: PaymentMethod;
           note: string | null;
           received_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["receipts"]["Row"]> & {
           party_type: PartyType;
