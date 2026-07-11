@@ -267,7 +267,22 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      record_fee_payment: {
+        Args: {
+          p_student_id: string;
+          p_amount: number;
+          p_method?: PaymentMethod;
+          p_note?: string | null;
+        };
+        Returns: {
+          payment_id: string;
+          student_name: string;
+          paid: number;
+          balance: number;
+        };
+      };
+    };
   };
 }
 

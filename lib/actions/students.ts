@@ -45,10 +45,21 @@ export async function saveStudent(_prev: FormState, formData: FormData): Promise
   return { success: true };
 }
 
-export async function deleteStudent(id: string, fullName: string) {
+export async function deleteStudent(id: string, fullName: string): Promise<FormState> {
   const supabase = await createClient();
   const { error } = await supabase.from("students").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // 23503 = foreign key violation. Since migration 0013 payment history
+    // is protected (on delete restrict), so a student who has paid fees
+    // can't be hard-deleted — their financial records must survive.
+    if (error.code === "23503") {
+      return {
+        error: `${fullName} has fee payment history, which must be kept. Set their status to inactive instead.`,
+      };
+    }
+    return { error: error.message };
+  }
   await logActivity(supabase, "student", `Removed student · ${fullName}`);
   revalidatePath("/", "layout");
+  return { success: true };
 }

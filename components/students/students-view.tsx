@@ -62,8 +62,8 @@ export function StudentsView({
     });
     if (!ok) return;
     startTransition(async () => {
-      await deleteStudent(s.id, s.full_name);
-      show("Student removed");
+      const result = await deleteStudent(s.id, s.full_name);
+      show(result?.error ?? "Student removed");
     });
   }
 
