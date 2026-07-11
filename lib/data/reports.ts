@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentYearId } from "@/lib/data/years";
 
 function lastNDays(n: number) {
   const days: string[] = [];
@@ -55,10 +56,12 @@ export type ClassPerformancePoint = { className: string; average: number; studen
 
 export async function getClassPerformance(): Promise<ClassPerformancePoint[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("exams")
-    .select("total_score, classes(name)")
-    .returns<Array<{ total_score: number; classes: { name: string } | null }>>();
+  // Averages are for the current academic year — mixing years would blur
+  // the chart as history accumulates.
+  const yearId = await getCurrentYearId();
+  let query = supabase.from("exams").select("total_score, classes(name)");
+  if (yearId) query = query.eq("year_id", yearId);
+  const { data } = await query.returns<Array<{ total_score: number; classes: { name: string } | null }>>();
 
   const byClass = new Map<string, number[]>();
   for (const row of data ?? []) {

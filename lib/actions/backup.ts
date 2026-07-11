@@ -25,6 +25,7 @@ export type BackupSnapshot = {
     // Added later — older backup files won't have these keys.
     invoices?: unknown[];
     receipts?: unknown[];
+    academic_years?: unknown[];
   };
 }
 
@@ -40,7 +41,7 @@ async function isCurrentUserAdmin(supabase: SupabaseClient<Database>) {
 export async function createBackupSnapshot(): Promise<BackupSnapshot> {
   const supabase = await createClient();
 
-  const [departments, classes, teachers, subjects, students, attendance, exams, feePayments, expenses, invoices, receipts] =
+  const [departments, classes, teachers, subjects, students, attendance, exams, feePayments, expenses, invoices, receipts, academicYears] =
     await Promise.all([
       supabase.from("departments").select("*"),
       supabase.from("classes").select("*"),
@@ -53,6 +54,7 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
       supabase.from("expenses").select("*"),
       supabase.from("invoices").select("*"),
       supabase.from("receipts").select("*"),
+      supabase.from("academic_years").select("*"),
     ]);
 
   await logActivity(supabase, "backup", "Downloaded system backup");
@@ -73,6 +75,7 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
       expenses: expenses.data ?? [],
       invoices: invoices.data ?? [],
       receipts: receipts.data ?? [],
+      academic_years: academicYears.data ?? [],
     },
   };
 }
@@ -132,6 +135,24 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
       "departments",
     ]) {
       await clearTable(supabase, table);
+    }
+
+    // Academic years are only replaced when the snapshot carries them.
+    // Older backups don't, and their exams/fee_payments rows have no
+    // year_id — those fall back to the database's current year via the
+    // column default, which needs the existing years left in place.
+    const academicYears = (data.academic_years ?? []) as Array<Record<string, unknown>>;
+    if (academicYears.length) {
+      await clearTable(supabase, "academic_years");
+      // seq is GENERATED ALWAYS — Postgres rejects explicit values, so it
+      // regenerates; ids (what the FKs point at) are preserved.
+      const rows = academicYears.map((y) => {
+        const rest = { ...y };
+        delete rest.seq;
+        return rest;
+      });
+      const { error } = await supabase.from("academic_years").insert(rows as never[]);
+      if (error) throw new Error(`Couldn't restore academic_years: ${error.message}`);
     }
 
     // Insert parents before children. Classes and teachers reference each

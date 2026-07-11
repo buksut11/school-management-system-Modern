@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Plus, Download } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
 import { ExamsTable } from "./exams-table";
@@ -15,15 +15,19 @@ import { downloadCsv } from "@/lib/csv";
 import { TERMS } from "@/lib/constants";
 import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
 import type { ExamRow } from "@/lib/data/exams";
-import type { Term } from "@/lib/types/database";
+import type { AcademicYear, Term } from "@/lib/types/database";
 
 export function ExamsView({
   term,
+  year,
+  years,
   rows,
   classes,
   eligibleStudents,
 }: {
   term: Term;
+  year: AcademicYear | null;
+  years: AcademicYear[];
   rows: ExamRow[];
   classes: { id: string; name: string }[];
   eligibleStudents: { id: string; full_name: string; class_id: string | null; class_name: string | null }[];
@@ -73,9 +77,26 @@ export function ExamsView({
       <div className="flex flex-wrap items-center gap-2.5">
         <Segmented
           value={term}
-          onChange={(v) => router.push(`/exams?term=${encodeURIComponent(v)}`)}
+          onChange={(v) =>
+            router.push(`/exams?term=${encodeURIComponent(v)}${year ? `&year=${year.id}` : ""}`)
+          }
           options={TERMS.map((t) => ({ value: t, label: t }))}
         />
+        {years.length > 1 && (
+          <Select
+            value={year?.id ?? ""}
+            onChange={(e) => router.push(`/exams?term=${encodeURIComponent(term)}&year=${e.target.value}`)}
+            className="w-auto"
+            aria-label="Academic year"
+          >
+            {years.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.name}
+                {y.is_current ? " (current)" : ""}
+              </option>
+            ))}
+          </Select>
+        )}
         <Segmented
           value={classFilter}
           onChange={setClassFilter}
@@ -117,6 +138,7 @@ export function ExamsView({
         onClose={() => setModalOpen(false)}
         exam={editing}
         term={term}
+        yearId={year?.id ?? null}
         eligibleStudents={eligibleStudents}
       />
     </div>

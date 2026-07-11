@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentYearId } from "@/lib/data/years";
 
 export type FeeRow = {
   student_id: string;
@@ -15,6 +16,13 @@ export type FeeRow = {
 export async function listFees(): Promise<FeeRow[]> {
   const supabase = await createClient();
 
+  // base_fees is what a student owes per academic year, so balances only
+  // count the current year's payments — prior years stay on record but
+  // don't make a returning student look paid.
+  const yearId = await getCurrentYearId();
+  let paymentsQuery = supabase.from("fee_payments").select("student_id, amount");
+  if (yearId) paymentsQuery = paymentsQuery.eq("year_id", yearId);
+
   const [{ data: students }, { data: payments }] = await Promise.all([
     supabase
       .from("students")
@@ -30,7 +38,7 @@ export async function listFees(): Promise<FeeRow[]> {
           classes: { name: string } | null;
         }>
       >(),
-    supabase.from("fee_payments").select("student_id, amount"),
+    paymentsQuery,
   ]);
 
   const paidByStudent = new Map<string, number>();

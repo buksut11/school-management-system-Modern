@@ -30,9 +30,13 @@ export async function saveExam(_prev: FormState, formData: FormData): Promise<Fo
   const grade = computeGrade(totalScore);
 
   const supabase = await createClient();
+  const yearId = str(formData, "year_id");
   const record = {
     student_id: studentId,
     class_id: str(formData, "class_id"),
+    // When the form doesn't carry a year the DB default (current academic
+    // year) fills it in.
+    ...(yearId ? { year_id: yearId } : {}),
     term: (str(formData, "term") ?? "Term 1") as Term,
     exam_date: str(formData, "exam_date") ?? new Date().toISOString().slice(0, 10),
     attendance_pct: num(formData, "attendance_pct"),

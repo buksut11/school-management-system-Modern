@@ -33,13 +33,14 @@ type RawExam = {
   classes: { name: string } | null;
 };
 
-export async function listExams(term: Term): Promise<ExamRow[]> {
+export async function listExams(term: Term, yearId: string | null): Promise<ExamRow[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+  let query = supabase
     .from("exams")
     .select("*, students(full_name, photo_url), classes(name)")
-    .eq("term", term)
-    .returns<RawExam[]>();
+    .eq("term", term);
+  if (yearId) query = query.eq("year_id", yearId);
+  const { data } = await query.returns<RawExam[]>();
 
   return (data ?? [])
     .map((e) => ({
@@ -60,9 +61,12 @@ export async function listExams(term: Term): Promise<ExamRow[]> {
     .sort((a, b) => a.student_name.localeCompare(b.student_name));
 }
 
-export async function listEligibleStudentsForExam(term: Term) {
+export async function listEligibleStudentsForExam(term: Term, yearId: string | null) {
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
+
+  let existingQuery = supabase.from("exams").select("student_id").eq("term", term);
+  if (yearId) existingQuery = existingQuery.eq("year_id", yearId);
 
   const [{ data: students }, { data: attendance }, { data: existing }] = await Promise.all([
     supabase
@@ -71,7 +75,7 @@ export async function listEligibleStudentsForExam(term: Term) {
       .eq("status", "active")
       .returns<Array<{ id: string; full_name: string; class_id: string | null; classes: { name: string } | null }>>(),
     supabase.from("attendance").select("student_id, status").eq("date", today),
-    supabase.from("exams").select("student_id").eq("term", term),
+    existingQuery,
   ]);
 
   const absentIds = new Set((attendance ?? []).filter((a) => a.status === "absent").map((a) => a.student_id));
@@ -82,12 +86,13 @@ export async function listEligibleStudentsForExam(term: Term) {
     .map((s) => ({ id: s.id, full_name: s.full_name, class_id: s.class_id, class_name: s.classes?.name ?? null }));
 }
 
-export async function listAcademicRecords() {
+export async function listAcademicRecords(yearId: string | null) {
   const supabase = await createClient();
-  const { data } = await supabase
+  let query = supabase
     .from("exams")
-    .select("student_id, term, total_score, grade, students(full_name, class_id, classes(name))")
-    .returns<
+    .select("student_id, term, total_score, grade, students(full_name, class_id, classes(name))");
+  if (yearId) query = query.eq("year_id", yearId);
+  const { data } = await query.returns<
       Array<{
         student_id: string;
         term: Term;

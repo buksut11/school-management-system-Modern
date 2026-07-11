@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Download, TrendingUp, TrendingDown, Minus, FileText } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Segmented } from "@/components/ui/segmented";
 import { downloadCsv } from "@/lib/csv";
+import type { AcademicYear } from "@/lib/types/database";
 
 type AcademicRecordRow = {
   student_id: string;
@@ -35,10 +37,15 @@ const TREND_COLOR = { up: "text-green", down: "text-red", flat: "text-text-2" };
 export function AcademicRecordsView({
   records,
   classes,
+  year,
+  years,
 }: {
   records: AcademicRecordRow[];
   classes: { id: string; name: string }[];
+  year: AcademicYear | null;
+  years: AcademicYear[];
 }) {
+  const router = useRouter();
   const [classFilter, setClassFilter] = useState("all");
   const [query, setQuery] = useState("");
 
@@ -74,6 +81,21 @@ export function AcademicRecordsView({
           onChange={setClassFilter}
           options={[{ value: "all", label: "All" }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
         />
+        {years.length > 1 && (
+          <Select
+            value={year?.id ?? ""}
+            onChange={(e) => router.push(`/academic-records?year=${e.target.value}`)}
+            className="w-auto"
+            aria-label="Academic year"
+          >
+            {years.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.name}
+                {y.is_current ? " (current)" : ""}
+              </option>
+            ))}
+          </Select>
+        )}
         <div className="relative flex-1 min-w-[180px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2" />
           <Input

@@ -15,12 +15,14 @@ export function ExamModal({
   onClose,
   exam,
   term,
+  yearId,
   eligibleStudents,
 }: {
   open: boolean;
   onClose: () => void;
   exam: ExamRow | null;
   term: Term;
+  yearId: string | null;
   eligibleStudents: { id: string; full_name: string; class_id: string | null; class_name: string | null }[];
 }) {
   const [state, formAction, pending] = useActionState(saveExam, undefined);
@@ -41,6 +43,7 @@ export function ExamModal({
       <form action={formAction} className="space-y-4">
         {exam && <input type="hidden" name="id" value={exam.id} />}
         <input type="hidden" name="term" value={term} />
+        {yearId && <input type="hidden" name="year_id" value={yearId} />}
         <input type="hidden" name="class_id" value={classId} />
 
         <div>

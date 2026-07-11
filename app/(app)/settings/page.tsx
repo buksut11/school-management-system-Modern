@@ -1,5 +1,6 @@
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { getTableCounts } from "@/lib/data/settings";
+import { listAcademicYears } from "@/lib/data/years";
 import { SetupNotice } from "@/components/setup-notice";
 import { SettingsView } from "@/components/settings/settings-view";
 
@@ -8,7 +9,7 @@ export default async function SettingsPage() {
     return <SetupNotice what="settings" />;
   }
 
-  const counts = await getTableCounts();
+  const [counts, years] = await Promise.all([getTableCounts(), listAcademicYears()]);
 
-  return <SettingsView counts={counts} />;
+  return <SettingsView counts={counts} years={years} />;
 }

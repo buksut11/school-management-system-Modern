@@ -134,7 +134,7 @@ begin
     end;
     insert into public.exams (student_id, class_id, term, exam_date, attendance_pct, test_score, subject_scores, total_score, grade)
     values (stu.id, stu.class_id, 'Term 1', current_date - 10, 85 + (cnt % 15), test_score, scores, total, grade_txt)
-    on conflict (student_id, term) do nothing;
+    on conflict (student_id, term, year_id) do nothing;
 
     -- fees: mix of full, half, and unpaid (every 4th student)
     if (cnt % 4) <> 3 then

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/utils";
 import { getActiveCounts, getTodayAttendance } from "@/lib/data/shared";
+import { getCurrentYearId } from "@/lib/data/years";
 
 export type SidebarCounts = {
   students: number;
@@ -15,12 +16,17 @@ export type SidebarCounts = {
 export async function getSidebarCounts(): Promise<SidebarCounts> {
   const supabase = await createClient();
 
+  // Fee balances count only the current academic year's payments.
+  const yearId = await getCurrentYearId();
+  let paymentsQuery = supabase.from("fee_payments").select("student_id, amount");
+  if (yearId) paymentsQuery = paymentsQuery.eq("year_id", yearId);
+
   const [{ students, teachers }, attendance, { data: feeStudents }, { data: feePayments }, { data: expenses }] =
     await Promise.all([
       getActiveCounts(),
       getTodayAttendance(),
       supabase.from("students").select("id, base_fees").eq("status", "active"),
-      supabase.from("fee_payments").select("student_id, amount"),
+      paymentsQuery,
       supabase.from("expenses").select("amount, paid"),
     ]);
 
@@ -48,13 +54,18 @@ export async function getSidebarCounts(): Promise<SidebarCounts> {
 export async function getDashboardData() {
   const supabase = await createClient();
 
+  // Collection figures are for the current academic year.
+  const yearId = await getCurrentYearId();
+  let paymentsQuery = supabase.from("fee_payments").select("amount");
+  if (yearId) paymentsQuery = paymentsQuery.eq("year_id", yearId);
+
   const [{ students, teachers }, attendance, { data: recentActivity }, { data: feeStudents }, { data: feePayments }] =
     await Promise.all([
       getActiveCounts(),
       getTodayAttendance(),
       supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(8),
       supabase.from("students").select("base_fees").eq("status", "active"),
-      supabase.from("fee_payments").select("amount"),
+      paymentsQuery,
     ]);
 
   const totalMarked = attendance.present + attendance.late + attendance.absent;

@@ -22,6 +22,22 @@ export interface InvoiceItem {
 export interface Database {
   public: {
     Tables: {
+      academic_years: {
+        Row: {
+          id: string;
+          seq: number;
+          name: string;
+          starts_on: string | null;
+          ends_on: string | null;
+          is_current: boolean;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["academic_years"]["Row"]> & {
+          name: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["academic_years"]["Row"]>;
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
@@ -163,6 +179,7 @@ export interface Database {
           id: string;
           student_id: string;
           class_id: string | null;
+          year_id: string;
           term: Term;
           exam_date: string;
           attendance_pct: number;
@@ -182,6 +199,7 @@ export interface Database {
         Row: {
           id: string;
           student_id: string;
+          year_id: string;
           amount: number;
           method: PaymentMethod;
           note: string | null;
@@ -278,6 +296,7 @@ export interface Database {
         Returns: {
           payment_id: string;
           student_name: string;
+          year_id: string;
           paid: number;
           balance: number;
         };
@@ -286,6 +305,7 @@ export interface Database {
   };
 }
 
+export type AcademicYear = Database["public"]["Tables"]["academic_years"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ClassRow = Database["public"]["Tables"]["classes"]["Row"];
 export type Teacher = Database["public"]["Tables"]["teachers"]["Row"];
