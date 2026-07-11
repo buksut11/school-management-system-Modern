@@ -40,12 +40,16 @@ alter table public.academic_years enable row level security;
 -- Same posture as the other structural/money tables: everyone signed in
 -- can read, only admins can change the calendar (switching the current
 -- year resets every fee balance, so it must not be a staff-level action).
+drop policy if exists "academic_years: read" on public.academic_years;
 create policy "academic_years: read" on public.academic_years
   for select using (auth.role() = 'authenticated');
+drop policy if exists "academic_years: admin write" on public.academic_years;
 create policy "academic_years: admin write" on public.academic_years
   for insert with check (public.is_admin());
+drop policy if exists "academic_years: admin update" on public.academic_years;
 create policy "academic_years: admin update" on public.academic_years
   for update using (public.is_admin());
+drop policy if exists "academic_years: admin delete" on public.academic_years;
 create policy "academic_years: admin delete" on public.academic_years
   for delete using (public.is_admin());
 
@@ -88,6 +92,7 @@ alter table public.exams alter column year_id set default public.current_academi
 alter table public.exams alter column year_id set not null;
 
 alter table public.exams drop constraint if exists exams_student_id_term_key;
+alter table public.exams drop constraint if exists exams_student_term_year_key;
 alter table public.exams
   add constraint exams_student_term_year_key unique (student_id, term, year_id);
 
