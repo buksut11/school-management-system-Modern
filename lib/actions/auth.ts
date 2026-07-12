@@ -55,6 +55,7 @@ export async function signup(_prevState: SignupState, formData: FormData): Promi
   const fullName = String(formData.get("full_name") || "").trim();
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
+  const next = String(formData.get("next") || "/");
 
   if (!fullName || !email || !password) {
     return { error: "Enter your name, email and a password." };
@@ -72,11 +73,15 @@ export async function signup(_prevState: SignupState, formData: FormData): Promi
   if (error) return { error: error.message };
 
   // With email confirmation enabled there's no session yet; with it
-  // disabled the user is signed in and lands on the school onboarding.
+  // disabled the user is signed in and lands wherever they were headed
+  // (the invite link they clicked, or the school onboarding).
   if (!data.session) {
-    return { message: "Check your email to confirm your account, then sign in." };
+    return {
+      message:
+        "Check your email to confirm your account, then come back to this link and sign in.",
+    };
   }
-  redirect("/");
+  redirect(safeNext(next));
 }
 
 export async function logout() {

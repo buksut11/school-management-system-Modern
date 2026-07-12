@@ -36,6 +36,20 @@ export async function joinSchool(_prev: FormState, formData: FormData): Promise<
   return { success: true };
 }
 
+// Invite-link variant of joinSchool: called with the code from /join/[code]
+// rather than a form field.
+export async function joinSchoolWithCode(code: string): Promise<{ error?: string; name?: string }> {
+  if (!code?.trim()) return { error: "This invite link is missing its code." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("join_school", { p_code: code.trim() });
+  if (error) return { error: error.message };
+
+  await logActivity(supabase, "settings", `Staff member joined via invite link · ${data?.name ?? "school"}`);
+  revalidatePath("/", "layout");
+  return { name: data?.name };
+}
+
 export async function renameSchool(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const name = str(formData, "name");

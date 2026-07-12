@@ -13,6 +13,7 @@ export function LoginForm({ next }: { next: string }) {
   if (mode === "signup") {
     return (
       <form action={signupAction} className="space-y-4">
+        <input type="hidden" name="next" value={next} />
         <div>
           <Label htmlFor="full_name">Full name</Label>
           <Input id="full_name" name="full_name" placeholder="Your name" autoComplete="name" required />
