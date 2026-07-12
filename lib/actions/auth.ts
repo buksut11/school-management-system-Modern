@@ -1,20 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { safeNext } from "@/lib/utils";
 
 export type LoginState = { error?: string } | undefined;
-
-// Only allow same-origin relative paths. "//evil.com" and "/\evil.com"
-// both pass a naive `startsWith("/")` check but browsers treat them as
-// protocol-relative absolute URLs — rejecting anything starting with a
-// second slash or backslash closes that off.
-function safeNext(next: string) {
-  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) {
-    return "/";
-  }
-  return next;
-}
 
 export async function login(
   _prevState: LoginState,
@@ -64,11 +55,22 @@ export async function signup(_prevState: SignupState, formData: FormData): Promi
     return { error: "Password must be at least 8 characters." };
   }
 
+  // The confirmation email must link back to THIS deployment's callback,
+  // not the Supabase project's default Site URL (which is localhost until
+  // configured). The domain still has to be in the project's Redirect
+  // URLs allowlist for Supabase to honor it.
+  const hdrs = await headers();
+  const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "";
+  const proto = hdrs.get("x-forwarded-proto") ?? "https";
+  const callback = host
+    ? `${proto}://${host}/auth/callback?next=${encodeURIComponent(safeNext(next))}`
+    : undefined;
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: { data: { full_name: fullName }, emailRedirectTo: callback },
   });
   if (error) return { error: error.message };
 

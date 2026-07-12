@@ -5,6 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Only allow same-origin relative paths for post-auth redirects.
+// "//evil.com" and "/\evil.com" both pass a naive startsWith("/") check
+// but browsers treat them as protocol-relative absolute URLs.
+export function safeNext(next: string) {
+  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) {
+    return "/";
+  }
+  return next;
+}
+
 export function initials(name: string) {
   return name
     .trim()
