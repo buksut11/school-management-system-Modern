@@ -360,6 +360,18 @@ export interface Database {
       };
     };
     Functions: {
+      rotate_join_code: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+      set_member_role: {
+        Args: { p_user_id: string; p_role: "admin" | "staff" };
+        Returns: undefined;
+      };
+      remove_member: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
       create_school: {
         Args: { p_name: string };
         Returns: { school_id: string; join_code: string };
