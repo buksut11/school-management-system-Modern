@@ -11,7 +11,7 @@ import type { School } from "@/lib/types/database";
 
 export function SchoolPanel({ school }: { school: School }) {
   const [state, formAction, pending] = useActionState(renameSchool, undefined);
-  const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const [copied, setCopied] = useState<"code" | "link" | "family" | null>(null);
   const { show } = useToast();
 
   useEffect(() => {
@@ -19,11 +19,13 @@ export function SchoolPanel({ school }: { school: School }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  async function copy(kind: "code" | "link") {
+  async function copy(kind: "code" | "link" | "family") {
     const value =
       kind === "link"
         ? `${window.location.origin}/join/${school.join_code}`
-        : school.join_code;
+        : kind === "family"
+          ? `${window.location.origin}/join/${school.family_join_code}`
+          : school.join_code;
     await navigator.clipboard.writeText(value);
     setCopied(kind);
     setTimeout(() => setCopied(null), 1600);
@@ -54,14 +56,13 @@ export function SchoolPanel({ school }: { school: School }) {
       </form>
 
       <Label>Invite staff</Label>
-      <div className="space-y-2">
+      <div className="space-y-2 mb-4">
         <Button type="button" variant="secondary" className="w-full" onClick={() => copy("link")}>
           {copied === "link" ? <Check size={15} className="text-green" /> : <Link2 size={15} />}
-          {copied === "link" ? "Invite link copied" : "Copy invite link"}
+          {copied === "link" ? "Staff link copied" : "Copy staff invite link"}
         </Button>
         <p className="text-[12px] text-text-2">
-          Anyone who opens the link signs up (or signs in) and is added to this school as staff
-          with one click. Prefer a code? They can also enter{" "}
+          Staff who open it are added with day-to-day access. Prefer a code? They can also enter{" "}
           <button
             type="button"
             onClick={() => copy("code")}
@@ -71,6 +72,19 @@ export function SchoolPanel({ school }: { school: School }) {
             {copied === "code" ? "copied!" : school.join_code}
           </button>{" "}
           on the join screen.
+        </p>
+      </div>
+
+      <Label>Invite students &amp; parents</Label>
+      <div className="space-y-2">
+        <Button type="button" variant="secondary" className="w-full" onClick={() => copy("family")}>
+          {copied === "family" ? <Check size={15} className="text-green" /> : <Link2 size={15} />}
+          {copied === "family" ? "Family link copied" : "Copy family invite link"}
+        </Button>
+        <p className="text-[12px] text-text-2">
+          Families who open it join as <span className="text-orange font-medium">pending</span>{" "}
+          and see nothing until you assign them Student or Parent in Members and link their child
+          record — safe to share widely.
         </p>
       </div>
     </Card>

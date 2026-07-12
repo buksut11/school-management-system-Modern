@@ -1,4 +1,6 @@
 export type Gender = "male" | "female";
+export type Role = "admin" | "staff" | "finance" | "teacher" | "student" | "parent" | "pending";
+export type AssignableRole = Exclude<Role, "pending">;
 export type PersonStatus = "active" | "inactive";
 export type AttendanceStatus = "present" | "late" | "absent";
 export type SubjectType = "core" | "elective";
@@ -45,6 +47,7 @@ export interface Database {
           id: string;
           name: string;
           join_code: string;
+          family_join_code: string;
           created_at: string;
           updated_at: string;
         };
@@ -57,10 +60,11 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
-          role: "admin" | "staff";
+          role: Role;
           full_name: string;
           phone: string | null;
           school_id: string | null;
+          teacher_id: string | null;
           is_platform_admin: boolean;
           created_at: string;
           updated_at: string;
@@ -229,6 +233,20 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["exams"]["Row"]>;
         Relationships: [];
       };
+      profile_students: {
+        Row: {
+          profile_id: string;
+          student_id: string;
+          created_at: string;
+        };
+        Insert: {
+          profile_id: string;
+          student_id: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["profile_students"]["Row"]>;
+        Relationships: [];
+      };
       enrollments: {
         Row: {
           id: string;
@@ -366,7 +384,15 @@ export interface Database {
         Returns: string;
       };
       set_member_role: {
-        Args: { p_user_id: string; p_role: "admin" | "staff" };
+        Args: { p_user_id: string; p_role: AssignableRole };
+        Returns: undefined;
+      };
+      link_member_teacher: {
+        Args: { p_user_id: string; p_teacher_id: string | null };
+        Returns: undefined;
+      };
+      link_member_students: {
+        Args: { p_user_id: string; p_student_ids: string[] };
         Returns: undefined;
       };
       remove_member: {
@@ -379,7 +405,7 @@ export interface Database {
       };
       join_school: {
         Args: { p_code: string };
-        Returns: { school_id: string; name: string; role: "admin" | "staff" };
+        Returns: { school_id: string; name: string; role: Role };
       };
       platform_list_schools: {
         Args: Record<string, never>;

@@ -22,6 +22,8 @@ export function JoinCard({ code }: { code: string }) {
         return;
       }
       setJoined(result.name ?? "your school");
+      // Pending (family-link) joiners land on the waiting screen; the
+      // app layout routes them there from "/".
       router.push("/");
       router.refresh();
     });

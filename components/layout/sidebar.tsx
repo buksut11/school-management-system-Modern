@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SidebarCounts } from "@/lib/data/dashboard";
+import type { Role } from "@/lib/types/database";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
@@ -39,16 +40,42 @@ const NAV = [
   { href: "/settings", label: "Data & Settings", icon: Settings },
 ];
 
+// Which pages each role can see. RLS enforces the data underneath —
+// this only keeps the menu honest about what each person can do.
+const ALL = NAV.map((n) => n.href);
+const ROLE_NAV: Record<Role, string[]> = {
+  admin: ALL,
+  staff: ALL.filter((h) => h !== "/expenses"),
+  finance: ["/", "/students", "/classes", "/fees", "/expenses", "/invoices", "/reports"],
+  teacher: [
+    "/",
+    "/students",
+    "/classes",
+    "/subjects",
+    "/attendance",
+    "/exams",
+    "/academic-records",
+    "/reports",
+  ],
+  student: ["/", "/attendance", "/exams", "/academic-records", "/fees", "/invoices"],
+  parent: ["/", "/attendance", "/exams", "/academic-records", "/fees", "/invoices"],
+  pending: [],
+};
+
 export function Sidebar({
   counts,
+  role,
   onNavigate,
   className,
 }: {
   counts: SidebarCounts;
+  role: Role;
   onNavigate?: () => void;
   className?: string;
 }) {
   const pathname = usePathname();
+  const allowed = new Set(ROLE_NAV[role] ?? ALL);
+  const nav = NAV.filter((item) => allowed.has(item.href));
 
   return (
     <aside
@@ -74,7 +101,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex flex-col gap-0.5">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           const Icon = item.icon;
           return (

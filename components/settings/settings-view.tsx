@@ -8,7 +8,7 @@ import { SchoolPanel } from "./school-panel";
 import { MembersPanel } from "./members-panel";
 import { PlatformPanel } from "./platform-panel";
 import type { AcademicYear, School } from "@/lib/types/database";
-import type { Member } from "@/lib/data/members";
+import type { Member, PersonOption } from "@/lib/data/members";
 import type { PlatformSchool } from "@/lib/data/platform";
 
 export function SettingsView({
@@ -19,6 +19,8 @@ export function SettingsView({
   currentUserId,
   isAdmin,
   platformSchools,
+  studentOptions,
+  teacherOptions,
 }: {
   counts: Record<string, number>;
   years: AcademicYear[];
@@ -27,6 +29,8 @@ export function SettingsView({
   currentUserId: string;
   isAdmin: boolean;
   platformSchools: PlatformSchool[] | null;
+  studentOptions: PersonOption[];
+  teacherOptions: PersonOption[];
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -36,7 +40,13 @@ export function SettingsView({
         )}
         {school && <SchoolPanel school={school} />}
         {school && (
-          <MembersPanel members={members} currentUserId={currentUserId} isAdmin={isAdmin} />
+          <MembersPanel
+            members={members}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            students={studentOptions}
+            teachers={teacherOptions}
+          />
         )}
         <AcademicYearPanel years={years} />
         <ExportPanel counts={counts} />

@@ -5,14 +5,17 @@ import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import { AmbientBackground } from "./ambient-bg";
 import type { SidebarCounts } from "@/lib/data/dashboard";
+import type { Role } from "@/lib/types/database";
 
 export function AppShell({
   counts,
   fullName,
+  role,
   children,
 }: {
   counts: SidebarCounts;
   fullName: string;
+  role: Role;
   children: React.ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -21,7 +24,7 @@ export function AppShell({
     <div className="relative min-h-screen flex">
       <AmbientBackground />
 
-      <Sidebar counts={counts} className="hidden md:flex md:sticky md:top-0 md:h-screen md:w-[248px] z-10" />
+      <Sidebar counts={counts} role={role} className="hidden md:flex md:sticky md:top-0 md:h-screen md:w-[248px] z-10" />
 
       {drawerOpen && (
         <div
@@ -31,6 +34,7 @@ export function AppShell({
       )}
       <Sidebar
         counts={counts}
+        role={role}
         onNavigate={() => setDrawerOpen(false)}
         className={`fixed inset-y-0 left-0 z-50 w-[80vw] max-w-[300px] md:hidden transition-transform duration-300 ${
           drawerOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
