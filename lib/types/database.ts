@@ -61,6 +61,7 @@ export interface Database {
           full_name: string;
           phone: string | null;
           school_id: string | null;
+          is_platform_admin: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -374,11 +375,26 @@ export interface Database {
       };
       create_school: {
         Args: { p_name: string };
-        Returns: { school_id: string; join_code: string };
+        Returns: { school_id: string; name: string; join_code: string };
       };
       join_school: {
         Args: { p_code: string };
-        Returns: { school_id: string; name: string };
+        Returns: { school_id: string; name: string; role: "admin" | "staff" };
+      };
+      platform_list_schools: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          name: string;
+          join_code: string;
+          created_at: string;
+          members: number;
+          students: number;
+        }[];
+      };
+      platform_delete_school: {
+        Args: { p_school_id: string };
+        Returns: undefined;
       };
       set_current_academic_year: {
         Args: { p_year_id: string };

@@ -6,8 +6,10 @@ import { DemoDataPanel } from "./demo-data-panel";
 import { AcademicYearPanel } from "./academic-year-panel";
 import { SchoolPanel } from "./school-panel";
 import { MembersPanel } from "./members-panel";
+import { PlatformPanel } from "./platform-panel";
 import type { AcademicYear, School } from "@/lib/types/database";
 import type { Member } from "@/lib/data/members";
+import type { PlatformSchool } from "@/lib/data/platform";
 
 export function SettingsView({
   counts,
@@ -16,6 +18,7 @@ export function SettingsView({
   members,
   currentUserId,
   isAdmin,
+  platformSchools,
 }: {
   counts: Record<string, number>;
   years: AcademicYear[];
@@ -23,10 +26,14 @@ export function SettingsView({
   members: Member[];
   currentUserId: string;
   isAdmin: boolean;
+  platformSchools: PlatformSchool[] | null;
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div className="space-y-4">
+        {platformSchools && (
+          <PlatformPanel schools={platformSchools} ownSchoolId={school?.id ?? null} />
+        )}
         {school && <SchoolPanel school={school} />}
         {school && (
           <MembersPanel members={members} currentUserId={currentUserId} isAdmin={isAdmin} />

@@ -10,19 +10,6 @@ function str(formData: FormData, key: string) {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
-export async function createSchool(_prev: FormState, formData: FormData): Promise<FormState> {
-  const name = str(formData, "name");
-  if (!name) return { error: "Enter your school's name." };
-
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("create_school", { p_name: name });
-  if (error) return { error: error.message };
-
-  await logActivity(supabase, "settings", `School created · ${name}`);
-  revalidatePath("/", "layout");
-  return { success: true };
-}
-
 export async function joinSchool(_prev: FormState, formData: FormData): Promise<FormState> {
   const code = str(formData, "code");
   if (!code) return { error: "Enter the join code your admin shared." };

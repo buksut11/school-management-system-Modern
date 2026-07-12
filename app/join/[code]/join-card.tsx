@@ -40,8 +40,8 @@ export function JoinCard({ code }: { code: string }) {
     <div className="text-center space-y-4">
       <h1 className="text-[17px] font-semibold tracking-tight">You&apos;ve been invited</h1>
       <p className="text-[13px] text-text-2">
-        This link adds your account to the school as a staff member — you&apos;ll see its
-        students, classes, attendance and more right away.
+        This link adds your account to the school — you&apos;ll see its students, classes,
+        attendance and more right away. The first person to join a new school becomes its admin.
       </p>
       {error && (
         <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2 text-left">{error}</p>

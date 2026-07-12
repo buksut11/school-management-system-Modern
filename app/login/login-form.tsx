@@ -63,7 +63,7 @@ export function LoginForm({ next }: { next: string }) {
         {pending ? "Signing in…" : "Sign in"}
       </Button>
       <p className="text-[12.5px] text-text-2 text-center">
-        New school?{" "}
+        Invited to a school?{" "}
         <button type="button" onClick={() => setMode("signup")} className="text-blue hover:underline">
           Create an account
         </button>
