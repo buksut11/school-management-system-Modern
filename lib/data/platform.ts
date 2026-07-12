@@ -3,10 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 export type PlatformSchool = {
   id: string;
   name: string;
-  join_code: string;
   created_at: string;
   members: number;
   students: number;
+  has_admin: boolean;
 };
 
 export async function getIsPlatformAdmin(): Promise<boolean> {
@@ -29,9 +29,9 @@ export async function listPlatformSchools(): Promise<PlatformSchool[]> {
   return (data ?? []).map((s) => ({
     id: s.id,
     name: s.name,
-    join_code: s.join_code,
     created_at: s.created_at,
     members: Number(s.members),
     students: Number(s.students),
+    has_admin: Boolean(s.has_admin),
   }));
 }

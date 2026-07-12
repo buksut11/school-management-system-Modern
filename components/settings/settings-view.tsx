@@ -7,7 +7,7 @@ import { AcademicYearPanel } from "./academic-year-panel";
 import { SchoolPanel } from "./school-panel";
 import { MembersPanel } from "./members-panel";
 import { PlatformPanel } from "./platform-panel";
-import type { AcademicYear, School } from "@/lib/types/database";
+import type { AcademicYear, Invite, School } from "@/lib/types/database";
 import type { Member, PersonOption } from "@/lib/data/members";
 import type { PlatformSchool } from "@/lib/data/platform";
 
@@ -16,6 +16,7 @@ export function SettingsView({
   years,
   school,
   members,
+  invites,
   currentUserId,
   isAdmin,
   platformSchools,
@@ -26,6 +27,7 @@ export function SettingsView({
   years: AcademicYear[];
   school: School | null;
   members: Member[];
+  invites: Invite[];
   currentUserId: string;
   isAdmin: boolean;
   platformSchools: PlatformSchool[] | null;
@@ -42,6 +44,7 @@ export function SettingsView({
         {school && (
           <MembersPanel
             members={members}
+            invites={invites}
             currentUserId={currentUserId}
             isAdmin={isAdmin}
             students={studentOptions}

@@ -6,7 +6,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input, Label } from "@/components/ui/input";
-import { platformCreateSchool, platformDeleteSchool } from "@/lib/actions/platform";
+import {
+  platformCreateSchool,
+  platformDeleteSchool,
+  platformAdminInvite,
+} from "@/lib/actions/platform";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { formatDate } from "@/lib/utils";
@@ -39,7 +43,12 @@ export function PlatformPanel({
   }, [state]);
 
   async function copyLink(s: PlatformSchool) {
-    await navigator.clipboard.writeText(`${window.location.origin}/join/${s.join_code}`);
+    const result = await platformAdminInvite(s.id);
+    if (result.error || !result.code) {
+      show(result.error ?? "Couldn't fetch the invite.");
+      return;
+    }
+    await navigator.clipboard.writeText(`${window.location.origin}/join/${result.code}`);
     setCopiedId(s.id);
     setTimeout(() => setCopiedId(null), 1600);
   }
@@ -89,11 +98,13 @@ export function PlatformPanel({
               </div>
             </div>
             <div className="flex items-center gap-1.5 flex-none">
-              {s.members === 0 && <Badge tone="orange">awaiting admin</Badge>}
-              <Button variant="secondary" size="sm" onClick={() => copyLink(s)}>
-                {copiedId === s.id ? <Check size={14} className="text-green" /> : <Link2 size={14} />}
-                {copiedId === s.id ? "Copied" : "Invite link"}
-              </Button>
+              {!s.has_admin && <Badge tone="orange">awaiting admin</Badge>}
+              {!s.has_admin && (
+                <Button variant="secondary" size="sm" onClick={() => copyLink(s)}>
+                  {copiedId === s.id ? <Check size={14} className="text-green" /> : <Link2 size={14} />}
+                  {copiedId === s.id ? "Copied" : "Admin invite"}
+                </Button>
+              )}
               {s.id !== ownSchoolId && (
                 <button
                   onClick={() => onDelete(s)}

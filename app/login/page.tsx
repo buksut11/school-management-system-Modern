@@ -8,9 +8,9 @@ import { safeNext } from "@/lib/utils";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; code?: string; notice?: string }>;
+  searchParams: Promise<{ next?: string; code?: string; notice?: string; mode?: string }>;
 }) {
-  const { next, code, notice } = await searchParams;
+  const { next, code, notice, mode } = await searchParams;
 
   // An email confirmation link can land here carrying its one-time code
   // (Supabase redirects to the Site URL root; the middleware bounces
@@ -53,7 +53,7 @@ export default async function LoginPage({
           </p>
         )}
 
-        <LoginForm next={next ?? "/"} />
+        <LoginForm next={next ?? "/"} initialMode={mode === "signup" ? "signup" : "login"} />
       </div>
     </div>
   );

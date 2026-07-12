@@ -2,7 +2,12 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getTableCounts } from "@/lib/data/settings";
 import { listAcademicYears } from "@/lib/data/years";
 import { getSchool } from "@/lib/data/school";
-import { listMembers, listStudentOptions, listTeacherOptions } from "@/lib/data/members";
+import {
+  listMembers,
+  listOpenInvites,
+  listStudentOptions,
+  listTeacherOptions,
+} from "@/lib/data/members";
 import { getIsPlatformAdmin, listPlatformSchools } from "@/lib/data/platform";
 import { SetupNotice } from "@/components/setup-notice";
 import { SettingsView } from "@/components/settings/settings-view";
@@ -17,12 +22,13 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [counts, years, school, members, isPlatformAdmin, studentOptions, teacherOptions] =
+  const [counts, years, school, members, invites, isPlatformAdmin, studentOptions, teacherOptions] =
     await Promise.all([
       getTableCounts(),
       listAcademicYears(),
       getSchool(),
       listMembers(),
+      listOpenInvites(),
       getIsPlatformAdmin(),
       listStudentOptions(),
       listTeacherOptions(),
@@ -38,6 +44,7 @@ export default async function SettingsPage() {
       years={years}
       school={school}
       members={members}
+      invites={invites}
       currentUserId={currentUserId}
       isAdmin={isAdmin}
       platformSchools={platformSchools}

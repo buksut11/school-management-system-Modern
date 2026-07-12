@@ -21,8 +21,9 @@ export function SchoolOnboarding({ fullName }: { fullName: string }) {
           Welcome{fullName ? `, ${fullName}` : ""}
         </h1>
         <p className="text-[13px] text-text-2 mb-4">
-          Your account isn&apos;t part of a school yet. Enter the join code from your invite —
-          or open the invite link you were sent and it fills in automatically.
+          Your account isn&apos;t part of a school yet. Open the invite link you were sent — or
+          enter its code here. Invites are personal and work once, so if yours was already used
+          or expired, ask the school for a new one.
         </p>
 
         <form action={joinAction} className="space-y-3">

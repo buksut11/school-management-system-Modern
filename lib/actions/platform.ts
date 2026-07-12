@@ -22,6 +22,17 @@ export async function platformCreateSchool(_prev: FormState, formData: FormData)
   return { success: true };
 }
 
+// Fetch (or mint) the school's single-use admin invite. Only works while
+// the school has no admin — after that, its admin issues the invites.
+export async function platformAdminInvite(
+  schoolId: string
+): Promise<{ error?: string; code?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("platform_admin_invite", { p_school_id: schoolId });
+  if (error) return { error: error.message };
+  return { code: data ?? undefined };
+}
+
 export async function platformDeleteSchool(
   schoolId: string,
   schoolName: string

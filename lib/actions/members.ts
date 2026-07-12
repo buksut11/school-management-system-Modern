@@ -5,16 +5,39 @@ import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
 import type { AssignableRole } from "@/lib/types/database";
 
-export type MemberActionResult = { error?: string; joinCode?: string };
+export type MemberActionResult = { error?: string; code?: string };
 
-export async function rotateJoinCode(): Promise<MemberActionResult> {
+export async function createInvite(input: {
+  role: Exclude<AssignableRole, "admin">;
+  email?: string | null;
+  teacherId?: string | null;
+  studentIds?: string[];
+}): Promise<MemberActionResult> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("rotate_join_code");
+  const { data, error } = await supabase.rpc("create_invite", {
+    p_role: input.role,
+    p_email: input.email ?? null,
+    p_teacher_id: input.teacherId ?? null,
+    p_student_ids: input.studentIds ?? [],
+  });
   if (error) return { error: error.message };
 
-  await logActivity(supabase, "settings", "Invite link rotated — old links no longer work");
-  revalidatePath("/", "layout");
-  return { joinCode: data ?? undefined };
+  await logActivity(supabase, "settings", `Invite created · ${input.role}`);
+  revalidatePath("/settings");
+  return { code: data?.code };
+}
+
+export async function revokeInvite(id: string): Promise<MemberActionResult> {
+  const supabase = await createClient();
+  // .select() so an RLS-blocked delete (0 rows, no error) doesn't pass
+  // as success.
+  const { data, error } = await supabase.from("invites").delete().eq("id", id).select("id");
+  if (error) return { error: error.message };
+  if (!data?.length) return { error: "Only an admin account can revoke invites." };
+
+  await logActivity(supabase, "settings", "Invite revoked");
+  revalidatePath("/settings");
+  return {};
 }
 
 export async function setMemberRole(

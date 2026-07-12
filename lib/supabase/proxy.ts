@@ -45,6 +45,11 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", path);
+    // Invite recipients are almost always NEW users — open the login
+    // page in create-account mode so they don't hunt for the toggle.
+    if (path.startsWith("/join/")) {
+      url.searchParams.set("mode", "signup");
+    }
     return NextResponse.redirect(url);
   }
 

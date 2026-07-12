@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Role } from "@/lib/types/database";
+import type { Invite, Role } from "@/lib/types/database";
 
 export type Member = {
   id: string;
@@ -15,6 +15,19 @@ export type Member = {
 // school-less rows explicitly. Family/teacher record links come from
 // profile_students and profiles.teacher_id.
 export type PersonOption = { id: string; full_name: string };
+
+// Outstanding (unused, unexpired) invites — RLS makes this admin-only,
+// so everyone else just gets an empty list.
+export async function listOpenInvites(): Promise<Invite[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("invites")
+    .select("*")
+    .is("used_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
 
 // Light pickers for the Members panel's record-linking controls.
 export async function listStudentOptions(): Promise<PersonOption[]> {

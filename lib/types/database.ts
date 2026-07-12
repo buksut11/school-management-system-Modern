@@ -46,8 +46,6 @@ export interface Database {
         Row: {
           id: string;
           name: string;
-          join_code: string;
-          family_join_code: string;
           created_at: string;
           updated_at: string;
         };
@@ -233,6 +231,27 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["exams"]["Row"]>;
         Relationships: [];
       };
+      invites: {
+        Row: {
+          id: string;
+          school_id: string;
+          code: string;
+          role: AssignableRole;
+          email: string | null;
+          teacher_id: string | null;
+          student_ids: string[];
+          created_by: string | null;
+          expires_at: string;
+          used_by: string | null;
+          used_at: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["invites"]["Row"]> & {
+          role: AssignableRole;
+        };
+        Update: Partial<Database["public"]["Tables"]["invites"]["Row"]>;
+        Relationships: [];
+      };
       profile_students: {
         Row: {
           profile_id: string;
@@ -379,8 +398,21 @@ export interface Database {
       };
     };
     Functions: {
-      rotate_join_code: {
-        Args: Record<string, never>;
+      create_invite: {
+        Args: {
+          p_role: Exclude<AssignableRole, "admin">;
+          p_email?: string | null;
+          p_teacher_id?: string | null;
+          p_student_ids?: string[];
+        };
+        Returns: { code: string };
+      };
+      invite_info: {
+        Args: { p_code: string };
+        Returns: { valid: boolean; reason?: string; school_name?: string; role?: Role };
+      };
+      platform_admin_invite: {
+        Args: { p_school_id: string };
         Returns: string;
       };
       set_member_role: {
@@ -401,7 +433,7 @@ export interface Database {
       };
       create_school: {
         Args: { p_name: string };
-        Returns: { school_id: string; name: string; join_code: string };
+        Returns: { school_id: string; name: string; invite_code: string };
       };
       join_school: {
         Args: { p_code: string };
@@ -412,10 +444,10 @@ export interface Database {
         Returns: {
           id: string;
           name: string;
-          join_code: string;
           created_at: string;
           members: number;
           students: number;
+          has_admin: boolean;
         }[];
       };
       platform_delete_school: {
@@ -446,6 +478,7 @@ export interface Database {
 }
 
 export type School = Database["public"]["Tables"]["schools"]["Row"];
+export type Invite = Database["public"]["Tables"]["invites"]["Row"];
 export type AcademicYear = Database["public"]["Tables"]["academic_years"]["Row"];
 export type Enrollment = Database["public"]["Tables"]["enrollments"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];

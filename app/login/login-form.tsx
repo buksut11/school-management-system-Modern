@@ -5,8 +5,14 @@ import { login, signup, requestPasswordReset } from "@/lib/actions/auth";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export function LoginForm({ next }: { next: string }) {
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+export function LoginForm({
+  next,
+  initialMode = "login",
+}: {
+  next: string;
+  initialMode?: "login" | "signup";
+}) {
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">(initialMode);
   const [state, formAction, pending] = useActionState(login, undefined);
   const [signupState, signupAction, signingUp] = useActionState(signup, undefined);
   const [forgotState, forgotAction, sendingReset] = useActionState(requestPasswordReset, undefined);
