@@ -86,6 +86,57 @@ export async function signup(_prevState: SignupState, formData: FormData): Promi
   redirect(safeNext(next));
 }
 
+export async function requestPasswordReset(
+  _prevState: SignupState,
+  formData: FormData
+): Promise<SignupState> {
+  if (!isSupabaseConfigured) {
+    return { error: "Supabase isn't configured yet." };
+  }
+  const email = String(formData.get("email") || "").trim();
+  if (!email) return { error: "Enter your email address." };
+
+  const hdrs = await headers();
+  const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "";
+  const proto = hdrs.get("x-forwarded-proto") ?? "https";
+
+  const supabase = await createClient();
+  // The email's link comes back through /auth/callback, which exchanges
+  // the code for a session and lands the user on the set-new-password
+  // page. Errors are not surfaced per address — that would let anyone
+  // probe which emails have accounts.
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: host
+      ? `${proto}://${host}/auth/callback?next=${encodeURIComponent("/reset-password")}`
+      : undefined,
+  });
+  return {
+    message: "If that email has an account, a reset link is on its way. Check your inbox.",
+  };
+}
+
+export async function updatePassword(
+  _prevState: SignupState,
+  formData: FormData
+): Promise<SignupState> {
+  const password = String(formData.get("password") || "");
+  const confirm = String(formData.get("confirm") || "");
+
+  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (password !== confirm) return { error: "The two passwords don't match." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your reset link has expired — request a new one." };
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: error.message };
+
+  redirect("/");
+}
+
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
