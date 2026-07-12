@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { createClient as createBareClient } from "@supabase/supabase-js";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/utils";
 
@@ -100,41 +101,24 @@ export async function requestPasswordReset(
   const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "";
   const proto = hdrs.get("x-forwarded-proto") ?? "https";
 
-  const supabase = await createClient();
-  // The email's link comes back through /auth/callback, which exchanges
-  // the code for a session and lands the user on the set-new-password
-  // page. Errors are not surfaced per address — that would let anyone
-  // probe which emails have accounts.
-  await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: host
-      ? `${proto}://${host}/auth/callback?next=${encodeURIComponent("/reset-password")}`
-      : undefined,
+  // A bare implicit-flow client on purpose (not the cookie-bound PKCE
+  // one): the default email template's link then carries the recovery
+  // session in the URL itself, so it works from ANY device or browser —
+  // PKCE reset links only redeem in the browser that requested them,
+  // and fixing that the other way needs an email-template edit.
+  const bare = createBareClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false } }
+  );
+  // Errors are not surfaced per address — that would let anyone probe
+  // which emails have accounts.
+  await bare.auth.resetPasswordForEmail(email, {
+    redirectTo: host ? `${proto}://${host}/reset-password` : undefined,
   });
   return {
     message: "If that email has an account, a reset link is on its way. Check your inbox.",
   };
-}
-
-export async function updatePassword(
-  _prevState: SignupState,
-  formData: FormData
-): Promise<SignupState> {
-  const password = String(formData.get("password") || "");
-  const confirm = String(formData.get("confirm") || "");
-
-  if (password.length < 8) return { error: "Password must be at least 8 characters." };
-  if (password !== confirm) return { error: "The two passwords don't match." };
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Your reset link has expired — request a new one." };
-
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) return { error: error.message };
-
-  redirect("/");
 }
 
 export async function logout() {

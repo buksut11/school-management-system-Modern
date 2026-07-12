@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth"];
+// /reset-password must stay reachable while signed out: the recovery
+// email's link carries its tokens in the URL fragment, which the browser
+// never sends to the server — the page picks them up client-side.
+const PUBLIC_PATHS = ["/login", "/auth", "/reset-password"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
