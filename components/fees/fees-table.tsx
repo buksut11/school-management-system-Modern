@@ -3,7 +3,7 @@
 import { CircleDollarSign, Printer, Receipt, SlidersHorizontal } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney, formatDate } from "@/lib/utils";
 import type { FeeRow } from "@/lib/data/fees";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
@@ -66,6 +66,15 @@ export function FeesTable({
             </div>
             <div className="r-cell w-24 flex-none text-[13px] font-medium" data-label="Balance">
               {formatMoney(r.balance)}
+              {r.overdue > 0 ? (
+                <div className="text-[11px] font-semibold text-red">
+                  {formatMoney(r.overdue)} overdue
+                </div>
+              ) : r.balance > 0 && r.next_due_date ? (
+                <div className="text-[11px] font-normal text-text-2 truncate">
+                  {r.next_due_label ?? "Next"} · {formatDate(r.next_due_date)}
+                </div>
+              ) : null}
             </div>
             <div className="r-cell w-24 flex-none" data-label="Status">
               <Badge tone={STATUS_TONE[r.status]}>

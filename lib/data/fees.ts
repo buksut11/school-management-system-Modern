@@ -15,6 +15,12 @@ export type FeeRow = {
   gross: number;
   discount: number;
   discount_reason: string | null;
+  // Installment schedule (0038): what should be paid by today, how far
+  // behind the student is, and the next upcoming installment.
+  expected: number;
+  overdue: number;
+  next_due_date: string | null;
+  next_due_label: string | null;
 };
 
 export async function listFees(): Promise<FeeRow[]> {
@@ -43,8 +49,44 @@ export async function listFees(): Promise<FeeRow[]> {
       gross: Number(r.gross),
       discount: Number(r.discount),
       discount_reason: r.discount_reason,
+      expected: Number(r.expected),
+      overdue: Number(r.overdue),
+      next_due_date: r.next_due_date,
+      next_due_label: r.next_due_label,
     }))
   );
+}
+
+export type FeeInstallment = {
+  id: string;
+  name: string;
+  due_date: string;
+  percent: number;
+};
+
+// The current year's payment schedule, for the fees page header and the
+// schedule editor.
+export async function getFeeSchedule(): Promise<{
+  year: { id: string; name: string } | null;
+  installments: FeeInstallment[];
+}> {
+  const supabase = await createClient();
+  const { data: year } = await supabase
+    .from("academic_years")
+    .select("id, name")
+    .eq("is_current", true)
+    .maybeSingle();
+  if (!year) return { year: null, installments: [] };
+
+  const { data } = await supabase
+    .from("fee_installments")
+    .select("id, name, due_date, percent")
+    .eq("year_id", year.id)
+    .order("due_date");
+  return {
+    year,
+    installments: (data ?? []).map((i) => ({ ...i, percent: Number(i.percent) })),
+  };
 }
 
 export async function getFeeSummary(rows: FeeRow[]) {

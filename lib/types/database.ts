@@ -283,6 +283,26 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["enrollments"]["Row"]>;
         Relationships: [];
       };
+      fee_installments: {
+        Row: {
+          id: string;
+          year_id: string;
+          school_id: string;
+          name: string;
+          due_date: string;
+          percent: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["fee_installments"]["Row"]> & {
+          year_id: string;
+          name: string;
+          due_date: string;
+          percent: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["fee_installments"]["Row"]>;
+        Relationships: [];
+      };
       student_fees: {
         Row: {
           id: string;
@@ -464,6 +484,10 @@ export interface Database {
           gross: number;
           discount: number;
           discount_reason: string | null;
+          expected: number;
+          overdue: number;
+          next_due_date: string | null;
+          next_due_label: string | null;
         };
         Relationships: [];
       };
@@ -593,6 +617,13 @@ export interface Database {
           p_year_id?: string | null;
         };
         Returns: { student_name: string; due: number; discount: number };
+      };
+      set_fee_installments: {
+        Args: {
+          p_year_id: string;
+          p_items: { name: string; due_date: string; percent: number }[];
+        };
+        Returns: { count: number; total_percent: number };
       };
     };
   };

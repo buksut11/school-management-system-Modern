@@ -271,6 +271,45 @@ call must_equal('the discounted student now shows as paid',
   $q$ select fee_status from public.student_fee_balances
       where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'paid');
 
+-- ---- 0038: installment schedules + overdue ----
+-- A second student (nothing paid) to observe overdue on; A1 is settled.
+insert into public.students (id, full_name, class_id, base_fees) values
+  ('aaaa1111-0000-0000-0000-0000000005a2', 'Student A2',
+   'aaaa1111-0000-0000-0000-00000000c1a1', 100);
+
+select public.set_fee_installments('aaaa1111-0000-0000-0000-000000000001',
+  jsonb_build_array(
+    jsonb_build_object('name', 'Term 1', 'due_date', (current_date - 30)::text, 'percent', 40),
+    jsonb_build_object('name', 'Term 2', 'due_date', (current_date + 30)::text, 'percent', 30),
+    jsonb_build_object('name', 'Term 3', 'due_date', (current_date + 120)::text, 'percent', 30)));
+call must_equal('the year''s payment schedule is stored',
+  $q$ select count(*)::text from public.fee_installments $q$, '3');
+
+call must_fail('a schedule above 100% is rejected',
+  $q$ select public.set_fee_installments('aaaa1111-0000-0000-0000-000000000001',
+      jsonb_build_array(
+        jsonb_build_object('name', 'Half 1', 'due_date', current_date::text, 'percent', 60),
+        jsonb_build_object('name', 'Half 2', 'due_date', current_date::text, 'percent', 50))) $q$);
+call must_equal('a failed schedule change leaves the old one intact',
+  $q$ select count(*)::text from public.fee_installments $q$, '3');
+
+call must_equal('an unpaid student past a due date shows overdue',
+  $q$ select (expected = 40 and overdue = 40)::text from public.student_fee_balances
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a2' $q$, 'true');
+call must_equal('a settled student is never overdue',
+  $q$ select (overdue = 0)::text from public.student_fee_balances
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
+call must_equal('the next upcoming installment is surfaced',
+  $q$ select next_due_label from public.student_fee_balances
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a2' $q$, 'Term 2');
+
+select public.set_fee_installments('aaaa1111-0000-0000-0000-000000000001',
+  jsonb_build_array(
+    jsonb_build_object('name', 'Term 1', 'due_date', (current_date - 30)::text, 'percent', 40),
+    jsonb_build_object('name', 'Term 2', 'due_date', (current_date + 30)::text, 'percent', 60)));
+call must_equal('the schedule replaces wholesale',
+  $q$ select count(*)::text from public.fee_installments $q$, '2');
+
 -- ---- 0030: invoice overpayment guard ----
 insert into public.invoices (id, party_type, party_name, items, total)
 values ('aaaa1111-0000-0000-0000-0000000009a1', 'staff', 'Cleaner Casey',
@@ -344,6 +383,8 @@ call must_fail('staff cannot record expenses',
   $q$ insert into public.expenses (payee, amount) values ('Sneaky', 5) $q$);
 call must_fail('staff cannot adjust fee plans',
   $q$ select public.set_student_fee('aaaa1111-0000-0000-0000-0000000005a1', 10, 0) $q$);
+call must_fail('staff cannot change the payment schedule',
+  $q$ select public.set_fee_installments('aaaa1111-0000-0000-0000-000000000001', '[]'::jsonb) $q$);
 
 -- ===================== 0032: atomic restore =====================
 reset role;
@@ -362,6 +403,7 @@ select jsonb_build_object(
   'teacher_subjects', coalesce((select jsonb_agg(to_jsonb(x)) from public.teacher_subjects x), '[]'::jsonb),
   'students',       coalesce((select jsonb_agg(to_jsonb(x)) from public.students x), '[]'::jsonb),
   'student_fees',   coalesce((select jsonb_agg(to_jsonb(x)) from public.student_fees x), '[]'::jsonb),
+  'fee_installments', coalesce((select jsonb_agg(to_jsonb(x)) from public.fee_installments x), '[]'::jsonb),
   'attendance',     coalesce((select jsonb_agg(to_jsonb(x)) from public.attendance x), '[]'::jsonb),
   'exams',          coalesce((select jsonb_agg(to_jsonb(x)) from public.exams x), '[]'::jsonb),
   'exam_scores',    coalesce((select jsonb_agg(to_jsonb(x)) from public.exam_scores x), '[]'::jsonb),
@@ -388,14 +430,14 @@ call must_fail('a broken snapshot fails the restore',
   $q$ select public.restore_school_snapshot((select data from t_bad),
       '11111111-1111-1111-1111-111111111111') $q$);
 call must_equal('failed restore rolled everything back — students intact',
-  $q$ select count(*)::text from public.students $q$, '1');
+  $q$ select count(*)::text from public.students $q$, '2');
 call must_equal('failed restore rolled everything back — payments intact',
   $q$ select count(*)::text from public.fee_payments $q$, '2');
 
 -- Happy path: wipe + reload lands identical data.
 select public.restore_school_snapshot((select data from t_snap),
   '11111111-1111-1111-1111-111111111111');
-call must_equal('restore round-trip: students', $q$ select count(*)::text from public.students $q$, '1');
+call must_equal('restore round-trip: students', $q$ select count(*)::text from public.students $q$, '2');
 call must_equal('restore round-trip: attendance', $q$ select count(*)::text from public.attendance $q$, '1');
 call must_equal('restore round-trip: exams', $q$ select count(*)::text from public.exams $q$, '2');
 call must_equal('restore round-trip: exam scores', $q$ select count(*)::text from public.exam_scores $q$, '1');
@@ -404,8 +446,10 @@ call must_equal('restore round-trip: fee payments', $q$ select count(*)::text fr
 call must_equal('restore round-trip: fee plan kept its discount',
   $q$ select (discount = 20)::text from public.student_fees
       where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
+call must_equal('restore round-trip: fee schedule',
+  $q$ select count(*)::text from public.fee_installments $q$, '2');
 call must_equal('restore round-trip: expense ledger', $q$ select count(*)::text from public.expense_payments $q$, '2');
-call must_equal('restore round-trip: enrollments', $q$ select count(*)::text from public.enrollments $q$, '1');
+call must_equal('restore round-trip: enrollments', $q$ select count(*)::text from public.enrollments $q$, '2');
 call must_equal('restore round-trip: class kept its teacher pointer',
   $q$ select count(*)::text from public.classes where name = 'Form 1A' $q$, '1');
 

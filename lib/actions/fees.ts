@@ -11,6 +11,43 @@ function str(formData: FormData, key: string) {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
+export type InstallmentInput = { name: string; due_date: string; percent: number };
+
+export async function setFeeInstallments(
+  yearId: string,
+  items: InstallmentInput[]
+): Promise<FormState> {
+  if (!yearId) return { error: "Missing academic year." };
+  const cleaned = (items ?? [])
+    .map((it) => ({
+      name: it.name?.trim() ?? "",
+      due_date: it.due_date?.trim() ?? "",
+      percent: Number(it.percent),
+    }))
+    .filter((it) => it.name || it.due_date || it.percent > 0);
+  const total = cleaned.reduce((sum, it) => sum + (it.percent > 0 ? it.percent : 0), 0);
+  if (total > 100) {
+    return { error: `The installments add up to ${total}% — they can't exceed 100%.` };
+  }
+
+  const supabase = await createClient();
+  // Replaces the year's whole schedule atomically (migration 0038):
+  // finance/admin only, every row validated in the database.
+  const { data, error } = await supabase.rpc("set_fee_installments", {
+    p_year_id: yearId,
+    p_items: cleaned,
+  });
+  if (error) return { error: error.message };
+
+  await logActivity(
+    supabase,
+    "fee",
+    `Payment schedule updated · ${data?.count ?? 0} installment${(data?.count ?? 0) === 1 ? "" : "s"}`
+  );
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
 export async function setStudentFee(_prev: FormState, formData: FormData): Promise<FormState> {
   const studentId = str(formData, "student_id");
   if (!studentId) return { error: "Missing student." };
