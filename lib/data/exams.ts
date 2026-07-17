@@ -1,7 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { signPhotoUrls } from "@/lib/data/photos";
-import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
+import { gradeForTotal } from "@/lib/grades";
 import type { Term } from "@/lib/types/database";
+
+export type GradebookSubject = { id: string; name: string };
+
+// The gradebook's columns are the school's OWN subjects (migration
+// 0035), not a hard-coded list.
+export async function listGradebookSubjects(): Promise<GradebookSubject[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("subjects").select("id, name").order("seq");
+  return data ?? [];
+}
 
 export type ExamRow = {
   id: string;
@@ -14,7 +24,12 @@ export type ExamRow = {
   exam_date: string;
   attendance_pct: number;
   test_score: number;
+  // Display scores keyed by subject NAME. Relational rows (exam_scores,
+  // resolved to each subject's current name) win; the name-keyed
+  // snapshot fills in for pre-0035 records.
   subject_scores: Record<string, number>;
+  // The same scores keyed by subject id — what the edit form posts back.
+  scores_by_id: Record<string, number>;
   total_score: number;
   grade: string;
 };
@@ -32,33 +47,48 @@ type RawExam = {
   grade: string;
   students: { full_name: string; photo_url: string | null } | null;
   classes: { name: string } | null;
+  exam_scores: { subject_id: string; score: number }[];
 };
 
 export async function listExams(term: Term, yearId: string | null): Promise<ExamRow[]> {
   const supabase = await createClient();
   let query = supabase
     .from("exams")
-    .select("*, students(full_name, photo_url), classes(name)")
+    .select("*, students(full_name, photo_url), classes(name), exam_scores(subject_id, score)")
     .eq("term", term);
   if (yearId) query = query.eq("year_id", yearId);
-  const { data } = await query.returns<RawExam[]>();
+  const [{ data }, subjects] = await Promise.all([
+    query.returns<RawExam[]>(),
+    listGradebookSubjects(),
+  ]);
+  const subjectName = new Map(subjects.map((s) => [s.id, s.name]));
 
   return signPhotoUrls((data ?? [])
-    .map((e) => ({
-      id: e.id,
-      student_id: e.student_id,
-      student_name: e.students?.full_name ?? "Unknown",
-      photo_url: e.students?.photo_url ?? null,
-      class_id: e.class_id,
-      class_name: e.classes?.name ?? null,
-      term: e.term,
-      exam_date: e.exam_date,
-      attendance_pct: Number(e.attendance_pct),
-      test_score: Number(e.test_score),
-      subject_scores: e.subject_scores ?? {},
-      total_score: Number(e.total_score),
-      grade: e.grade,
-    }))
+    .map((e) => {
+      const byName: Record<string, number> = { ...(e.subject_scores ?? {}) };
+      const byId: Record<string, number> = {};
+      for (const s of e.exam_scores ?? []) {
+        byId[s.subject_id] = Number(s.score);
+        const name = subjectName.get(s.subject_id);
+        if (name) byName[name] = Number(s.score);
+      }
+      return {
+        id: e.id,
+        student_id: e.student_id,
+        student_name: e.students?.full_name ?? "Unknown",
+        photo_url: e.students?.photo_url ?? null,
+        class_id: e.class_id,
+        class_name: e.classes?.name ?? null,
+        term: e.term,
+        exam_date: e.exam_date,
+        attendance_pct: Number(e.attendance_pct),
+        test_score: Number(e.test_score),
+        subject_scores: byName,
+        scores_by_id: byId,
+        total_score: Number(e.total_score),
+        grade: e.grade,
+      };
+    })
     .sort((a, b) => a.student_name.localeCompare(b.student_name)));
 }
 
@@ -93,6 +123,12 @@ export async function listAcademicRecords(yearId: string | null) {
     .from("exams")
     .select("student_id, term, total_score, grade, students(full_name, class_id, classes(name))");
   if (yearId) query = query.eq("year_id", yearId);
+  // The average's letter grade depends on how many subjects make up a
+  // full gradebook — that's the school's subject count now, not a
+  // hard-coded seven.
+  const { count: subjectCount } = await supabase
+    .from("subjects")
+    .select("id", { count: "exact", head: true });
   const { data } = await query.returns<
       Array<{
         student_id: string;
@@ -144,18 +180,8 @@ export async function listAcademicRecords(yearId: string | null) {
       term2: v.terms["Term 2"] ?? null,
       term3: v.terms["Term 3"] ?? null,
       average: Math.round(average * 10) / 10,
-      grade: computeGradeLabel(average),
+      grade: gradeForTotal(average, subjectCount ?? 0),
       trend,
     };
   });
-}
-
-function computeGradeLabel(average: number) {
-  const max = GRADEBOOK_SUBJECTS.length * 100 + 100;
-  const pct = (average / max) * 100;
-  if (pct >= 80) return "A";
-  if (pct >= 70) return "B";
-  if (pct >= 60) return "C";
-  if (pct >= 50) return "D";
-  return "F";
 }

@@ -3,9 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
-import { computeTotal, computeGrade } from "@/lib/grades";
-import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
 import type { Gender, PaymentMethod, AttendanceStatus, ExpenseCategory } from "@/lib/types/database";
+
+// Seeded for schools that don't have a subject list yet (the gradebook
+// is the subjects table since migration 0035).
+const DEFAULT_SUBJECTS = [
+  "Somali",
+  "English",
+  "Chemistry",
+  "Physics",
+  "Maths",
+  "Arabic",
+  "Geography",
+];
 
 const DEMO_TEACHERS: {
   full_name: string;
@@ -110,6 +120,17 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
     if (error) return { error: error.message };
   }
 
+  // ---- gradebook subjects (seed defaults if the school has none) ----
+  let { data: gradebook } = await supabase.from("subjects").select("id, name").order("seq");
+  if (!gradebook || gradebook.length === 0) {
+    const { data: seeded, error: subjectSeedError } = await supabase
+      .from("subjects")
+      .insert(DEFAULT_SUBJECTS.map((name) => ({ name })))
+      .select("id, name");
+    if (subjectSeedError) return { error: subjectSeedError.message };
+    gradebook = seeded ?? [];
+  }
+
   // ---- subject + department assignments ----
   const { data: subjects } = await supabase.from("subjects").select("id, name").is("teacher_id", null);
   for (const subject of subjects ?? []) {
@@ -173,28 +194,24 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
   const { error: attendanceError } = await supabase.from("attendance").insert(attendanceRecords);
   if (attendanceError) return { error: attendanceError.message };
 
-  // ---- exams (Term 1 for every student) ----
-  const examRecords = students.map((student, i) => {
-    const subjectScores: Record<string, number> = {};
-    GRADEBOOK_SUBJECTS.forEach((subject, j) => {
-      subjectScores[subject] = 55 + ((i * 7 + j * 11) % 43); // 55–97
+  // ---- exams (Term 1 for every student, via the same atomic RPC the
+  // exam form uses — totals and grades are computed in the database) ----
+  for (let i = 0; i < students.length; i++) {
+    const scores: Record<string, number> = {};
+    gradebook.forEach((subject, j) => {
+      scores[subject.id] = 55 + ((i * 7 + j * 11) % 43); // 55–97
     });
-    const testScore = 60 + ((i * 13) % 38); // 60–97
-    const total = computeTotal(subjectScores, testScore);
-    return {
-      student_id: student.id,
-      class_id: student.class_id,
-      term: "Term 1" as const,
-      exam_date: isoDaysAgo(10),
-      attendance_pct: 85 + (i % 15),
-      test_score: testScore,
-      subject_scores: subjectScores,
-      total_score: total,
-      grade: computeGrade(total),
-    };
-  });
-  const { error: examError } = await supabase.from("exams").insert(examRecords);
-  if (examError) return { error: examError.message };
+    const { error: examError } = await supabase.rpc("save_exam", {
+      p_student_id: students[i].id,
+      p_term: "Term 1",
+      p_scores: scores,
+      p_class_id: students[i].class_id,
+      p_exam_date: isoDaysAgo(10),
+      p_attendance_pct: 85 + (i % 15),
+      p_test_score: 60 + ((i * 13) % 38), // 60–97
+    });
+    if (examError) return { error: examError.message };
+  }
 
   // ---- fee payments (a mix of fully paid, partially paid, and unpaid) ----
   const feeRecords = [];
@@ -235,6 +252,6 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
   revalidatePath("/", "layout");
   return {
     success: true,
-    summary: `${teachers.length} teachers, ${students.length} students, ${attendanceRecords.length} attendance records, ${examRecords.length} exam records, ${feeRecords.length} fee payments and ${DEMO_EXPENSES.length} expenses`,
+    summary: `${teachers.length} teachers, ${students.length} students, ${attendanceRecords.length} attendance records, ${students.length} exam records, ${feeRecords.length} fee payments and ${DEMO_EXPENSES.length} expenses`,
   };
 }

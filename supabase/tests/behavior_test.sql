@@ -77,6 +77,9 @@ insert into public.students (id, school_id, full_name, class_id, base_fees) valu
   ('bbbb2222-0000-0000-0000-0000000005b1', '22222222-2222-2222-2222-222222222222', 'Student B1',
    'bbbb2222-0000-0000-0000-00000000c1b1', 100);
 
+insert into public.subjects (id, school_id, name) values
+  ('bbbb2222-0000-0000-0000-0000000000b5', '22222222-2222-2222-2222-222222222222', 'History B');
+
 -- Avatar objects for both schools (service context, as the storage API
 -- would have written them).
 insert into storage.objects (bucket_id, name) values
@@ -140,6 +143,46 @@ call must_fail('total_score above the possible maximum is rejected',
 insert into public.exams (student_id, class_id, term, subject_scores, test_score, total_score, grade)
 values ('aaaa1111-0000-0000-0000-0000000005a1', 'aaaa1111-0000-0000-0000-00000000c1a1',
         'Term 1', '{"Maths": 90}'::jsonb, 80, 170, 'A');
+
+-- ---- 0035: relational gradebook via save_exam ----
+select public.save_exam(
+  'aaaa1111-0000-0000-0000-0000000005a1', 'Term 2',
+  jsonb_build_object((select id from public.subjects where name = 'Maths')::text, 90),
+  p_class_id => 'aaaa1111-0000-0000-0000-00000000c1a1',
+  p_test_score => 80);
+call must_equal('save_exam computed the total in the database',
+  $q$ select (total_score = 170)::text from public.exams where term = 'Term 2' $q$, 'true');
+call must_equal('save_exam computed the grade in the database',
+  $q$ select grade from public.exams where term = 'Term 2' $q$, 'A');
+call must_equal('save_exam wrote the relational score rows',
+  $q$ select count(*)::text from public.exam_scores $q$, '1');
+call must_equal('save_exam maintains the name-keyed snapshot',
+  $q$ select (subject_scores ->> 'Maths') from public.exams where term = 'Term 2' $q$, '90');
+
+call must_fail('save_exam rejects a subject score above 100',
+  $q$ select public.save_exam('aaaa1111-0000-0000-0000-0000000005a1', 'Term 3',
+      jsonb_build_object((select id from public.subjects where name = 'Maths')::text, 850)) $q$);
+call must_fail('save_exam rejects another school''s subject',
+  $q$ select public.save_exam('aaaa1111-0000-0000-0000-0000000005a1', 'Term 3',
+      jsonb_build_object('bbbb2222-0000-0000-0000-0000000000b5', 50)) $q$);
+call must_fail('save_exam rejects a malformed subject id',
+  $q$ select public.save_exam('aaaa1111-0000-0000-0000-0000000005a1', 'Term 3',
+      '{"not-a-uuid": 50}'::jsonb) $q$);
+call must_fail('save_exam rejects a duplicate term record',
+  $q$ select public.save_exam('aaaa1111-0000-0000-0000-0000000005a1', 'Term 2',
+      '{}'::jsonb) $q$);
+
+-- editing replaces the scores and recomputes total + grade
+select public.save_exam(
+  'aaaa1111-0000-0000-0000-0000000005a1', 'Term 2',
+  jsonb_build_object((select id from public.subjects where name = 'Maths')::text, 40),
+  p_exam_id => (select id from public.exams where term = 'Term 2'),
+  p_class_id => 'aaaa1111-0000-0000-0000-00000000c1a1',
+  p_test_score => 10);
+call must_equal('editing an exam replaces its score rows',
+  $q$ select (score = 40)::text from public.exam_scores $q$, 'true');
+call must_equal('editing an exam recomputes the grade',
+  $q$ select grade from public.exams where term = 'Term 2' $q$, 'F');
 
 -- ---- 0013/0014: fee overpayment guard still holds ----
 select public.record_fee_payment('aaaa1111-0000-0000-0000-0000000005a1', 60);
@@ -238,6 +281,7 @@ select jsonb_build_object(
   'students',       coalesce((select jsonb_agg(to_jsonb(x)) from public.students x), '[]'::jsonb),
   'attendance',     coalesce((select jsonb_agg(to_jsonb(x)) from public.attendance x), '[]'::jsonb),
   'exams',          coalesce((select jsonb_agg(to_jsonb(x)) from public.exams x), '[]'::jsonb),
+  'exam_scores',    coalesce((select jsonb_agg(to_jsonb(x)) from public.exam_scores x), '[]'::jsonb),
   'fee_payments',   coalesce((select jsonb_agg(to_jsonb(x)) from public.fee_payments x), '[]'::jsonb),
   'expenses',       coalesce((select jsonb_agg(to_jsonb(x)) from public.expenses x), '[]'::jsonb),
   'expense_payments', coalesce((select jsonb_agg(to_jsonb(x)) from public.expense_payments x), '[]'::jsonb),
@@ -270,7 +314,8 @@ select public.restore_school_snapshot((select data from t_snap),
   '11111111-1111-1111-1111-111111111111');
 call must_equal('restore round-trip: students', $q$ select count(*)::text from public.students $q$, '1');
 call must_equal('restore round-trip: attendance', $q$ select count(*)::text from public.attendance $q$, '1');
-call must_equal('restore round-trip: exams', $q$ select count(*)::text from public.exams $q$, '1');
+call must_equal('restore round-trip: exams', $q$ select count(*)::text from public.exams $q$, '2');
+call must_equal('restore round-trip: exam scores', $q$ select count(*)::text from public.exam_scores $q$, '1');
 call must_equal('restore round-trip: fee payments', $q$ select count(*)::text from public.fee_payments $q$, '1');
 call must_equal('restore round-trip: expense ledger', $q$ select count(*)::text from public.expense_payments $q$, '2');
 call must_equal('restore round-trip: enrollments', $q$ select count(*)::text from public.enrollments $q$, '1');

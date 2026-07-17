@@ -323,6 +323,23 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["expenses"]["Row"]>;
         Relationships: [];
       };
+      exam_scores: {
+        Row: {
+          id: string;
+          exam_id: string;
+          subject_id: string;
+          school_id: string;
+          score: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["exam_scores"]["Row"]> & {
+          exam_id: string;
+          subject_id: string;
+          score: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["exam_scores"]["Row"]>;
+        Relationships: [];
+      };
       expense_payments: {
         Row: {
           id: string;
@@ -511,6 +528,20 @@ export interface Database {
       restore_school_snapshot: {
         Args: { p_data: unknown; p_school_id?: string | null };
         Returns: Record<string, number>;
+      };
+      save_exam: {
+        Args: {
+          p_student_id: string;
+          p_term: Term;
+          p_scores: Record<string, number>;
+          p_exam_id?: string | null;
+          p_class_id?: string | null;
+          p_year_id?: string | null;
+          p_exam_date?: string | null;
+          p_attendance_pct?: number;
+          p_test_score?: number;
+        };
+        Returns: { exam_id: string; student_name: string; total: number; grade: string };
       };
     };
   };

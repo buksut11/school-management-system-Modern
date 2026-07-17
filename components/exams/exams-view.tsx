@@ -13,8 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { TERMS } from "@/lib/constants";
-import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
-import type { ExamRow } from "@/lib/data/exams";
+import type { ExamRow, GradebookSubject } from "@/lib/data/exams";
 import type { AcademicYear, Term } from "@/lib/types/database";
 
 export function ExamsView({
@@ -22,6 +21,7 @@ export function ExamsView({
   year,
   years,
   rows,
+  subjects,
   classes,
   eligibleStudents,
 }: {
@@ -29,6 +29,7 @@ export function ExamsView({
   year: AcademicYear | null;
   years: AcademicYear[];
   rows: ExamRow[];
+  subjects: GradebookSubject[];
   classes: { id: string; name: string }[];
   eligibleStudents: { id: string; full_name: string; class_id: string | null; class_name: string | null }[];
 }) {
@@ -64,7 +65,7 @@ export function ExamsView({
       filtered.map((r) => ({
         student: r.student_name,
         class: r.class_name ?? "",
-        ...Object.fromEntries(GRADEBOOK_SUBJECTS.map((s) => [s, r.subject_scores[s] ?? 0])),
+        ...Object.fromEntries(subjects.map((s) => [s.name, r.subject_scores[s.name] ?? 0])),
         test: r.test_score,
         total: r.total_score,
         grade: r.grade,
@@ -126,6 +127,7 @@ export function ExamsView({
 
       <ExamsTable
         rows={filtered}
+        subjects={subjects.map((s) => s.name)}
         onEdit={(r) => {
           setEditing(r);
           setModalOpen(true);
@@ -139,6 +141,7 @@ export function ExamsView({
         exam={editing}
         term={term}
         yearId={year?.id ?? null}
+        subjects={subjects}
         eligibleStudents={eligibleStudents}
       />
     </div>

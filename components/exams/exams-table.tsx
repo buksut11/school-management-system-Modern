@@ -3,7 +3,6 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
 import type { ExamRow } from "@/lib/data/exams";
 
 const GRADE_TONE: Record<string, "green" | "blue" | "orange" | "red"> = {
@@ -16,10 +15,12 @@ const GRADE_TONE: Record<string, "green" | "blue" | "orange" | "red"> = {
 
 export function ExamsTable({
   rows,
+  subjects,
   onEdit,
   onDelete,
 }: {
   rows: ExamRow[];
+  subjects: string[];
   onEdit: (r: ExamRow) => void;
   onDelete: (r: ExamRow) => void;
 }) {
@@ -32,7 +33,7 @@ export function ExamsTable({
               <th className="sticky left-0 z-10 bg-solid text-left px-5 py-3 border-b border-line min-w-[190px]">
                 Student
               </th>
-              {GRADEBOOK_SUBJECTS.map((s) => (
+              {subjects.map((s) => (
                 <th key={s} className="px-3 py-3 border-b border-line text-center min-w-[76px]">
                   {s}
                 </th>
@@ -55,7 +56,7 @@ export function ExamsTable({
                     </div>
                   </div>
                 </td>
-                {GRADEBOOK_SUBJECTS.map((s) => (
+                {subjects.map((s) => (
                   <td key={s} className="px-3 py-2.5 text-center text-text-2">
                     {r.subject_scores[s] ?? 0}
                   </td>
