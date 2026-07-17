@@ -1,6 +1,7 @@
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { listTeachers } from "@/lib/data/teachers";
 import { listClassOptions } from "@/lib/data/students";
+import { listGradebookSubjects } from "@/lib/data/exams";
 import { SetupNotice } from "@/components/setup-notice";
 import { TeachersView } from "@/components/teachers/teachers-view";
 
@@ -9,7 +10,11 @@ export default async function TeachersPage() {
     return <SetupNotice what="teachers" />;
   }
 
-  const [teachers, classes] = await Promise.all([listTeachers(), listClassOptions()]);
+  const [teachers, classes, subjects] = await Promise.all([
+    listTeachers(),
+    listClassOptions(),
+    listGradebookSubjects(),
+  ]);
 
-  return <TeachersView teachers={teachers} classes={classes} />;
+  return <TeachersView teachers={teachers} classes={classes} subjects={subjects} />;
 }

@@ -323,6 +323,20 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["expenses"]["Row"]>;
         Relationships: [];
       };
+      teacher_subjects: {
+        Row: {
+          teacher_id: string;
+          subject_id: string;
+          school_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["teacher_subjects"]["Row"]> & {
+          teacher_id: string;
+          subject_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["teacher_subjects"]["Row"]>;
+        Relationships: [];
+      };
       exam_scores: {
         Row: {
           id: string;
@@ -542,6 +556,10 @@ export interface Database {
           p_test_score?: number;
         };
         Returns: { exam_id: string; student_name: string; total: number; grade: string };
+      };
+      set_teacher_subjects: {
+        Args: { p_teacher_id: string; p_subject_ids: string[] };
+        Returns: undefined;
       };
     };
   };

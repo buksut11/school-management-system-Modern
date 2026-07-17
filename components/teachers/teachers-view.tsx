@@ -14,13 +14,16 @@ import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import type { TeacherWithClass } from "@/lib/data/teachers";
+import type { GradebookSubject } from "@/lib/data/exams";
 
 export function TeachersView({
   teachers,
   classes,
+  subjects,
 }: {
   teachers: TeacherWithClass[];
   classes: { id: string; name: string }[];
+  subjects: GradebookSubject[];
 }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
@@ -109,6 +112,7 @@ export function TeachersView({
         onClose={() => setModalOpen(false)}
         teacher={editing}
         classes={classes}
+        subjects={subjects}
       />
     </div>
   );

@@ -34,6 +34,7 @@ export type BackupSnapshot = {
     enrollments?: unknown[];
     expense_payments?: unknown[];
     exam_scores?: unknown[];
+    teacher_subjects?: unknown[];
   };
 }
 
@@ -54,12 +55,13 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
   // by accident.
   const { data: school } = await supabase.from("schools").select("id, name").single();
 
-  const [departments, classes, teachers, subjects, students, attendance, exams, examScores, feePayments, expenses, expensePayments, invoices, receipts, academicYears, enrollments] =
+  const [departments, classes, teachers, subjects, teacherSubjects, students, attendance, exams, examScores, feePayments, expenses, expensePayments, invoices, receipts, academicYears, enrollments] =
     await Promise.all([
       supabase.from("departments").select("*"),
       supabase.from("classes").select("*"),
       supabase.from("teachers").select("*"),
       supabase.from("subjects").select("*"),
+      supabase.from("teacher_subjects").select("*"),
       supabase.from("students").select("*"),
       supabase.from("attendance").select("*"),
       supabase.from("exams").select("*"),
@@ -85,6 +87,7 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
       classes: classes.data ?? [],
       teachers: teachers.data ?? [],
       subjects: subjects.data ?? [],
+      teacher_subjects: teacherSubjects.data ?? [],
       students: students.data ?? [],
       attendance: attendance.data ?? [],
       exams: exams.data ?? [],

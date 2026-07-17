@@ -131,7 +131,21 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
     gradebook = seeded ?? [];
   }
 
-  // ---- subject + department assignments ----
+  // ---- which subjects each teacher teaches (teacher_subjects, 0036) ----
+  const subjectIdByName = new Map(gradebook.map((s) => [s.name, s.id]));
+  for (const teacher of teachers) {
+    const subjectIds = teacher.subjects
+      .map((name) => subjectIdByName.get(name))
+      .filter((id): id is string => Boolean(id));
+    if (subjectIds.length === 0) continue;
+    const { error } = await supabase.rpc("set_teacher_subjects", {
+      p_teacher_id: teacher.id,
+      p_subject_ids: subjectIds,
+    });
+    if (error) return { error: error.message };
+  }
+
+  // ---- subject "owner" (subjects.teacher_id) assignments ----
   const { data: subjects } = await supabase.from("subjects").select("id, name").is("teacher_id", null);
   for (const subject of subjects ?? []) {
     const teacher = teachers.find((t) => t.subjects.includes(subject.name));

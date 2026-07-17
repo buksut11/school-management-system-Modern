@@ -80,6 +80,9 @@ insert into public.students (id, school_id, full_name, class_id, base_fees) valu
 insert into public.subjects (id, school_id, name) values
   ('bbbb2222-0000-0000-0000-0000000000b5', '22222222-2222-2222-2222-222222222222', 'History B');
 
+insert into public.teachers (id, school_id, full_name) values
+  ('aaaa1111-0000-0000-0000-0000000007a1', '11111111-1111-1111-1111-111111111111', 'Teacher A1');
+
 -- Avatar objects for both schools (service context, as the storage API
 -- would have written them).
 insert into storage.objects (bucket_id, name) values
@@ -184,6 +187,37 @@ call must_equal('editing an exam replaces its score rows',
 call must_equal('editing an exam recomputes the grade',
   $q$ select grade from public.exams where term = 'Term 2' $q$, 'F');
 
+-- ---- 0036: teacher ↔ subject relation ----
+select public.set_teacher_subjects('aaaa1111-0000-0000-0000-0000000007a1',
+  array[(select id from public.subjects where name = 'Maths')]);
+call must_equal('set_teacher_subjects links the subject',
+  $q$ select count(*)::text from public.teacher_subjects
+      where teacher_id = 'aaaa1111-0000-0000-0000-0000000007a1' $q$, '1');
+call must_equal('the teachers.subjects snapshot follows the links',
+  $q$ select array_to_string(subjects, ',') from public.teachers
+      where id = 'aaaa1111-0000-0000-0000-0000000007a1' $q$, 'Maths');
+
+call must_fail('set_teacher_subjects rejects another school''s subject',
+  $q$ select public.set_teacher_subjects('aaaa1111-0000-0000-0000-0000000007a1',
+      array['bbbb2222-0000-0000-0000-0000000000b5'::uuid]) $q$);
+call must_fail('set_teacher_subjects rejects a teacher outside the school',
+  $q$ select public.set_teacher_subjects('99999999-9999-9999-9999-999999999999',
+      array[(select id from public.subjects where name = 'Maths')]) $q$);
+
+insert into public.subjects (name) values ('Art');
+select public.set_teacher_subjects('aaaa1111-0000-0000-0000-0000000007a1',
+  array[(select id from public.subjects where name = 'Maths'),
+        (select id from public.subjects where name = 'Art')]);
+call must_equal('set_teacher_subjects replaces the whole set',
+  $q$ select count(*)::text from public.teacher_subjects
+      where teacher_id = 'aaaa1111-0000-0000-0000-0000000007a1' $q$, '2');
+
+-- deleting a subject cascades out of the links AND refreshes the snapshot
+delete from public.subjects where name = 'Art';
+call must_equal('deleting a subject refreshes the teachers.subjects snapshot',
+  $q$ select array_to_string(subjects, ',') from public.teachers
+      where id = 'aaaa1111-0000-0000-0000-0000000007a1' $q$, 'Maths');
+
 -- ---- 0013/0014: fee overpayment guard still holds ----
 select public.record_fee_payment('aaaa1111-0000-0000-0000-0000000005a1', 60);
 call must_fail('fee payment beyond the outstanding balance is rejected',
@@ -278,6 +312,7 @@ select jsonb_build_object(
   'classes',        coalesce((select jsonb_agg(to_jsonb(x)) from public.classes x), '[]'::jsonb),
   'teachers',       coalesce((select jsonb_agg(to_jsonb(x)) from public.teachers x), '[]'::jsonb),
   'subjects',       coalesce((select jsonb_agg(to_jsonb(x)) from public.subjects x), '[]'::jsonb),
+  'teacher_subjects', coalesce((select jsonb_agg(to_jsonb(x)) from public.teacher_subjects x), '[]'::jsonb),
   'students',       coalesce((select jsonb_agg(to_jsonb(x)) from public.students x), '[]'::jsonb),
   'attendance',     coalesce((select jsonb_agg(to_jsonb(x)) from public.attendance x), '[]'::jsonb),
   'exams',          coalesce((select jsonb_agg(to_jsonb(x)) from public.exams x), '[]'::jsonb),
@@ -316,6 +351,7 @@ call must_equal('restore round-trip: students', $q$ select count(*)::text from p
 call must_equal('restore round-trip: attendance', $q$ select count(*)::text from public.attendance $q$, '1');
 call must_equal('restore round-trip: exams', $q$ select count(*)::text from public.exams $q$, '2');
 call must_equal('restore round-trip: exam scores', $q$ select count(*)::text from public.exam_scores $q$, '1');
+call must_equal('restore round-trip: teacher subjects', $q$ select count(*)::text from public.teacher_subjects $q$, '1');
 call must_equal('restore round-trip: fee payments', $q$ select count(*)::text from public.fee_payments $q$, '1');
 call must_equal('restore round-trip: expense ledger', $q$ select count(*)::text from public.expense_payments $q$, '2');
 call must_equal('restore round-trip: enrollments', $q$ select count(*)::text from public.enrollments $q$, '1');

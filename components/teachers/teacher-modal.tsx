@@ -8,7 +8,65 @@ import { Segmented } from "@/components/ui/segmented";
 import { PhotoPicker } from "@/components/ui/photo-picker";
 import { saveTeacher } from "@/lib/actions/teachers";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import type { TeacherWithClass } from "@/lib/data/teachers";
+import type { GradebookSubject } from "@/lib/data/exams";
+
+function SubjectPicker({
+  subjects,
+  initialIds,
+}: {
+  subjects: GradebookSubject[];
+  initialIds: string[];
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialIds));
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  if (subjects.length === 0) {
+    return (
+      <p className="text-[12.5px] text-text-2 bg-card-2 rounded-lg px-3 py-2">
+        No subjects yet — add them on the Subjects page first.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {[...selected].map((id) => (
+        <input key={id} type="hidden" name="subject_ids" value={id} />
+      ))}
+      <div className="flex flex-wrap gap-1.5">
+        {subjects.map((s) => {
+          const on = selected.has(s.id);
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => toggle(s.id)}
+              aria-pressed={on}
+              className={cn(
+                "px-2.5 h-8 rounded-lg text-[12.5px] font-medium border transition-colors",
+                on
+                  ? "bg-blue text-white border-blue"
+                  : "bg-input text-text-2 border-transparent hover:bg-hover"
+              )}
+            >
+              {s.name}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
 
 function SegmentedField({
   name,
@@ -33,11 +91,13 @@ export function TeacherModal({
   onClose,
   teacher,
   classes,
+  subjects,
 }: {
   open: boolean;
   onClose: () => void;
   teacher: TeacherWithClass | null;
   classes: { id: string; name: string }[];
+  subjects: GradebookSubject[];
 }) {
   const [state, formAction, pending] = useActionState(saveTeacher, undefined);
   const { show } = useToast();
@@ -96,13 +156,8 @@ export function TeacherModal({
         </div>
 
         <div>
-          <Label htmlFor="subjects">Subjects (comma separated)</Label>
-          <Input
-            id="subjects"
-            name="subjects"
-            defaultValue={teacher?.subjects.join(", ") ?? ""}
-            placeholder="Maths, Physics"
-          />
+          <Label>Subjects taught</Label>
+          <SubjectPicker subjects={subjects} initialIds={teacher?.subject_ids ?? []} />
         </div>
 
         <div>
