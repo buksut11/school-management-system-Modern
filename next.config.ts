@@ -38,11 +38,13 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   images: {
+    // Avatars are served through short-lived signed URLs since the
+    // bucket went private (migration 0034).
     remotePatterns: [
       {
         protocol: "https",
         hostname: "*.supabase.co",
-        pathname: "/storage/v1/object/public/**",
+        pathname: "/storage/v1/object/sign/**",
       },
     ],
   },

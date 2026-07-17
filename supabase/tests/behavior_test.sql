@@ -77,6 +77,12 @@ insert into public.students (id, school_id, full_name, class_id, base_fees) valu
   ('bbbb2222-0000-0000-0000-0000000005b1', '22222222-2222-2222-2222-222222222222', 'Student B1',
    'bbbb2222-0000-0000-0000-00000000c1b1', 100);
 
+-- Avatar objects for both schools (service context, as the storage API
+-- would have written them).
+insert into storage.objects (bucket_id, name) values
+  ('avatars', '11111111-1111-1111-1111-111111111111/students/photo-a.jpg'),
+  ('avatars', '22222222-2222-2222-2222-222222222222/students/photo-b.jpg');
+
 -- ===================== as Admin A =====================
 select test_login('00000000-0000-0000-0000-00000000000a');
 set role authenticated;
@@ -84,6 +90,15 @@ set role authenticated;
 -- ---- tenant isolation sanity ----
 call must_equal('RLS hides school B students from school A',
   $q$ select count(*)::text from public.students $q$, '1');
+
+-- ---- 0034: private avatars ----
+call must_equal('avatars bucket is private',
+  $q$ select public::text from storage.buckets where id = 'avatars' $q$, 'false');
+call must_equal('members see only their own school''s photo objects',
+  $q$ select count(*)::text from storage.objects where bucket_id = 'avatars' $q$, '1');
+call must_equal('the visible photo object belongs to the member''s school',
+  $q$ select (storage.foldername(name))[1] from storage.objects where bucket_id = 'avatars' $q$,
+  '11111111-1111-1111-1111-111111111111');
 
 -- ---- 0026: activity log actor stamping ----
 insert into public.activity_log (kind, message, actor_id, actor_name)

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
-import { safePhotoUrl } from "@/lib/utils";
+import { normalizePhotoPath } from "@/lib/utils";
+import { removeReplacedPhoto } from "@/lib/photo-cleanup";
 import type { FormState } from "@/lib/actions/students";
 import type { Gender, PersonStatus } from "@/lib/types/database";
 
@@ -47,13 +48,19 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
     address: str(formData, "address"),
     mobile: str(formData, "mobile"),
     subjects,
-    photo_url: safePhotoUrl(str(formData, "photo_url")),
+    photo_url: normalizePhotoPath(str(formData, "photo_url")),
     status: (str(formData, "status") ?? "active") as PersonStatus,
   };
 
   if (id) {
+    const { data: existing } = await supabase
+      .from("teachers")
+      .select("photo_url")
+      .eq("id", id)
+      .single();
     const { error } = await supabase.from("teachers").update(record).eq("id", id);
     if (error) return { error: error.message };
+    await removeReplacedPhoto(supabase, existing?.photo_url, record.photo_url);
     await assignTeacherClass(supabase, id, classId);
     await logActivity(supabase, "teacher", `Updated teacher · ${fullName}`);
   } else {
@@ -69,8 +76,14 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
 
 export async function deleteTeacher(id: string, fullName: string) {
   const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("teachers")
+    .select("photo_url")
+    .eq("id", id)
+    .single();
   const { error } = await supabase.from("teachers").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  await removeReplacedPhoto(supabase, existing?.photo_url, null);
   await logActivity(supabase, "teacher", `Removed teacher · ${fullName}`);
   revalidatePath("/", "layout");
 }

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { signPhotoUrls } from "@/lib/data/photos";
 
 export type FeeRow = {
   student_id: string;
@@ -24,17 +25,19 @@ export async function listFees(): Promise<FeeRow[]> {
     .eq("student_status", "active")
     .order("full_name");
 
-  return (data ?? []).map((r) => ({
-    student_id: r.student_id,
-    student_name: r.full_name,
-    photo_url: r.photo_url,
-    class_id: r.class_id,
-    class_name: r.class_name,
-    due: Number(r.due),
-    paid: Number(r.paid),
-    balance: Number(r.balance),
-    status: r.fee_status,
-  }));
+  return signPhotoUrls(
+    (data ?? []).map((r) => ({
+      student_id: r.student_id,
+      student_name: r.full_name,
+      photo_url: r.photo_url,
+      class_id: r.class_id,
+      class_name: r.class_name,
+      due: Number(r.due),
+      paid: Number(r.paid),
+      balance: Number(r.balance),
+      status: r.fee_status,
+    }))
+  );
 }
 
 export async function getFeeSummary(rows: FeeRow[]) {

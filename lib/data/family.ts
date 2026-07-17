@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { signPhotoUrls } from "@/lib/data/photos";
 import type { Term } from "@/lib/types/database";
 
 export type FamilyChild = {
@@ -57,7 +58,7 @@ export async function getFamilyChildren(): Promise<FamilyChild[]> {
     }
   }
 
-  return (balances ?? []).map((b) => {
+  return signPhotoUrls((balances ?? []).map((b) => {
     const a = att.get(b.student_id) ?? { present: 0, late: 0, absent: 0 };
     const e = latestExam.get(b.student_id) ?? null;
     return {
@@ -76,5 +77,5 @@ export async function getFamilyChildren(): Promise<FamilyChild[]> {
       latest_total: e?.total ?? null,
       latest_grade: e?.grade ?? null,
     };
-  });
+  }));
 }

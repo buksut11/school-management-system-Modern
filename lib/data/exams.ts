@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { signPhotoUrls } from "@/lib/data/photos";
 import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
 import type { Term } from "@/lib/types/database";
 
@@ -42,7 +43,7 @@ export async function listExams(term: Term, yearId: string | null): Promise<Exam
   if (yearId) query = query.eq("year_id", yearId);
   const { data } = await query.returns<RawExam[]>();
 
-  return (data ?? [])
+  return signPhotoUrls((data ?? [])
     .map((e) => ({
       id: e.id,
       student_id: e.student_id,
@@ -58,7 +59,7 @@ export async function listExams(term: Term, yearId: string | null): Promise<Exam
       total_score: Number(e.total_score),
       grade: e.grade,
     }))
-    .sort((a, b) => a.student_name.localeCompare(b.student_name));
+    .sort((a, b) => a.student_name.localeCompare(b.student_name)));
 }
 
 export async function listEligibleStudentsForExam(term: Term, yearId: string | null) {

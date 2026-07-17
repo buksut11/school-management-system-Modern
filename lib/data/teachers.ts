@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { signPhotoUrls } from "@/lib/data/photos";
 import type { Teacher } from "@/lib/types/database";
 
 type TeacherJoinRow = Teacher & { classes: { id: string; name: string }[] };
@@ -29,7 +30,7 @@ export async function listTeachers(): Promise<TeacherWithClass[]> {
     .order("seq", { ascending: true })
     .returns<TeacherJoinRow[]>();
 
-  return (data ?? []).map((t) => {
+  return signPhotoUrls((data ?? []).map((t) => {
     const assignedClass = t.classes?.[0] ?? null;
     return {
       id: t.id,
@@ -45,7 +46,7 @@ export async function listTeachers(): Promise<TeacherWithClass[]> {
       class_id: assignedClass?.id ?? null,
       class_name: assignedClass?.name ?? null,
     };
-  });
+  }));
 }
 
 export async function listTeacherOptions() {

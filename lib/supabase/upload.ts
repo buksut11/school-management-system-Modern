@@ -44,6 +44,15 @@ export async function uploadAvatar(file: File, folder: "students" | "teachers") 
   });
   if (error) throw new Error(error.message);
 
-  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-  return data.publicUrl;
+  // The bucket is private (migration 0034): return a short-lived signed
+  // URL so the form can preview the photo immediately. On save, the
+  // server action extracts and stores the bare storage path — display
+  // URLs are re-signed on every read.
+  const { data: signed, error: signError } = await supabase.storage
+    .from("avatars")
+    .createSignedUrl(path, 3600);
+  if (signError || !signed?.signedUrl) {
+    throw new Error(signError?.message ?? "Could not create a preview link.");
+  }
+  return signed.signedUrl;
 }
