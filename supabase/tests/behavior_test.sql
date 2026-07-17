@@ -226,6 +226,51 @@ call must_equal('fee payment issued its receipt',
   $q$ select count(*)::text from public.receipts where party_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$,
   '1');
 
+-- ---- 0037: per-year fee plans + discounts ----
+-- The sync trigger created A1's current-year plan at insert time.
+call must_equal('creating a student seeded their fee plan',
+  $q$ select (amount = 100)::text from public.student_fees
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
+
+select public.set_student_fee('aaaa1111-0000-0000-0000-0000000005a1', 120, 20, 'Sibling discount');
+call must_equal('set_student_fee stores the discount',
+  $q$ select (discount = 20)::text from public.student_fees
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
+call must_equal('the balances view shows the NET due',
+  $q$ select (due = 100)::text from public.student_fee_balances
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
+call must_equal('adjusting the current year refreshes the student default',
+  $q$ select (base_fees = 120)::text from public.students
+      where id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
+
+call must_fail('a discount larger than the fee is rejected',
+  $q$ select public.set_student_fee('aaaa1111-0000-0000-0000-0000000005a1', 100, 150) $q$);
+
+-- unrelated student edits never clobber the plan
+update public.students set address = 'Hodan District'
+where id = 'aaaa1111-0000-0000-0000-0000000005a1';
+call must_equal('unrelated student edits preserve the discount',
+  $q$ select (amount = 120 and discount = 20)::text from public.student_fees
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
+
+-- but changing the fee itself flows through (discount intact)
+update public.students set base_fees = 150
+where id = 'aaaa1111-0000-0000-0000-0000000005a1';
+call must_equal('changing base_fees syncs the year amount, keeping the discount',
+  $q$ select (amount = 150 and discount = 20)::text from public.student_fees
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
+
+-- payments run against the net fee
+select public.set_student_fee('aaaa1111-0000-0000-0000-0000000005a1', 120, 20, 'Sibling discount');
+call must_fail('payment beyond the discounted balance is rejected',
+  $q$ select public.record_fee_payment('aaaa1111-0000-0000-0000-0000000005a1', 50) $q$);
+select public.record_fee_payment('aaaa1111-0000-0000-0000-0000000005a1', 40);
+call must_fail('a discounted plan fully paid rejects further payments',
+  $q$ select public.record_fee_payment('aaaa1111-0000-0000-0000-0000000005a1', 1) $q$);
+call must_equal('the discounted student now shows as paid',
+  $q$ select fee_status from public.student_fee_balances
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'paid');
+
 -- ---- 0030: invoice overpayment guard ----
 insert into public.invoices (id, party_type, party_name, items, total)
 values ('aaaa1111-0000-0000-0000-0000000009a1', 'staff', 'Cleaner Casey',
@@ -297,6 +342,8 @@ call must_equal('staff cannot read expenses (salaries stay private)',
   $q$ select count(*)::text from public.expenses $q$, '0');
 call must_fail('staff cannot record expenses',
   $q$ insert into public.expenses (payee, amount) values ('Sneaky', 5) $q$);
+call must_fail('staff cannot adjust fee plans',
+  $q$ select public.set_student_fee('aaaa1111-0000-0000-0000-0000000005a1', 10, 0) $q$);
 
 -- ===================== 0032: atomic restore =====================
 reset role;
@@ -314,6 +361,7 @@ select jsonb_build_object(
   'subjects',       coalesce((select jsonb_agg(to_jsonb(x)) from public.subjects x), '[]'::jsonb),
   'teacher_subjects', coalesce((select jsonb_agg(to_jsonb(x)) from public.teacher_subjects x), '[]'::jsonb),
   'students',       coalesce((select jsonb_agg(to_jsonb(x)) from public.students x), '[]'::jsonb),
+  'student_fees',   coalesce((select jsonb_agg(to_jsonb(x)) from public.student_fees x), '[]'::jsonb),
   'attendance',     coalesce((select jsonb_agg(to_jsonb(x)) from public.attendance x), '[]'::jsonb),
   'exams',          coalesce((select jsonb_agg(to_jsonb(x)) from public.exams x), '[]'::jsonb),
   'exam_scores',    coalesce((select jsonb_agg(to_jsonb(x)) from public.exam_scores x), '[]'::jsonb),
@@ -342,7 +390,7 @@ call must_fail('a broken snapshot fails the restore',
 call must_equal('failed restore rolled everything back — students intact',
   $q$ select count(*)::text from public.students $q$, '1');
 call must_equal('failed restore rolled everything back — payments intact',
-  $q$ select count(*)::text from public.fee_payments $q$, '1');
+  $q$ select count(*)::text from public.fee_payments $q$, '2');
 
 -- Happy path: wipe + reload lands identical data.
 select public.restore_school_snapshot((select data from t_snap),
@@ -352,7 +400,10 @@ call must_equal('restore round-trip: attendance', $q$ select count(*)::text from
 call must_equal('restore round-trip: exams', $q$ select count(*)::text from public.exams $q$, '2');
 call must_equal('restore round-trip: exam scores', $q$ select count(*)::text from public.exam_scores $q$, '1');
 call must_equal('restore round-trip: teacher subjects', $q$ select count(*)::text from public.teacher_subjects $q$, '1');
-call must_equal('restore round-trip: fee payments', $q$ select count(*)::text from public.fee_payments $q$, '1');
+call must_equal('restore round-trip: fee payments', $q$ select count(*)::text from public.fee_payments $q$, '2');
+call must_equal('restore round-trip: fee plan kept its discount',
+  $q$ select (discount = 20)::text from public.student_fees
+      where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
 call must_equal('restore round-trip: expense ledger', $q$ select count(*)::text from public.expense_payments $q$, '2');
 call must_equal('restore round-trip: enrollments', $q$ select count(*)::text from public.enrollments $q$, '1');
 call must_equal('restore round-trip: class kept its teacher pointer',

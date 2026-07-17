@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
 import { FeesTable } from "./fees-table";
 import { FeePaymentModal } from "./fee-payment-modal";
+import { StudentFeeModal } from "./student-fee-modal";
 import { downloadCsv } from "@/lib/csv";
 import { formatMoney } from "@/lib/utils";
 import type { FeeRow } from "@/lib/data/fees";
@@ -23,6 +24,7 @@ export function FeesView({
   const [statusFilter, setStatusFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [payTarget, setPayTarget] = useState<FeeRow | null>(null);
+  const [adjustTarget, setAdjustTarget] = useState<FeeRow | null>(null);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -44,6 +46,9 @@ export function FeesView({
       filtered.map((r) => ({
         student: r.student_name,
         class: r.class_name ?? "",
+        annual_fee: r.gross,
+        discount: r.discount,
+        discount_reason: r.discount_reason ?? "",
         due: r.due,
         paid: r.paid,
         balance: r.balance,
@@ -94,9 +99,17 @@ export function FeesView({
         </Button>
       </div>
 
-      <FeesTable rows={filtered} onPay={setPayTarget} />
+      <FeesTable rows={filtered} onPay={setPayTarget} onAdjust={setAdjustTarget} />
 
       <FeePaymentModal open={!!payTarget} onClose={() => setPayTarget(null)} fee={payTarget} />
+      {adjustTarget && (
+        <StudentFeeModal
+          key={adjustTarget.student_id}
+          open
+          onClose={() => setAdjustTarget(null)}
+          fee={adjustTarget}
+        />
+      )}
     </div>
   );
 }

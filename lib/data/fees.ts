@@ -7,10 +7,14 @@ export type FeeRow = {
   photo_url: string | null;
   class_id: string | null;
   class_name: string | null;
+  // due is the year's NET fee (gross - discount) — what balances run against.
   due: number;
   paid: number;
   balance: number;
   status: "paid" | "partial" | "unpaid";
+  gross: number;
+  discount: number;
+  discount_reason: string | null;
 };
 
 export async function listFees(): Promise<FeeRow[]> {
@@ -36,6 +40,9 @@ export async function listFees(): Promise<FeeRow[]> {
       paid: Number(r.paid),
       balance: Number(r.balance),
       status: r.fee_status,
+      gross: Number(r.gross),
+      discount: Number(r.discount),
+      discount_reason: r.discount_reason,
     }))
   );
 }

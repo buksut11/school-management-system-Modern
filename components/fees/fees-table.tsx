@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleDollarSign, Printer, Receipt } from "lucide-react";
+import { CircleDollarSign, Printer, Receipt, SlidersHorizontal } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/utils";
@@ -8,7 +8,15 @@ import type { FeeRow } from "@/lib/data/fees";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
 
-export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) => void }) {
+export function FeesTable({
+  rows,
+  onPay,
+  onAdjust,
+}: {
+  rows: FeeRow[];
+  onPay: (r: FeeRow) => void;
+  onAdjust: (r: FeeRow) => void;
+}) {
   async function print(r: FeeRow) {
     const [{ buildFeeReceipt }, { printPdf }] = await Promise.all([
       import("@/lib/pdf/fee-receipt"),
@@ -44,6 +52,14 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
             </div>
             <div className="r-cell fcol-due w-24 flex-none text-[13px] text-text-2" data-label="Due">
               {formatMoney(r.due)}
+              {r.discount > 0 && (
+                <div
+                  className="text-[11px] text-green truncate"
+                  title={r.discount_reason ?? "Discount"}
+                >
+                  −{formatMoney(r.discount)}
+                </div>
+              )}
             </div>
             <div className="r-cell fcol-paid w-24 flex-none text-[13px] text-text-2" data-label="Paid">
               {formatMoney(r.paid)}
@@ -57,6 +73,14 @@ export function FeesTable({ rows, onPay }: { rows: FeeRow[]; onPay: (r: FeeRow) 
               </Badge>
             </div>
             <div className="r-actions w-48 flex-none flex justify-end gap-1.5">
+              <button
+                onClick={() => onAdjust(r)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
+                aria-label="Adjust fees"
+                title="Adjust annual fee / discount"
+              >
+                <SlidersHorizontal size={14} />
+              </button>
               <button
                 onClick={() => print(r)}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
