@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
+import { safePhotoUrl } from "@/lib/utils";
 import type { Gender, PersonStatus } from "@/lib/types/database";
 
 export type FormState = { error?: string; success?: boolean } | undefined;
@@ -27,7 +28,7 @@ export async function saveStudent(_prev: FormState, formData: FormData): Promise
     parent_mobile: str(formData, "parent_mobile"),
     class_id: str(formData, "class_id"),
     base_fees: Number(str(formData, "base_fees") ?? 0),
-    photo_url: str(formData, "photo_url"),
+    photo_url: safePhotoUrl(str(formData, "photo_url")),
     status: (str(formData, "status") ?? "active") as PersonStatus,
   };
 

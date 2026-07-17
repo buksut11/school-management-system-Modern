@@ -15,6 +15,19 @@ export function safeNext(next: string) {
   return next;
 }
 
+// Accept only photo URLs that point at this project's public avatars
+// bucket. photo_url is stored as plain text, so without this check a
+// crafted request could plant an arbitrary external URL (tracking pixel,
+// dead link, mixed content) that every viewer's browser would then fetch.
+export function safePhotoUrl(url: string | null) {
+  if (!url) return null;
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return null;
+  return url.startsWith(`${base.replace(/\/$/, "")}/storage/v1/object/public/avatars/`)
+    ? url
+    : null;
+}
+
 export function initials(name: string) {
   return name
     .trim()

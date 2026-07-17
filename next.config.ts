@@ -1,6 +1,29 @@
 import type { NextConfig } from "next";
 
+// Everything the app talks to lives on Supabase; every other origin is
+// blocked outright, so even an injected script has nowhere to send data.
+// 'unsafe-inline' is required by Next's own bootstrap scripts and the
+// theme snippet (upgrading to per-request nonces means making every
+// route dynamic — worth doing, tracked in docs/AUDIT-2026-07.md).
+// 'unsafe-eval' is dev-only: React uses eval for error overlays there.
+// frame-src blob: lets the hidden print iframe (lib/pdf/print.ts) load
+// generated PDFs.
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data: https://*.supabase.co",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "frame-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
 const securityHeaders = [
+  { key: "Content-Security-Policy", value: csp },
   // No <iframe> embedding anywhere else — blocks clickjacking.
   { key: "X-Frame-Options", value: "DENY" },
   // Stops the browser guessing content-types away from what we declare.

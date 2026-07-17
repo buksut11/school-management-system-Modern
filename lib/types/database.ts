@@ -323,6 +323,23 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["expenses"]["Row"]>;
         Relationships: [];
       };
+      expense_payments: {
+        Row: {
+          id: string;
+          expense_id: string;
+          school_id: string;
+          amount: number;
+          method: PaymentMethod;
+          note: string | null;
+          paid_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["expense_payments"]["Row"]> & {
+          expense_id: string;
+          amount: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["expense_payments"]["Row"]>;
+        Relationships: [];
+      };
       invoices: {
         Row: {
           id: string;
@@ -472,6 +489,28 @@ export interface Database {
           paid: number;
           balance: number;
         };
+      };
+      record_invoice_payment: {
+        Args: {
+          p_invoice_id: string;
+          p_amount: number;
+          p_method?: PaymentMethod;
+          p_note?: string | null;
+        };
+        Returns: { party_name: string; paid: number; balance: number };
+      };
+      record_expense_payment: {
+        Args: {
+          p_expense_id: string;
+          p_amount: number;
+          p_method?: PaymentMethod | null;
+          p_note?: string | null;
+        };
+        Returns: { payee: string; paid: number; remaining: number };
+      };
+      restore_school_snapshot: {
+        Args: { p_data: unknown; p_school_id?: string | null };
+        Returns: Record<string, number>;
       };
     };
   };
