@@ -17,6 +17,7 @@ import {
   Wallet,
   Receipt,
   FileText,
+  MessageSquare,
   BarChart3,
   Settings,
 } from "lucide-react";
@@ -38,6 +39,7 @@ const NAV = [
   { href: "/fees", label: "Fees", icon: Wallet, badgeKey: "fees" as const },
   { href: "/expenses", label: "Expenses", icon: Receipt, badgeKey: "expenses" as const },
   { href: "/invoices", label: "Invoices & Receipts", icon: FileText },
+  { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Data & Settings", icon: Settings },
 ];
@@ -48,7 +50,7 @@ const ALL = NAV.map((n) => n.href);
 const ROLE_NAV: Record<Role, string[]> = {
   admin: ALL,
   staff: ALL.filter((h) => h !== "/expenses"),
-  finance: ["/", "/students", "/classes", "/fees", "/expenses", "/invoices", "/reports"],
+  finance: ["/", "/students", "/classes", "/fees", "/expenses", "/invoices", "/messages", "/reports"],
   teacher: [
     "/",
     "/students",

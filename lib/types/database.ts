@@ -15,6 +15,8 @@ export type ExpenseCategory =
   | "transport"
   | "other";
 export type PartyType = "student" | "teacher" | "staff";
+export type NotificationKind = "fee_reminder" | "absence" | "general";
+export type NotificationStatus = "pending" | "sent" | "failed";
 export interface InvoiceItem {
   description: string;
   qty: number;
@@ -281,6 +283,30 @@ export interface Database {
           year_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["enrollments"]["Row"]>;
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          school_id: string;
+          student_id: string | null;
+          kind: NotificationKind;
+          recipient: string;
+          body: string;
+          status: NotificationStatus;
+          error: string | null;
+          ref_date: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+          sent_at: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["notifications"]["Row"]> & {
+          kind: NotificationKind;
+          recipient: string;
+          body: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
         Relationships: [];
       };
       timetable_slots: {
@@ -679,6 +705,14 @@ export interface Database {
           p_teacher_id?: string | null;
         };
         Returns: { saved: boolean };
+      };
+      queue_fee_reminders: {
+        Args: { p_template?: string | null };
+        Returns: { queued: number; no_phone: number; already_pending: number };
+      };
+      queue_absence_alerts: {
+        Args: { p_date?: string; p_template?: string | null };
+        Returns: { queued: number; no_phone: number; already_sent: number };
       };
     };
   };

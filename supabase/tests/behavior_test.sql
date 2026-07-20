@@ -374,6 +374,39 @@ call must_equal('a grid edit keeps the surviving period''s lessons',
 call must_equal('a dropped period is removed from the grid',
   $q$ select count(*)::text from public.timetable_slots $q$, '1');
 
+-- ---- 0040: notifications ----
+-- A2 (owes their whole fee) gets a parent number; A1 is settled.
+update public.students set parent_mobile = '0617770001'
+where id = 'aaaa1111-0000-0000-0000-0000000005a2';
+
+select public.queue_fee_reminders(null);
+call must_equal('one reminder queued for the student who owes',
+  $q$ select count(*)::text from public.notifications where kind = 'fee_reminder' $q$, '1');
+call must_equal('the reminder is rendered with name, balance and school',
+  $q$ select (body like '%Student A2%' and body like '%100.00%' and body like '%School A%')::text
+      from public.notifications where kind = 'fee_reminder' $q$, 'true');
+call must_equal('the reminder targets the parent''s number',
+  $q$ select recipient from public.notifications where kind = 'fee_reminder' $q$, '0617770001');
+
+select public.queue_fee_reminders(null);
+call must_equal('a pending reminder isn''t duplicated',
+  $q$ select count(*)::text from public.notifications where kind = 'fee_reminder' $q$, '1');
+
+-- absence alerts: A2 misses today
+insert into public.attendance (student_id, class_id, date, status)
+values ('aaaa1111-0000-0000-0000-0000000005a2', 'aaaa1111-0000-0000-0000-00000000c1a1',
+        current_date, 'absent');
+select public.queue_absence_alerts(current_date, null);
+call must_equal('one absence alert queued for the absent student',
+  $q$ select count(*)::text from public.notifications where kind = 'absence' $q$, '1');
+select public.queue_absence_alerts(current_date, null);
+call must_equal('an absence day is only ever alerted once',
+  $q$ select count(*)::text from public.notifications where kind = 'absence' $q$, '1');
+
+update public.notifications set status = 'sent', sent_at = now() where status = 'pending';
+call must_equal('pending messages can be marked sent',
+  $q$ select count(*)::text from public.notifications where status = 'pending' $q$, '0');
+
 -- ---- 0030: invoice overpayment guard ----
 insert into public.invoices (id, party_type, party_name, items, total)
 values ('aaaa1111-0000-0000-0000-0000000009a1', 'staff', 'Cleaner Casey',
@@ -467,6 +500,7 @@ select jsonb_build_object(
   'teacher_subjects', coalesce((select jsonb_agg(to_jsonb(x)) from public.teacher_subjects x), '[]'::jsonb),
   'timetable_slots', coalesce((select jsonb_agg(to_jsonb(x)) from public.timetable_slots x), '[]'::jsonb),
   'lessons',        coalesce((select jsonb_agg(to_jsonb(x)) from public.lessons x), '[]'::jsonb),
+  'notifications',  coalesce((select jsonb_agg(to_jsonb(x)) from public.notifications x), '[]'::jsonb),
   'students',       coalesce((select jsonb_agg(to_jsonb(x)) from public.students x), '[]'::jsonb),
   'student_fees',   coalesce((select jsonb_agg(to_jsonb(x)) from public.student_fees x), '[]'::jsonb),
   'fee_installments', coalesce((select jsonb_agg(to_jsonb(x)) from public.fee_installments x), '[]'::jsonb),
@@ -504,7 +538,9 @@ call must_equal('failed restore rolled everything back — payments intact',
 select public.restore_school_snapshot((select data from t_snap),
   '11111111-1111-1111-1111-111111111111');
 call must_equal('restore round-trip: students', $q$ select count(*)::text from public.students $q$, '2');
-call must_equal('restore round-trip: attendance', $q$ select count(*)::text from public.attendance $q$, '1');
+call must_equal('restore round-trip: attendance', $q$ select count(*)::text from public.attendance $q$, '2');
+call must_equal('restore round-trip: notifications',
+  $q$ select count(*)::text from public.notifications $q$, '2');
 call must_equal('restore round-trip: exams', $q$ select count(*)::text from public.exams $q$, '2');
 call must_equal('restore round-trip: exam scores', $q$ select count(*)::text from public.exam_scores $q$, '1');
 call must_equal('restore round-trip: teacher subjects', $q$ select count(*)::text from public.teacher_subjects $q$, '1');
