@@ -4,7 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 // /reset-password must stay reachable while signed out: the recovery
 // email's link carries its tokens in the URL fragment, which the browser
 // never sends to the server — the page picks them up client-side.
-const PUBLIC_PATHS = ["/login", "/auth", "/reset-password"];
+// The cron delivery endpoint authenticates itself with CRON_SECRET, not
+// a session — redirecting it to /login would break schedulers.
+const PUBLIC_PATHS = ["/login", "/auth", "/reset-password", "/api/notifications/send"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

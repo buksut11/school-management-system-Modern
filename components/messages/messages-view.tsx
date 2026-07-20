@@ -1,13 +1,18 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Wallet, CalendarX, Download, CheckCheck, Trash2 } from "lucide-react";
+import { Wallet, CalendarX, Download, CheckCheck, Trash2, Send, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Segmented } from "@/components/ui/segmented";
 import { ComposeModal } from "./compose-modal";
-import { markNotificationsSent, deleteNotification } from "@/lib/actions/messages";
+import {
+  markNotificationsSent,
+  deleteNotification,
+  sendPendingNow,
+  retryFailedNotifications,
+} from "@/lib/actions/messages";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
@@ -17,10 +22,16 @@ import type { NotificationRow } from "@/lib/data/messages";
 const STATUS_TONE = { pending: "orange", sent: "green", failed: "red" } as const;
 const KIND_LABEL = { fee_reminder: "Fee reminder", absence: "Absence", general: "General" } as const;
 
-export function MessagesView({ notifications }: { notifications: NotificationRow[] }) {
+export function MessagesView({
+  notifications,
+  gateway,
+}: {
+  notifications: NotificationRow[];
+  gateway: string | null;
+}) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [compose, setCompose] = useState<"fees" | "absence" | null>(null);
-  const [, startTransition] = useTransition();
+  const [sending, startTransition] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
 
@@ -29,6 +40,28 @@ export function MessagesView({ notifications }: { notifications: NotificationRow
     [notifications, statusFilter]
   );
   const pending = notifications.filter((n) => n.status === "pending");
+  const failedCount = notifications.filter((n) => n.status === "failed").length;
+
+  function sendNow() {
+    startTransition(async () => {
+      const result = await sendPendingNow();
+      if (result.error) {
+        show(result.error);
+        return;
+      }
+      const parts = [`${result.sent} sent`];
+      if (result.failed) parts.push(`${result.failed} failed`);
+      if (result.remaining) parts.push(`${result.remaining} remaining — send again`);
+      show(parts.join(" · "));
+    });
+  }
+
+  function retryFailed() {
+    startTransition(async () => {
+      const result = await retryFailedNotifications();
+      show(result.error ?? `${result.retried} message${result.retried === 1 ? "" : "s"} queued again`);
+    });
+  }
 
   function exportPending() {
     downloadCsv(
@@ -78,6 +111,11 @@ export function MessagesView({ notifications }: { notifications: NotificationRow
             { value: "sent", label: "Sent" },
           ]}
         />
+        {pending.length > 0 && gateway && (
+          <Button size="md" onClick={sendNow} disabled={sending}>
+            <Send size={15} /> {sending ? "Sending…" : `Send via ${gateway}`}
+          </Button>
+        )}
         {pending.length > 0 && (
           <>
             <Button variant="secondary" size="md" onClick={exportPending}>
@@ -88,12 +126,17 @@ export function MessagesView({ notifications }: { notifications: NotificationRow
             </Button>
           </>
         )}
+        {failedCount > 0 && (
+          <Button variant="secondary" size="md" onClick={retryFailed} disabled={sending}>
+            <RotateCcw size={15} /> Retry failed ({failedCount})
+          </Button>
+        )}
       </div>
 
       <p className="text-[12.5px] text-text-2">
-        Messages queue here with the parent&apos;s number and the final text. Export the pending
-        list as CSV for any bulk-SMS portal (Hormuud, Somtel, …), send it there, then mark them
-        sent — or connect a gateway worker to deliver them automatically.
+        {gateway
+          ? `Messages queue here with the parent's number and the final text, then deliver through ${gateway} — press Send, or let the scheduled endpoint deliver them automatically.`
+          : "Messages queue here with the parent's number and the final text. Export the pending list as CSV for any bulk-SMS portal (Hormuud, Somtel, …), send it there, then mark them sent — or configure an SMS gateway (SMS_PROVIDER) to deliver directly."}
       </p>
 
       {filtered.length === 0 ? (
