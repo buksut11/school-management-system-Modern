@@ -167,6 +167,49 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
     if (error) return { error: error.message };
   }
 
+  // ---- timetable (period grid + a clash-free weekly rotation) ----
+  const { data: slots, error: slotError } = await supabase
+    .from("timetable_slots")
+    .insert([
+      { name: "Period 1", starts_at: "07:30", ends_at: "08:15" },
+      { name: "Period 2", starts_at: "08:20", ends_at: "09:05" },
+      { name: "Period 3", starts_at: "09:25", ends_at: "10:10" },
+      { name: "Period 4", starts_at: "10:15", ends_at: "11:00" },
+    ])
+    .select("id");
+  if (slotError) return { error: slotError.message };
+
+  const teacherBySubject = new Map<string, string>();
+  for (const s of gradebook) {
+    const teacher = teachers.find((t) => t.subjects.includes(s.name));
+    if (teacher) teacherBySubject.set(s.id, teacher.id);
+  }
+  const SCHOOL_DAYS = [5, 6, 0, 1, 2, 3]; // Sat–Thu week
+  const busy = new Set<string>();
+  const lessonRows = [];
+  for (let ci = 0; ci < classes.length; ci++) {
+    for (let di = 0; di < SCHOOL_DAYS.length; di++) {
+      for (let si = 0; si < (slots ?? []).length; si++) {
+        const subject = gradebook[(ci + di + si) % gradebook.length];
+        const slotId = slots![si].id;
+        const day = SCHOOL_DAYS[di];
+        // never double-book a teacher: leave the cell unassigned instead
+        let teacherId = teacherBySubject.get(subject.id) ?? null;
+        if (teacherId && busy.has(`${teacherId}:${day}:${slotId}`)) teacherId = null;
+        if (teacherId) busy.add(`${teacherId}:${day}:${slotId}`);
+        lessonRows.push({
+          class_id: classes[ci].id,
+          slot_id: slotId,
+          day,
+          subject_id: subject.id,
+          teacher_id: teacherId,
+        });
+      }
+    }
+  }
+  const { error: lessonError } = await supabase.from("lessons").insert(lessonRows);
+  if (lessonError) return { error: lessonError.message };
+
   // ---- students ----
   const fallbackClass = classes[0];
   const studentRecords = DEMO_STUDENTS.map((s, i) => {
@@ -266,6 +309,6 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
   revalidatePath("/", "layout");
   return {
     success: true,
-    summary: `${teachers.length} teachers, ${students.length} students, ${attendanceRecords.length} attendance records, ${students.length} exam records, ${feeRecords.length} fee payments and ${DEMO_EXPENSES.length} expenses`,
+    summary: `${teachers.length} teachers, ${students.length} students, ${attendanceRecords.length} attendance records, ${students.length} exam records, ${feeRecords.length} fee payments, ${DEMO_EXPENSES.length} expenses and a weekly timetable`,
   };
 }

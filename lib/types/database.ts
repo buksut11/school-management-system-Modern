@@ -283,6 +283,45 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["enrollments"]["Row"]>;
         Relationships: [];
       };
+      timetable_slots: {
+        Row: {
+          id: string;
+          school_id: string;
+          name: string;
+          starts_at: string;
+          ends_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["timetable_slots"]["Row"]> & {
+          name: string;
+          starts_at: string;
+          ends_at: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["timetable_slots"]["Row"]>;
+        Relationships: [];
+      };
+      lessons: {
+        Row: {
+          id: string;
+          school_id: string;
+          class_id: string;
+          slot_id: string;
+          day: number;
+          subject_id: string;
+          teacher_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["lessons"]["Row"]> & {
+          class_id: string;
+          slot_id: string;
+          day: number;
+          subject_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["lessons"]["Row"]>;
+        Relationships: [];
+      };
       fee_installments: {
         Row: {
           id: string;
@@ -624,6 +663,22 @@ export interface Database {
           p_items: { name: string; due_date: string; percent: number }[];
         };
         Returns: { count: number; total_percent: number };
+      };
+      set_timetable_slots: {
+        Args: {
+          p_items: { id?: string; name: string; starts_at: string; ends_at: string }[];
+        };
+        Returns: { count: number };
+      };
+      save_lesson: {
+        Args: {
+          p_class_id: string;
+          p_day: number;
+          p_slot_id: string;
+          p_subject_id: string;
+          p_teacher_id?: string | null;
+        };
+        Returns: { saved: boolean };
       };
     };
   };

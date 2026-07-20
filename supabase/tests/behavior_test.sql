@@ -310,6 +310,70 @@ select public.set_fee_installments('aaaa1111-0000-0000-0000-000000000001',
 call must_equal('the schedule replaces wholesale',
   $q$ select count(*)::text from public.fee_installments $q$, '2');
 
+-- ---- 0039: timetable ----
+select public.set_timetable_slots(jsonb_build_array(
+  jsonb_build_object('name', 'Period 1', 'starts_at', '07:30', 'ends_at', '08:15'),
+  jsonb_build_object('name', 'Period 2', 'starts_at', '08:20', 'ends_at', '09:05')));
+call must_equal('the period grid is stored',
+  $q$ select count(*)::text from public.timetable_slots $q$, '2');
+
+select public.save_lesson(
+  'aaaa1111-0000-0000-0000-00000000c1a1', 0,
+  (select id from public.timetable_slots where name = 'Period 1'),
+  (select id from public.subjects where name = 'Maths'),
+  'aaaa1111-0000-0000-0000-0000000007a1');
+call must_equal('a lesson lands in the grid',
+  $q$ select count(*)::text from public.lessons $q$, '1');
+
+-- saving the same cell edits it (no duplicate)
+select public.save_lesson(
+  'aaaa1111-0000-0000-0000-00000000c1a1', 0,
+  (select id from public.timetable_slots where name = 'Period 1'),
+  (select id from public.subjects where name = 'Maths'),
+  null);
+call must_equal('editing a cell replaces the lesson instead of duplicating',
+  $q$ select (count(*) = 1 and bool_and(teacher_id is null))::text from public.lessons $q$, 'true');
+
+-- put the teacher back for the clash test
+select public.save_lesson(
+  'aaaa1111-0000-0000-0000-00000000c1a1', 0,
+  (select id from public.timetable_slots where name = 'Period 1'),
+  (select id from public.subjects where name = 'Maths'),
+  'aaaa1111-0000-0000-0000-0000000007a1');
+
+insert into public.classes (id, name) values
+  ('aaaa1111-0000-0000-0000-00000000c1a2', 'Form 1B');
+call must_fail('a teacher can''t be in two classrooms at once',
+  $q$ select public.save_lesson(
+      'aaaa1111-0000-0000-0000-00000000c1a2', 0,
+      (select id from public.timetable_slots where name = 'Period 1'),
+      (select id from public.subjects where name = 'Maths'),
+      'aaaa1111-0000-0000-0000-0000000007a1') $q$);
+select public.save_lesson(
+  'aaaa1111-0000-0000-0000-00000000c1a2', 0,
+  (select id from public.timetable_slots where name = 'Period 2'),
+  (select id from public.subjects where name = 'Maths'),
+  'aaaa1111-0000-0000-0000-0000000007a1');
+call must_equal('the same teacher in a different period is fine',
+  $q$ select count(*)::text from public.lessons $q$, '2');
+
+call must_fail('a lesson cannot reference another school''s class',
+  $q$ insert into public.lessons (class_id, slot_id, day, subject_id)
+      values ('bbbb2222-0000-0000-0000-00000000c1b1',
+              (select id from public.timetable_slots where name = 'Period 1'),
+              0,
+              (select id from public.subjects where name = 'Maths')) $q$);
+
+-- renaming a kept period preserves its lessons; a dropped period takes
+-- its lessons with it
+select public.set_timetable_slots(jsonb_build_array(
+  jsonb_build_object('id', (select id from public.timetable_slots where name = 'Period 1'),
+                     'name', 'First Period', 'starts_at', '07:30', 'ends_at', '08:15')));
+call must_equal('a grid edit keeps the surviving period''s lessons',
+  $q$ select count(*)::text from public.lessons $q$, '1');
+call must_equal('a dropped period is removed from the grid',
+  $q$ select count(*)::text from public.timetable_slots $q$, '1');
+
 -- ---- 0030: invoice overpayment guard ----
 insert into public.invoices (id, party_type, party_name, items, total)
 values ('aaaa1111-0000-0000-0000-0000000009a1', 'staff', 'Cleaner Casey',
@@ -401,6 +465,8 @@ select jsonb_build_object(
   'teachers',       coalesce((select jsonb_agg(to_jsonb(x)) from public.teachers x), '[]'::jsonb),
   'subjects',       coalesce((select jsonb_agg(to_jsonb(x)) from public.subjects x), '[]'::jsonb),
   'teacher_subjects', coalesce((select jsonb_agg(to_jsonb(x)) from public.teacher_subjects x), '[]'::jsonb),
+  'timetable_slots', coalesce((select jsonb_agg(to_jsonb(x)) from public.timetable_slots x), '[]'::jsonb),
+  'lessons',        coalesce((select jsonb_agg(to_jsonb(x)) from public.lessons x), '[]'::jsonb),
   'students',       coalesce((select jsonb_agg(to_jsonb(x)) from public.students x), '[]'::jsonb),
   'student_fees',   coalesce((select jsonb_agg(to_jsonb(x)) from public.student_fees x), '[]'::jsonb),
   'fee_installments', coalesce((select jsonb_agg(to_jsonb(x)) from public.fee_installments x), '[]'::jsonb),
@@ -448,6 +514,10 @@ call must_equal('restore round-trip: fee plan kept its discount',
       where student_id = 'aaaa1111-0000-0000-0000-0000000005a1' $q$, 'true');
 call must_equal('restore round-trip: fee schedule',
   $q$ select count(*)::text from public.fee_installments $q$, '2');
+call must_equal('restore round-trip: period grid',
+  $q$ select count(*)::text from public.timetable_slots $q$, '1');
+call must_equal('restore round-trip: lessons',
+  $q$ select count(*)::text from public.lessons $q$, '1');
 call must_equal('restore round-trip: expense ledger', $q$ select count(*)::text from public.expense_payments $q$, '2');
 call must_equal('restore round-trip: enrollments', $q$ select count(*)::text from public.enrollments $q$, '2');
 call must_equal('restore round-trip: class kept its teacher pointer',
