@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
+import { normalizePhotoPath } from "@/lib/utils";
+import { removeReplacedPhoto } from "@/lib/photo-cleanup";
 import type { Gender, PersonStatus } from "@/lib/types/database";
 
 export type FormState = { error?: string; success?: boolean } | undefined;
@@ -27,13 +29,21 @@ export async function saveStudent(_prev: FormState, formData: FormData): Promise
     parent_mobile: str(formData, "parent_mobile"),
     class_id: str(formData, "class_id"),
     base_fees: Number(str(formData, "base_fees") ?? 0),
-    photo_url: str(formData, "photo_url"),
+    // Forms hold display (signed) URLs; only the bare storage path is
+    // persisted — see normalizePhotoPath.
+    photo_url: normalizePhotoPath(str(formData, "photo_url")),
     status: (str(formData, "status") ?? "active") as PersonStatus,
   };
 
   if (id) {
+    const { data: existing } = await supabase
+      .from("students")
+      .select("photo_url")
+      .eq("id", id)
+      .single();
     const { error } = await supabase.from("students").update(record).eq("id", id);
     if (error) return { error: error.message };
+    await removeReplacedPhoto(supabase, existing?.photo_url, record.photo_url);
     await logActivity(supabase, "student", `Updated student · ${fullName}`);
   } else {
     const { error } = await supabase.from("students").insert(record);
@@ -47,6 +57,11 @@ export async function saveStudent(_prev: FormState, formData: FormData): Promise
 
 export async function deleteStudent(id: string, fullName: string): Promise<FormState> {
   const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("students")
+    .select("photo_url")
+    .eq("id", id)
+    .single();
   const { error } = await supabase.from("students").delete().eq("id", id);
   if (error) {
     // 23503 = foreign key violation. Since migration 0013 payment history
@@ -59,6 +74,7 @@ export async function deleteStudent(id: string, fullName: string): Promise<FormS
     }
     return { error: error.message };
   }
+  await removeReplacedPhoto(supabase, existing?.photo_url, null);
   await logActivity(supabase, "student", `Removed student · ${fullName}`);
   revalidatePath("/", "layout");
   return { success: true };

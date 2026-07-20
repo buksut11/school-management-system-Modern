@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
+import { normalizePhotoPath } from "@/lib/utils";
+import { removeReplacedPhoto } from "@/lib/photo-cleanup";
 import type { FormState } from "@/lib/actions/students";
 import type { Gender, PersonStatus } from "@/lib/types/database";
 
@@ -33,11 +35,14 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
   if (!fullName) return { error: "Teacher name is required." };
 
   const supabase = await createClient();
-  const subjects = (str(formData, "subjects") ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
   const classId = str(formData, "class_id");
+  // Subjects are chosen from the school's subject list now (migration
+  // 0036) — the form posts one subject_ids value per checked subject.
+  // teachers.subjects stays as a snapshot the database maintains from
+  // these links, so it's never set here.
+  const subjectIds = formData
+    .getAll("subject_ids")
+    .filter((v): v is string => typeof v === "string" && v.trim() !== "");
 
   const record = {
     full_name: fullName,
@@ -45,21 +50,38 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
     gender: str(formData, "gender") as Gender | null,
     address: str(formData, "address"),
     mobile: str(formData, "mobile"),
-    subjects,
-    photo_url: str(formData, "photo_url"),
+    photo_url: normalizePhotoPath(str(formData, "photo_url")),
     status: (str(formData, "status") ?? "active") as PersonStatus,
   };
 
+  let teacherId = id;
   if (id) {
+    const { data: existing } = await supabase
+      .from("teachers")
+      .select("photo_url")
+      .eq("id", id)
+      .single();
     const { error } = await supabase.from("teachers").update(record).eq("id", id);
     if (error) return { error: error.message };
+    await removeReplacedPhoto(supabase, existing?.photo_url, record.photo_url);
     await assignTeacherClass(supabase, id, classId);
     await logActivity(supabase, "teacher", `Updated teacher · ${fullName}`);
   } else {
     const { data: inserted, error } = await supabase.from("teachers").insert(record).select("id").single();
     if (error) return { error: error.message };
+    teacherId = inserted.id;
     await assignTeacherClass(supabase, inserted.id, classId);
     await logActivity(supabase, "teacher", `New teacher added · ${fullName}`);
+  }
+
+  if (teacherId) {
+    // Replaces the teacher's subject links atomically and refreshes the
+    // teachers.subjects snapshot via trigger.
+    const { error } = await supabase.rpc("set_teacher_subjects", {
+      p_teacher_id: teacherId,
+      p_subject_ids: subjectIds,
+    });
+    if (error) return { error: error.message };
   }
 
   revalidatePath("/", "layout");
@@ -68,8 +90,14 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
 
 export async function deleteTeacher(id: string, fullName: string) {
   const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("teachers")
+    .select("photo_url")
+    .eq("id", id)
+    .single();
   const { error } = await supabase.from("teachers").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  await removeReplacedPhoto(supabase, existing?.photo_url, null);
   await logActivity(supabase, "teacher", `Removed teacher · ${fullName}`);
   revalidatePath("/", "layout");
 }

@@ -119,35 +119,22 @@ export async function recordInvoicePayment(_prev: FormState, formData: FormData)
   if (!(amount > 0)) return { error: "Enter an amount greater than zero." };
 
   const supabase = await createClient();
-  const { data: invoice } = await supabase
-    .from("invoices")
-    .select(
-      "party_type, party_id, party_name, party_detail, party_phone, party_address, parent_name, parent_phone"
-    )
-    .eq("id", invoiceId)
-    .single();
-  if (!invoice) return { error: "Invoice not found." };
-
-  const { error } = await supabase.from("receipts").insert({
-    invoice_id: invoiceId,
-    party_type: invoice.party_type,
-    party_id: invoice.party_id,
-    party_name: invoice.party_name,
-    party_detail: invoice.party_detail,
-    party_phone: invoice.party_phone,
-    party_address: invoice.party_address,
-    parent_name: invoice.parent_name,
-    parent_phone: invoice.parent_phone,
-    amount,
-    method: (str(formData, "method") ?? "cash") as PaymentMethod,
-    note: str(formData, "note"),
+  // Payment + snapshot receipt happen atomically in the database
+  // (migration 0030): a per-invoice lock and a balance check against the
+  // receipts ledger stop concurrent submissions from overpaying the
+  // invoice — the function raises a readable message instead.
+  const { data, error } = await supabase.rpc("record_invoice_payment", {
+    p_invoice_id: invoiceId,
+    p_amount: amount,
+    p_method: (str(formData, "method") ?? "cash") as PaymentMethod,
+    p_note: str(formData, "note"),
   });
   if (error) return { error: error.message };
 
   await logActivity(
     supabase,
     "receipt",
-    `Invoice payment · ${invoice.party_name} · $${amount}`
+    `Invoice payment · ${data?.party_name ?? "party"} · $${amount}`
   );
   revalidatePath("/", "layout");
   return { success: true };

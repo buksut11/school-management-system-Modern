@@ -1,28 +1,34 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Download } from "lucide-react";
+import { Search, Download, CalendarClock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
 import { FeesTable } from "./fees-table";
 import { FeePaymentModal } from "./fee-payment-modal";
+import { StudentFeeModal } from "./student-fee-modal";
+import { InstallmentsModal } from "./installments-modal";
 import { downloadCsv } from "@/lib/csv";
 import { formatMoney } from "@/lib/utils";
-import type { FeeRow } from "@/lib/data/fees";
+import type { FeeRow, FeeInstallment } from "@/lib/data/fees";
 
 export function FeesView({
   rows,
   classes,
+  schedule,
 }: {
   rows: FeeRow[];
   classes: { id: string; name: string }[];
+  schedule: { year: { id: string; name: string } | null; installments: FeeInstallment[] };
 }) {
   const [classFilter, setClassFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [payTarget, setPayTarget] = useState<FeeRow | null>(null);
+  const [adjustTarget, setAdjustTarget] = useState<FeeRow | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -44,9 +50,13 @@ export function FeesView({
       filtered.map((r) => ({
         student: r.student_name,
         class: r.class_name ?? "",
+        annual_fee: r.gross,
+        discount: r.discount,
+        discount_reason: r.discount_reason ?? "",
         due: r.due,
         paid: r.paid,
         balance: r.balance,
+        overdue: r.overdue,
         status: r.status,
       }))
     );
@@ -89,14 +99,35 @@ export function FeesView({
             className="pl-9"
           />
         </div>
+        {schedule.year && (
+          <Button variant="secondary" size="md" onClick={() => setScheduleOpen(true)}>
+            <CalendarClock size={15} /> Schedule
+          </Button>
+        )}
         <Button variant="secondary" size="md" onClick={exportCsv}>
           <Download size={15} /> Export
         </Button>
       </div>
 
-      <FeesTable rows={filtered} onPay={setPayTarget} />
+      <FeesTable rows={filtered} onPay={setPayTarget} onAdjust={setAdjustTarget} />
 
       <FeePaymentModal open={!!payTarget} onClose={() => setPayTarget(null)} fee={payTarget} />
+      {adjustTarget && (
+        <StudentFeeModal
+          key={adjustTarget.student_id}
+          open
+          onClose={() => setAdjustTarget(null)}
+          fee={adjustTarget}
+        />
+      )}
+      {scheduleOpen && schedule.year && (
+        <InstallmentsModal
+          open
+          onClose={() => setScheduleOpen(false)}
+          year={schedule.year}
+          installments={schedule.installments}
+        />
+      )}
     </div>
   );
 }

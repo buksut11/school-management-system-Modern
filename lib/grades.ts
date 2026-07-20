@@ -1,12 +1,10 @@
-import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
-
-export function computeTotal(subjectScores: Record<string, number>, testScore: number) {
-  const subjectTotal = GRADEBOOK_SUBJECTS.reduce((sum, subj) => sum + (Number(subjectScores[subj]) || 0), 0);
-  return subjectTotal + (Number(testScore) || 0);
-}
-
-export function computeGrade(total: number) {
-  const max = GRADEBOOK_SUBJECTS.length * 100 + 100;
+// Grade letters mirror public.exam_grade() in the database (migration
+// 0035), which is the authority — save_exam computes and stores each
+// exam's grade there. This copy exists for DISPLAY math over
+// already-stored totals (e.g. the academic-records average), where a
+// round trip per row would be wasteful.
+export function gradeForTotal(total: number, subjectCount: number) {
+  const max = 100 * (Math.max(subjectCount, 0) + 1);
   const pct = (total / max) * 100;
   if (pct >= 80) return "A";
   if (pct >= 70) return "B";

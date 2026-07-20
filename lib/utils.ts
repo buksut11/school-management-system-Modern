@@ -15,6 +15,36 @@ export function safeNext(next: string) {
   return next;
 }
 
+// A bare avatars-bucket storage path: <school uuid>/students|teachers/<file>.
+// This is what photo_url columns store since the bucket went private
+// (migration 0034) — display URLs are short-lived signatures minted from
+// the path at read time.
+const PHOTO_PATH_RE = /^[0-9a-f-]{36}\/(students|teachers)\/[^/?#]+$/i;
+
+export function isPhotoPath(value: string | null): value is string {
+  return !!value && PHOTO_PATH_RE.test(value);
+}
+
+// Normalize whatever a form posted back into a storable path, or null.
+// Forms legitimately hold three shapes: the bare path, a signed display
+// URL (what the data layer/upload helper hands out), or a legacy public
+// URL from before 0034. Anything else — an external URL a crafted
+// request tried to plant — is dropped.
+export function normalizePhotoPath(value: string | null): string | null {
+  if (!value) return null;
+  if (PHOTO_PATH_RE.test(value)) return value;
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return null;
+  for (const kind of ["sign", "public"]) {
+    const prefix = `${base.replace(/\/$/, "")}/storage/v1/object/${kind}/avatars/`;
+    if (value.startsWith(prefix)) {
+      const path = value.slice(prefix.length).split("?")[0];
+      return PHOTO_PATH_RE.test(path) ? path : null;
+    }
+  }
+  return null;
+}
+
 export function initials(name: string) {
   return name
     .trim()

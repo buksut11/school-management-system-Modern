@@ -3,9 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
-import { computeTotal, computeGrade } from "@/lib/grades";
-import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
 import type { Gender, PaymentMethod, AttendanceStatus, ExpenseCategory } from "@/lib/types/database";
+
+// Seeded for schools that don't have a subject list yet (the gradebook
+// is the subjects table since migration 0035).
+const DEFAULT_SUBJECTS = [
+  "Somali",
+  "English",
+  "Chemistry",
+  "Physics",
+  "Maths",
+  "Arabic",
+  "Geography",
+];
 
 const DEMO_TEACHERS: {
   full_name: string;
@@ -110,7 +120,32 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
     if (error) return { error: error.message };
   }
 
-  // ---- subject + department assignments ----
+  // ---- gradebook subjects (seed defaults if the school has none) ----
+  let { data: gradebook } = await supabase.from("subjects").select("id, name").order("seq");
+  if (!gradebook || gradebook.length === 0) {
+    const { data: seeded, error: subjectSeedError } = await supabase
+      .from("subjects")
+      .insert(DEFAULT_SUBJECTS.map((name) => ({ name })))
+      .select("id, name");
+    if (subjectSeedError) return { error: subjectSeedError.message };
+    gradebook = seeded ?? [];
+  }
+
+  // ---- which subjects each teacher teaches (teacher_subjects, 0036) ----
+  const subjectIdByName = new Map(gradebook.map((s) => [s.name, s.id]));
+  for (const teacher of teachers) {
+    const subjectIds = teacher.subjects
+      .map((name) => subjectIdByName.get(name))
+      .filter((id): id is string => Boolean(id));
+    if (subjectIds.length === 0) continue;
+    const { error } = await supabase.rpc("set_teacher_subjects", {
+      p_teacher_id: teacher.id,
+      p_subject_ids: subjectIds,
+    });
+    if (error) return { error: error.message };
+  }
+
+  // ---- subject "owner" (subjects.teacher_id) assignments ----
   const { data: subjects } = await supabase.from("subjects").select("id, name").is("teacher_id", null);
   for (const subject of subjects ?? []) {
     const teacher = teachers.find((t) => t.subjects.includes(subject.name));
@@ -131,6 +166,49 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
       .eq("id", departments![i].id);
     if (error) return { error: error.message };
   }
+
+  // ---- timetable (period grid + a clash-free weekly rotation) ----
+  const { data: slots, error: slotError } = await supabase
+    .from("timetable_slots")
+    .insert([
+      { name: "Period 1", starts_at: "07:30", ends_at: "08:15" },
+      { name: "Period 2", starts_at: "08:20", ends_at: "09:05" },
+      { name: "Period 3", starts_at: "09:25", ends_at: "10:10" },
+      { name: "Period 4", starts_at: "10:15", ends_at: "11:00" },
+    ])
+    .select("id");
+  if (slotError) return { error: slotError.message };
+
+  const teacherBySubject = new Map<string, string>();
+  for (const s of gradebook) {
+    const teacher = teachers.find((t) => t.subjects.includes(s.name));
+    if (teacher) teacherBySubject.set(s.id, teacher.id);
+  }
+  const SCHOOL_DAYS = [5, 6, 0, 1, 2, 3]; // Sat–Thu week
+  const busy = new Set<string>();
+  const lessonRows = [];
+  for (let ci = 0; ci < classes.length; ci++) {
+    for (let di = 0; di < SCHOOL_DAYS.length; di++) {
+      for (let si = 0; si < (slots ?? []).length; si++) {
+        const subject = gradebook[(ci + di + si) % gradebook.length];
+        const slotId = slots![si].id;
+        const day = SCHOOL_DAYS[di];
+        // never double-book a teacher: leave the cell unassigned instead
+        let teacherId = teacherBySubject.get(subject.id) ?? null;
+        if (teacherId && busy.has(`${teacherId}:${day}:${slotId}`)) teacherId = null;
+        if (teacherId) busy.add(`${teacherId}:${day}:${slotId}`);
+        lessonRows.push({
+          class_id: classes[ci].id,
+          slot_id: slotId,
+          day,
+          subject_id: subject.id,
+          teacher_id: teacherId,
+        });
+      }
+    }
+  }
+  const { error: lessonError } = await supabase.from("lessons").insert(lessonRows);
+  if (lessonError) return { error: lessonError.message };
 
   // ---- students ----
   const fallbackClass = classes[0];
@@ -173,28 +251,24 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
   const { error: attendanceError } = await supabase.from("attendance").insert(attendanceRecords);
   if (attendanceError) return { error: attendanceError.message };
 
-  // ---- exams (Term 1 for every student) ----
-  const examRecords = students.map((student, i) => {
-    const subjectScores: Record<string, number> = {};
-    GRADEBOOK_SUBJECTS.forEach((subject, j) => {
-      subjectScores[subject] = 55 + ((i * 7 + j * 11) % 43); // 55–97
+  // ---- exams (Term 1 for every student, via the same atomic RPC the
+  // exam form uses — totals and grades are computed in the database) ----
+  for (let i = 0; i < students.length; i++) {
+    const scores: Record<string, number> = {};
+    gradebook.forEach((subject, j) => {
+      scores[subject.id] = 55 + ((i * 7 + j * 11) % 43); // 55–97
     });
-    const testScore = 60 + ((i * 13) % 38); // 60–97
-    const total = computeTotal(subjectScores, testScore);
-    return {
-      student_id: student.id,
-      class_id: student.class_id,
-      term: "Term 1" as const,
-      exam_date: isoDaysAgo(10),
-      attendance_pct: 85 + (i % 15),
-      test_score: testScore,
-      subject_scores: subjectScores,
-      total_score: total,
-      grade: computeGrade(total),
-    };
-  });
-  const { error: examError } = await supabase.from("exams").insert(examRecords);
-  if (examError) return { error: examError.message };
+    const { error: examError } = await supabase.rpc("save_exam", {
+      p_student_id: students[i].id,
+      p_term: "Term 1",
+      p_scores: scores,
+      p_class_id: students[i].class_id,
+      p_exam_date: isoDaysAgo(10),
+      p_attendance_pct: 85 + (i % 15),
+      p_test_score: 60 + ((i * 13) % 38), // 60–97
+    });
+    if (examError) return { error: examError.message };
+  }
 
   // ---- fee payments (a mix of fully paid, partially paid, and unpaid) ----
   const feeRecords = [];
@@ -235,6 +309,6 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
   revalidatePath("/", "layout");
   return {
     success: true,
-    summary: `${teachers.length} teachers, ${students.length} students, ${attendanceRecords.length} attendance records, ${examRecords.length} exam records, ${feeRecords.length} fee payments and ${DEMO_EXPENSES.length} expenses`,
+    summary: `${teachers.length} teachers, ${students.length} students, ${attendanceRecords.length} attendance records, ${students.length} exam records, ${feeRecords.length} fee payments, ${DEMO_EXPENSES.length} expenses and a weekly timetable`,
   };
 }

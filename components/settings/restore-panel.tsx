@@ -29,7 +29,7 @@ export function RestorePanel() {
       setSnapshot(parsed);
       setFileName(file.name);
     } catch {
-      setError("That doesn't look like a valid Sh.Asharow backup file.");
+      setError("That doesn't look like a valid backup file from this system.");
       setSnapshot(null);
       setFileName("");
     }

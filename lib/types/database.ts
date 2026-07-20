@@ -15,6 +15,8 @@ export type ExpenseCategory =
   | "transport"
   | "other";
 export type PartyType = "student" | "teacher" | "staff";
+export type NotificationKind = "fee_reminder" | "absence" | "general";
+export type NotificationStatus = "pending" | "sent" | "failed";
 export interface InvoiceItem {
   description: string;
   qty: number;
@@ -283,6 +285,109 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["enrollments"]["Row"]>;
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          id: string;
+          school_id: string;
+          student_id: string | null;
+          kind: NotificationKind;
+          recipient: string;
+          body: string;
+          status: NotificationStatus;
+          error: string | null;
+          ref_date: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+          sent_at: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["notifications"]["Row"]> & {
+          kind: NotificationKind;
+          recipient: string;
+          body: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
+        Relationships: [];
+      };
+      timetable_slots: {
+        Row: {
+          id: string;
+          school_id: string;
+          name: string;
+          starts_at: string;
+          ends_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["timetable_slots"]["Row"]> & {
+          name: string;
+          starts_at: string;
+          ends_at: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["timetable_slots"]["Row"]>;
+        Relationships: [];
+      };
+      lessons: {
+        Row: {
+          id: string;
+          school_id: string;
+          class_id: string;
+          slot_id: string;
+          day: number;
+          subject_id: string;
+          teacher_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["lessons"]["Row"]> & {
+          class_id: string;
+          slot_id: string;
+          day: number;
+          subject_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["lessons"]["Row"]>;
+        Relationships: [];
+      };
+      fee_installments: {
+        Row: {
+          id: string;
+          year_id: string;
+          school_id: string;
+          name: string;
+          due_date: string;
+          percent: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["fee_installments"]["Row"]> & {
+          year_id: string;
+          name: string;
+          due_date: string;
+          percent: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["fee_installments"]["Row"]>;
+        Relationships: [];
+      };
+      student_fees: {
+        Row: {
+          id: string;
+          student_id: string;
+          year_id: string;
+          school_id: string;
+          amount: number;
+          discount: number;
+          discount_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["student_fees"]["Row"]> & {
+          student_id: string;
+          year_id: string;
+          amount: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["student_fees"]["Row"]>;
+        Relationships: [];
+      };
       fee_payments: {
         Row: {
           id: string;
@@ -321,6 +426,54 @@ export interface Database {
           payee: string;
         };
         Update: Partial<Database["public"]["Tables"]["expenses"]["Row"]>;
+        Relationships: [];
+      };
+      teacher_subjects: {
+        Row: {
+          teacher_id: string;
+          subject_id: string;
+          school_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["teacher_subjects"]["Row"]> & {
+          teacher_id: string;
+          subject_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["teacher_subjects"]["Row"]>;
+        Relationships: [];
+      };
+      exam_scores: {
+        Row: {
+          id: string;
+          exam_id: string;
+          subject_id: string;
+          school_id: string;
+          score: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["exam_scores"]["Row"]> & {
+          exam_id: string;
+          subject_id: string;
+          score: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["exam_scores"]["Row"]>;
+        Relationships: [];
+      };
+      expense_payments: {
+        Row: {
+          id: string;
+          expense_id: string;
+          school_id: string;
+          amount: number;
+          method: PaymentMethod;
+          note: string | null;
+          paid_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["expense_payments"]["Row"]> & {
+          expense_id: string;
+          amount: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["expense_payments"]["Row"]>;
         Relationships: [];
       };
       invoices: {
@@ -393,6 +546,13 @@ export interface Database {
           paid: number;
           balance: number;
           fee_status: "paid" | "partial" | "unpaid";
+          gross: number;
+          discount: number;
+          discount_reason: string | null;
+          expected: number;
+          overdue: number;
+          next_due_date: string | null;
+          next_due_label: string | null;
         };
         Relationships: [];
       };
@@ -472,6 +632,87 @@ export interface Database {
           paid: number;
           balance: number;
         };
+      };
+      record_invoice_payment: {
+        Args: {
+          p_invoice_id: string;
+          p_amount: number;
+          p_method?: PaymentMethod;
+          p_note?: string | null;
+        };
+        Returns: { party_name: string; paid: number; balance: number };
+      };
+      record_expense_payment: {
+        Args: {
+          p_expense_id: string;
+          p_amount: number;
+          p_method?: PaymentMethod | null;
+          p_note?: string | null;
+        };
+        Returns: { payee: string; paid: number; remaining: number };
+      };
+      restore_school_snapshot: {
+        Args: { p_data: unknown; p_school_id?: string | null };
+        Returns: Record<string, number>;
+      };
+      save_exam: {
+        Args: {
+          p_student_id: string;
+          p_term: Term;
+          p_scores: Record<string, number>;
+          p_exam_id?: string | null;
+          p_class_id?: string | null;
+          p_year_id?: string | null;
+          p_exam_date?: string | null;
+          p_attendance_pct?: number;
+          p_test_score?: number;
+        };
+        Returns: { exam_id: string; student_name: string; total: number; grade: string };
+      };
+      set_teacher_subjects: {
+        Args: { p_teacher_id: string; p_subject_ids: string[] };
+        Returns: undefined;
+      };
+      set_student_fee: {
+        Args: {
+          p_student_id: string;
+          p_amount: number;
+          p_discount?: number;
+          p_discount_reason?: string | null;
+          p_year_id?: string | null;
+        };
+        Returns: { student_name: string; due: number; discount: number };
+      };
+      set_fee_installments: {
+        Args: {
+          p_year_id: string;
+          p_items: { name: string; due_date: string; percent: number }[];
+        };
+        Returns: { count: number; total_percent: number };
+      };
+      set_timetable_slots: {
+        Args: {
+          p_items: { id?: string; name: string; starts_at: string; ends_at: string }[];
+        };
+        Returns: { count: number };
+      };
+      save_lesson: {
+        Args: {
+          p_class_id: string;
+          p_day: number;
+          p_slot_id: string;
+          p_subject_id: string;
+          p_teacher_id?: string | null;
+        };
+        Returns: { saved: boolean };
+      };
+      queue_fee_reminders: {
+        Args: { p_template?: string | null };
+        Returns: { queued: number; no_phone: number; already_pending: number };
+      };
+      queue_absence_alerts: {
+        Args: { p_date?: string; p_template?: string | null };
+        Returns: { queued: number; no_phone: number; already_sent: number };
       };
     };
   };

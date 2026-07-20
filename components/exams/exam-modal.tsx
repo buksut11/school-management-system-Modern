@@ -6,8 +6,7 @@ import { Input, Label, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { saveExam } from "@/lib/actions/exams";
 import { useToast } from "@/components/ui/toast";
-import { GRADEBOOK_SUBJECTS } from "@/lib/constants";
-import type { ExamRow } from "@/lib/data/exams";
+import type { ExamRow, GradebookSubject } from "@/lib/data/exams";
 import type { Term } from "@/lib/types/database";
 
 export function ExamModal({
@@ -16,6 +15,7 @@ export function ExamModal({
   exam,
   term,
   yearId,
+  subjects,
   eligibleStudents,
 }: {
   open: boolean;
@@ -23,6 +23,7 @@ export function ExamModal({
   exam: ExamRow | null;
   term: Term;
   yearId: string | null;
+  subjects: GradebookSubject[];
   eligibleStudents: { id: string; full_name: string; class_id: string | null; class_name: string | null }[];
 }) {
   const [state, formAction, pending] = useActionState(saveExam, undefined);
@@ -86,20 +87,28 @@ export function ExamModal({
 
         <div>
           <Label>Subject scores</Label>
-          <div className="grid grid-cols-2 gap-3">
-            {GRADEBOOK_SUBJECTS.map((subject) => (
-              <div key={subject}>
-                <label className="text-[12px] text-text-2 mb-1 block">{subject}</label>
-                <Input
-                  name={`subject_${subject}`}
-                  type="number"
-                  min={0}
-                  max={100}
-                  defaultValue={exam?.subject_scores[subject] ?? 0}
-                />
-              </div>
-            ))}
-          </div>
+          {subjects.length === 0 ? (
+            <p className="text-[12.5px] text-text-2 bg-card-2 rounded-lg px-3 py-2">
+              Your school has no subjects yet — add them on the Subjects page to build the gradebook.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {subjects.map((subject) => (
+                <div key={subject.id}>
+                  <label className="text-[12px] text-text-2 mb-1 block">{subject.name}</label>
+                  <Input
+                    name={`subject_${subject.id}`}
+                    type="number"
+                    min={0}
+                    max={100}
+                    defaultValue={
+                      exam?.scores_by_id[subject.id] ?? exam?.subject_scores[subject.name] ?? 0
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {state?.error && (

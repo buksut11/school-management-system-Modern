@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { signPhotoUrls } from "@/lib/data/photos";
 import type { Student } from "@/lib/types/database";
 
 type StudentJoinRow = Student & { classes: { name: string } | null };
@@ -35,7 +36,7 @@ export async function listStudents(): Promise<StudentWithClass[]> {
 
   const attendanceMap = new Map((attendance ?? []).map((a) => [a.student_id, a.status]));
 
-  return (students ?? []).map((s) => ({
+  return signPhotoUrls((students ?? []).map((s) => ({
     id: s.id,
     seq: s.seq,
     full_name: s.full_name,
@@ -50,7 +51,7 @@ export async function listStudents(): Promise<StudentWithClass[]> {
     class_id: s.class_id,
     class_name: s.classes?.name ?? null,
     today_status: (attendanceMap.get(s.id) as "present" | "late" | "absent" | undefined) ?? null,
-  }));
+  })));
 }
 
 export async function listClassOptions() {

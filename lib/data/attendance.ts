@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { signPhotoUrls } from "@/lib/data/photos";
 
 type StudentRosterRow = {
   id: string;
@@ -43,7 +44,7 @@ export async function listAttendance(date: string): Promise<AttendanceRow[]> {
 
   const recordMap = new Map((attendance ?? []).map((a) => [a.student_id, a]));
 
-  return (students ?? []).map((s) => {
+  return signPhotoUrls((students ?? []).map((s) => {
     // Prefer the class snapshotted on the attendance record itself (correct
     // even if the student has since moved classes); fall back to their
     // current class for days that were never explicitly marked.
@@ -56,5 +57,5 @@ export async function listAttendance(date: string): Promise<AttendanceRow[]> {
       class_name: record?.classes?.name ?? s.classes?.name ?? null,
       status: record?.status ?? "present",
     };
-  });
+  }));
 }

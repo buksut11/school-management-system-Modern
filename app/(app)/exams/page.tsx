@@ -1,5 +1,5 @@
 import { isSupabaseConfigured } from "@/lib/supabase/server";
-import { listExams, listEligibleStudentsForExam } from "@/lib/data/exams";
+import { listExams, listEligibleStudentsForExam, listGradebookSubjects } from "@/lib/data/exams";
 import { listClassOptions } from "@/lib/data/students";
 import { listAcademicYears, pickCurrentYear } from "@/lib/data/years";
 import { SetupNotice } from "@/components/setup-notice";
@@ -22,8 +22,9 @@ export default async function ExamsPage({
   const years = await listAcademicYears();
   const year = years.find((y) => y.id === yearParam) ?? pickCurrentYear(years);
 
-  const [rows, classes, eligibleStudents] = await Promise.all([
+  const [rows, subjects, classes, eligibleStudents] = await Promise.all([
     listExams(term, year?.id ?? null),
+    listGradebookSubjects(),
     listClassOptions(),
     listEligibleStudentsForExam(term, year?.id ?? null),
   ]);
@@ -35,6 +36,7 @@ export default async function ExamsPage({
       year={year}
       years={years}
       rows={rows}
+      subjects={subjects}
       classes={classes}
       eligibleStudents={eligibleStudents}
     />
