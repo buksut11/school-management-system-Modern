@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
+import { deliverPending } from "@/lib/sms/deliver";
 
 export type QueueResult = {
   error?: string;
@@ -52,6 +53,46 @@ export async function queueAbsenceAlerts(
     no_phone: data?.no_phone ?? 0,
     already: data?.already_sent ?? 0,
   };
+}
+
+export type SendNowResult = {
+  error?: string;
+  sent?: number;
+  failed?: number;
+  remaining?: number;
+};
+
+export async function sendPendingNow(): Promise<SendNowResult> {
+  const supabase = await createClient();
+  // Runs under the signed-in user's own permissions: RLS scopes the
+  // pending rows to their school, and only desk roles can update
+  // statuses — so the button simply doesn't work for anyone else.
+  const result = await deliverPending(supabase, 50);
+  if (result.error) return { error: result.error };
+
+  if (result.sent || result.failed) {
+    await logActivity(
+      supabase,
+      "message",
+      `Sent ${result.sent} message${result.sent === 1 ? "" : "s"} via SMS gateway` +
+        (result.failed ? ` · ${result.failed} failed` : "")
+    );
+  }
+  revalidatePath("/messages");
+  return { sent: result.sent, failed: result.failed, remaining: result.remaining };
+}
+
+export async function retryFailedNotifications(): Promise<{ error?: string; retried?: number }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("notifications")
+    .update({ status: "pending", error: null })
+    .eq("status", "failed")
+    .select("id");
+  if (error) return { error: error.message };
+
+  revalidatePath("/messages");
+  return { retried: data?.length ?? 0 };
 }
 
 export async function markNotificationsSent(ids: string[]): Promise<{ error?: string; marked?: number }> {
