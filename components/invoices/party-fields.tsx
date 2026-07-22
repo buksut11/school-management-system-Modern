@@ -2,6 +2,7 @@
 
 import { Input, Label, Select } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
+import { useT } from "@/lib/i18n/client";
 import type { PartyType } from "@/lib/types/database";
 import type { StudentOption, TeacherOption } from "@/lib/data/invoices";
 
@@ -49,24 +50,25 @@ export function PartyFields({
   teachers: TeacherOption[];
   onStudentPick?: (s: StudentOption) => void;
 }) {
+  const t = useT();
   return (
     <div className="space-y-4">
       <div>
-        <Label>Who is this for?</Label>
+        <Label>{t("party.forWhom")}</Label>
         <Segmented
           value={party.type}
           onChange={(type) => onChange({ ...EMPTY_PARTY, type: type as PartyType })}
           options={[
-            { value: "student", label: "Student" },
-            { value: "teacher", label: "Teacher" },
-            { value: "staff", label: "Other staff" },
+            { value: "student", label: t("party.student") },
+            { value: "teacher", label: t("party.teacher") },
+            { value: "staff", label: t("party.otherStaff") },
           ]}
         />
       </div>
 
       {party.type === "student" && (
         <div>
-          <Label htmlFor="party-student">Student</Label>
+          <Label htmlFor="party-student">{t("party.student")}</Label>
           <Select
             id="party-student"
             value={party.id ?? ""}
@@ -85,7 +87,7 @@ export function PartyFields({
               onStudentPick?.(s);
             }}
           >
-            <option value="">Select a student…</option>
+            <option value="">{t("party.selectStudent")}</option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.full_name}
@@ -98,24 +100,24 @@ export function PartyFields({
 
       {party.type === "teacher" && (
         <div>
-          <Label htmlFor="party-teacher">Teacher</Label>
+          <Label htmlFor="party-teacher">{t("party.teacher")}</Label>
           <Select
             id="party-teacher"
             value={party.id ?? ""}
             onChange={(e) => {
-              const t = teachers.find((x) => x.id === e.target.value);
-              if (!t) return onChange({ ...EMPTY_PARTY, type: "teacher" });
+              const picked = teachers.find((x) => x.id === e.target.value);
+              if (!picked) return onChange({ ...EMPTY_PARTY, type: "teacher" });
               onChange({
                 ...party,
-                id: t.id,
-                name: t.full_name,
+                id: picked.id,
+                name: picked.full_name,
                 detail: "Teacher",
-                phone: t.mobile ?? "",
-                address: t.address ?? "",
+                phone: picked.mobile ?? "",
+                address: picked.address ?? "",
               });
             }}
           >
-            <option value="">Select a teacher…</option>
+            <option value="">{t("party.selectTeacher")}</option>
             {teachers.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.full_name}
@@ -128,22 +130,22 @@ export function PartyFields({
       {party.type === "staff" && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="party-name">Name</Label>
+            <Label htmlFor="party-name">{t("field.name")}</Label>
             <Input
               id="party-name"
               value={party.name}
               onChange={(e) => onChange({ ...party, name: e.target.value })}
-              placeholder="e.g. Abdi Hassan"
+              placeholder={t("party.namePlaceholder")}
               required
             />
           </div>
           <div>
-            <Label htmlFor="party-role">Role</Label>
+            <Label htmlFor="party-role">{t("field.role")}</Label>
             <Input
               id="party-role"
               value={party.detail}
               onChange={(e) => onChange({ ...party, detail: e.target.value })}
-              placeholder="e.g. Cleaner, Watchman"
+              placeholder={t("party.rolePlaceholder")}
             />
           </div>
         </div>
@@ -154,21 +156,21 @@ export function PartyFields({
       {(party.type === "staff" || party.id) && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="party-phone">Phone</Label>
+            <Label htmlFor="party-phone">{t("field.phone")}</Label>
             <Input
               id="party-phone"
               value={party.phone}
               onChange={(e) => onChange({ ...party, phone: e.target.value })}
-              placeholder="e.g. +252 61 000 0000"
+              placeholder={t("party.phonePlaceholder")}
             />
           </div>
           <div>
-            <Label htmlFor="party-address">Address</Label>
+            <Label htmlFor="party-address">{t("field.address")}</Label>
             <Input
               id="party-address"
               value={party.address}
               onChange={(e) => onChange({ ...party, address: e.target.value })}
-              placeholder="e.g. Hodan District, Mogadishu"
+              placeholder={t("party.addressPlaceholder")}
             />
           </div>
         </div>
@@ -178,21 +180,21 @@ export function PartyFields({
       {party.type === "student" && party.id && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="parent-name">Parent / guardian</Label>
+            <Label htmlFor="parent-name">{t("field.parentGuardian")}</Label>
             <Input
               id="parent-name"
               value={party.parentName}
               onChange={(e) => onChange({ ...party, parentName: e.target.value })}
-              placeholder="e.g. Mother — Fadumo Ali"
+              placeholder={t("party.parentPlaceholder")}
             />
           </div>
           <div>
-            <Label htmlFor="parent-phone">Parent phone</Label>
+            <Label htmlFor="parent-phone">{t("field.parentPhone")}</Label>
             <Input
               id="parent-phone"
               value={party.parentPhone}
               onChange={(e) => onChange({ ...party, parentPhone: e.target.value })}
-              placeholder="e.g. +252 61 000 0000"
+              placeholder={t("party.phonePlaceholder")}
             />
           </div>
         </div>

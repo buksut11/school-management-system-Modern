@@ -4,11 +4,13 @@ import { CircleDollarSign, FileDown, Pencil, Printer, Trash2 } from "lucide-reac
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { useSchoolName } from "@/components/layout/school-context";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { InvoiceRow } from "@/lib/data/invoices";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
 const TYPE_TONE = { student: "blue", teacher: "purple", staff: "teal" } as const;
-const TYPE_LABEL = { student: "Student", teacher: "Teacher", staff: "Staff" } as const;
+const TYPE_KEY = { student: "party.student", teacher: "party.teacher", staff: "party.staffShort" } as const;
 
 export function InvoicesTable({
   invoices,
@@ -22,6 +24,7 @@ export function InvoicesTable({
   onPay: (inv: InvoiceRow) => void;
 }) {
   const schoolName = useSchoolName();
+  const t = useT();
 
   function download(inv: InvoiceRow) {
     import("@/lib/pdf/invoice").then((m) => m.downloadInvoicePdf(inv, schoolName));
@@ -38,15 +41,15 @@ export function InvoicesTable({
   return (
     <div className="r-table inv-table rounded-2xl bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card overflow-hidden">
       <div className="r-head flex items-center gap-3 px-5 py-3 border-b border-line text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-        <div className="flex-1 min-w-[170px]">Invoice</div>
-        <div className="w-20 flex-none icol-type">Type</div>
-        <div className="w-24 flex-none icol-issued">Issued</div>
-        <div className="w-24 flex-none icol-due">Due</div>
-        <div className="w-24 flex-none icol-total">Total</div>
-        <div className="w-24 flex-none icol-paid">Paid</div>
-        <div className="w-24 flex-none">Balance</div>
-        <div className="w-24 flex-none">Status</div>
-        <div className="w-40 flex-none text-right">Actions</div>
+        <div className="flex-1 min-w-[170px]">{t("col.invoice")}</div>
+        <div className="w-20 flex-none icol-type">{t("col.type")}</div>
+        <div className="w-24 flex-none icol-issued">{t("field.issued")}</div>
+        <div className="w-24 flex-none icol-due">{t("col.due")}</div>
+        <div className="w-24 flex-none icol-total">{t("col.total")}</div>
+        <div className="w-24 flex-none icol-paid">{t("col.paid")}</div>
+        <div className="w-24 flex-none">{t("col.balance")}</div>
+        <div className="w-24 flex-none">{t("col.status")}</div>
+        <div className="w-40 flex-none text-right">{t("col.actions")}</div>
       </div>
 
       <div className="divide-y divide-line/60">
@@ -61,41 +64,41 @@ export function InvoicesTable({
                 </div>
               </div>
             </div>
-            <div className="r-cell icol-type w-20 flex-none" data-label="Type">
-              <Badge tone={TYPE_TONE[inv.party_type]}>{TYPE_LABEL[inv.party_type]}</Badge>
+            <div className="r-cell icol-type w-20 flex-none" data-label={t("col.type")}>
+              <Badge tone={TYPE_TONE[inv.party_type]}>{t(TYPE_KEY[inv.party_type] as MessageKey)}</Badge>
             </div>
-            <div className="r-cell icol-issued w-24 flex-none text-[13px] text-text-2" data-label="Issued">
+            <div className="r-cell icol-issued w-24 flex-none text-[13px] text-text-2" data-label={t("field.issued")}>
               {formatDate(inv.issued_date)}
             </div>
-            <div className="r-cell icol-due w-24 flex-none text-[13px] text-text-2" data-label="Due">
+            <div className="r-cell icol-due w-24 flex-none text-[13px] text-text-2" data-label={t("col.due")}>
               {inv.due_date ? formatDate(inv.due_date) : "—"}
             </div>
-            <div className="r-cell icol-total w-24 flex-none text-[13px] font-medium" data-label="Total">
+            <div className="r-cell icol-total w-24 flex-none text-[13px] font-medium" data-label={t("col.total")}>
               {formatMoney(inv.total)}
             </div>
-            <div className="r-cell icol-paid w-24 flex-none text-[13px] text-text-2" data-label="Paid">
+            <div className="r-cell icol-paid w-24 flex-none text-[13px] text-text-2" data-label={t("col.paid")}>
               {formatMoney(inv.paid)}
             </div>
-            <div className="r-cell w-24 flex-none text-[13px] font-medium" data-label="Balance">
+            <div className="r-cell w-24 flex-none text-[13px] font-medium" data-label={t("col.balance")}>
               {formatMoney(inv.balance)}
             </div>
-            <div className="r-cell w-24 flex-none" data-label="Status">
+            <div className="r-cell w-24 flex-none" data-label={t("col.status")}>
               <Badge tone={STATUS_TONE[inv.status]}>
-                {inv.status[0].toUpperCase() + inv.status.slice(1)}
+                {t(`feeStatus.${inv.status}` as MessageKey)}
               </Badge>
             </div>
             <div className="r-actions w-40 flex-none flex items-center justify-end gap-1">
               <button
                 onClick={() => print(inv)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                aria-label="Print invoice"
+                aria-label={t("invoice.print")}
               >
                 <Printer size={14} />
               </button>
               <button
                 onClick={() => download(inv)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                aria-label="Download invoice PDF"
+                aria-label={t("invoice.downloadPdf")}
               >
                 <FileDown size={14} />
               </button>
@@ -103,7 +106,7 @@ export function InvoicesTable({
                 <button
                   onClick={() => onPay(inv)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-blue-soft hover:text-blue transition-colors"
-                  aria-label="Record payment"
+                  aria-label={t("expense.recordPayment")}
                 >
                   <CircleDollarSign size={14} />
                 </button>
@@ -111,14 +114,14 @@ export function InvoicesTable({
               <button
                 onClick={() => onEdit(inv)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                aria-label="Edit"
+                aria-label={t("common.edit")}
               >
                 <Pencil size={14} />
               </button>
               <button
                 onClick={() => onDelete(inv)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-red/10 hover:text-red transition-colors"
-                aria-label="Delete"
+                aria-label={t("common.delete")}
               >
                 <Trash2 size={14} />
               </button>
@@ -126,9 +129,7 @@ export function InvoicesTable({
           </div>
         ))}
         {invoices.length === 0 && (
-          <div className="py-12 text-center text-[13px] text-text-2">
-            No invoices yet. Create one with “New Invoice”.
-          </div>
+          <div className="py-12 text-center text-[13px] text-text-2">{t("invoice.emptyList")}</div>
         )}
       </div>
     </div>
