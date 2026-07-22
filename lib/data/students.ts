@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { signPhotoUrls } from "@/lib/data/photos";
 import { STUDENTS_PAGE_SIZE } from "@/lib/pagination";
-import type { Student } from "@/lib/types/database";
+import type { Student, PersonStatus } from "@/lib/types/database";
 
 type StudentJoinRow = Student & { classes: { name: string } | null };
 
@@ -16,7 +16,7 @@ export type StudentWithClass = {
   parent_mobile: string | null;
   base_fees: number;
   photo_url: string | null;
-  status: "active" | "inactive";
+  status: PersonStatus;
   class_id: string | null;
   class_name: string | null;
   today_status: "present" | "late" | "absent" | null;

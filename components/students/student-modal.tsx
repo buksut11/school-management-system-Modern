@@ -154,6 +154,7 @@ export function StudentModal({
             options={[
               { value: "active", label: "Active" },
               { value: "inactive", label: "Inactive" },
+              { value: "graduated", label: "Graduated" },
             ]}
           />
         </div>

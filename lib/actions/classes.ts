@@ -18,12 +18,15 @@ export async function saveClass(_prev: FormState, formData: FormData): Promise<F
 
   const supabase = await createClient();
   const teacherId = str(formData, "teacher_id");
+  // "" (from the "Graduate / none" option) clears the pointer.
+  const nextClassId = str(formData, "next_class_id");
   const record = {
     name,
     room: str(formData, "room"),
     base_fees: Number(str(formData, "base_fees") ?? 0),
     capacity: Number(str(formData, "capacity") ?? 40),
     teacher_id: teacherId,
+    next_class_id: nextClassId && nextClassId !== id ? nextClassId : null,
   };
 
   // A teacher can lead at most one class — if this teacher was already

@@ -4,6 +4,7 @@ import { BackupPanel } from "./backup-panel";
 import { RestorePanel } from "./restore-panel";
 import { DemoDataPanel } from "./demo-data-panel";
 import { AcademicYearPanel } from "./academic-year-panel";
+import { PromotionPanel } from "./promotion-panel";
 import { SchoolPanel } from "./school-panel";
 import { SecurityPanel } from "./security-panel";
 import { MembersPanel } from "./members-panel";
@@ -55,6 +56,7 @@ export function SettingsView({
           />
         )}
         <AcademicYearPanel years={years} />
+        {isAdmin && <PromotionPanel />}
         <ExportPanel counts={counts} />
         <ImportWizard />
       </div>

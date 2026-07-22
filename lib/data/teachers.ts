@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { signPhotoUrls } from "@/lib/data/photos";
 import { TEACHERS_PAGE_SIZE } from "@/lib/pagination";
-import type { Teacher } from "@/lib/types/database";
+import type { Teacher, PersonStatus } from "@/lib/types/database";
 
 type TeacherJoinRow = Teacher & {
   classes: { id: string; name: string }[];
@@ -21,7 +21,7 @@ export type TeacherWithClass = {
   subjects: string[];
   subject_ids: string[];
   photo_url: string | null;
-  status: "active" | "inactive";
+  status: PersonStatus;
   class_id: string | null;
   class_name: string | null;
 };

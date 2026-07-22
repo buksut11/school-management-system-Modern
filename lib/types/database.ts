@@ -1,7 +1,7 @@
 export type Gender = "male" | "female";
 export type Role = "admin" | "staff" | "finance" | "teacher" | "student" | "parent" | "pending";
 export type AssignableRole = Exclude<Role, "pending">;
-export type PersonStatus = "active" | "inactive";
+export type PersonStatus = "active" | "inactive" | "graduated";
 export type AttendanceStatus = "present" | "late" | "absent";
 export type SubjectType = "core" | "elective";
 export type Term = "Term 1" | "Term 2" | "Term 3";
@@ -84,6 +84,7 @@ export interface Database {
           base_fees: number;
           capacity: number;
           teacher_id: string | null;
+          next_class_id: string | null;
           school_id: string;
           created_at: string;
           updated_at: string;
@@ -573,6 +574,10 @@ export interface Database {
       receipt_summary: {
         Args: Record<string, never>;
         Returns: { count: number; money_in: number; money_out: number }[];
+      };
+      promote_students: {
+        Args: { p_hold_ids?: string[] };
+        Returns: { promoted: number; graduated: number };
       };
       create_invite: {
         Args: {

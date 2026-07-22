@@ -593,6 +593,45 @@ set role authenticated;
 call must_equal('school B untouched by school A''s restore',
   $q$ select full_name from public.students $q$, 'Student B1');
 
+-- ---- 0042: promotion workflow ----
+-- Runs last: promote_students() acts on every final-class student in the
+-- school, so keep it after the assertions that count students. Grade 1
+-- promotes into Grade 2; Grade 2 is a final class (its students graduate).
+reset role;
+select test_login('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+
+insert into public.classes (id, school_id, name, base_fees) values
+  ('aaaa1111-0000-0000-0000-00000000c201', '11111111-1111-1111-1111-111111111111', 'Grade 1', 100),
+  ('aaaa1111-0000-0000-0000-00000000c202', '11111111-1111-1111-1111-111111111111', 'Grade 2', 100);
+update public.classes set next_class_id = 'aaaa1111-0000-0000-0000-00000000c202'
+  where id = 'aaaa1111-0000-0000-0000-00000000c201';
+insert into public.students (id, school_id, full_name, class_id, base_fees) values
+  ('aaaa1111-0000-0000-0000-0000000005f1', '11111111-1111-1111-1111-111111111111', 'Promote Pat',
+   'aaaa1111-0000-0000-0000-00000000c201', 100),
+  ('aaaa1111-0000-0000-0000-0000000005f2', '11111111-1111-1111-1111-111111111111', 'Graduate Gwen',
+   'aaaa1111-0000-0000-0000-00000000c202', 100),
+  ('aaaa1111-0000-0000-0000-0000000005f3', '11111111-1111-1111-1111-111111111111', 'Repeat Rae',
+   'aaaa1111-0000-0000-0000-00000000c201', 100);
+
+call must_fail('a class cannot promote into itself',
+  $q$ update public.classes set next_class_id = id where id = 'aaaa1111-0000-0000-0000-00000000c201' $q$);
+
+select public.promote_students(array['aaaa1111-0000-0000-0000-0000000005f3']::uuid[]);
+
+call must_equal('promotion advances a student to the next class',
+  $q$ select class_id::text from public.students where id = 'aaaa1111-0000-0000-0000-0000000005f1' $q$,
+  'aaaa1111-0000-0000-0000-00000000c202');
+call must_equal('a promoted student is not graduated in the same run',
+  $q$ select status from public.students where id = 'aaaa1111-0000-0000-0000-0000000005f1' $q$,
+  'active');
+call must_equal('promotion graduates a final-class student',
+  $q$ select status from public.students where id = 'aaaa1111-0000-0000-0000-0000000005f2' $q$,
+  'graduated');
+call must_equal('a held-back student stays in place',
+  $q$ select class_id::text from public.students where id = 'aaaa1111-0000-0000-0000-0000000005f3' $q$,
+  'aaaa1111-0000-0000-0000-00000000c201');
+
 reset role;
 \echo ''
 \echo 'ALL TESTS PASSED'
