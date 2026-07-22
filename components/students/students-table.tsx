@@ -79,14 +79,14 @@ export function StudentsTable({
               <button
                 onClick={() => onEdit(s)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                aria-label="Edit"
+                aria-label={t("common.edit")}
               >
                 <Pencil size={14} />
               </button>
               <button
                 onClick={() => onDelete(s)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-red/10 hover:text-red transition-colors"
-                aria-label="Delete"
+                aria-label={t("common.delete")}
               >
                 <Trash2 size={14} />
               </button>

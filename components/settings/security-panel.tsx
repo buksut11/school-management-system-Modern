@@ -8,6 +8,7 @@ import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { startMfaEnrollment, confirmMfaEnrollment, disableMfa } from "@/lib/actions/mfa";
+import { useT } from "@/lib/i18n/client";
 
 type Enrolling = { factorId: string; qrCode: string; secret: string };
 
@@ -19,6 +20,7 @@ export function SecurityPanel({ enabled: initialEnabled }: { enabled: boolean })
   const [pending, start] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   function begin() {
     setError(null);
@@ -44,15 +46,15 @@ export function SecurityPanel({ enabled: initialEnabled }: { enabled: boolean })
       }
       setEnrolling(null);
       setEnabled(true);
-      show("Two-factor authentication is on");
+      show(t("set.twoFactorOnToast"));
     });
   }
 
   async function turnOff() {
     const ok = await confirm({
-      title: "Turn off two-factor?",
-      message: "Your account will be protected by password only.",
-      confirmLabel: "Turn off",
+      title: t("set.turnOffTitle"),
+      message: t("set.turnOffMsg"),
+      confirmLabel: t("set.turnOff"),
     });
     if (!ok) return;
     start(async () => {
@@ -62,57 +64,51 @@ export function SecurityPanel({ enabled: initialEnabled }: { enabled: boolean })
         return;
       }
       setEnabled(false);
-      show("Two-factor authentication is off");
+      show(t("set.twoFactorOffToast"));
     });
   }
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">Security</h3>
-      <p className="text-[12.5px] text-text-2 mb-4">
-        Two-factor authentication adds a 6-digit code from an app on your phone (Google
-        Authenticator, Authy, Microsoft Authenticator) on top of your password. Recommended for
-        admin and finance accounts.
-      </p>
+      <h3 className="text-[15px] font-semibold tracking-tight mb-1">{t("set.security")}</h3>
+      <p className="text-[12.5px] text-text-2 mb-4">{t("set.securityDesc")}</p>
 
       {enabled && !enrolling && (
         <div className="flex items-center justify-between gap-3 rounded-xl bg-green/10 px-3.5 py-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <ShieldCheck size={18} className="text-green flex-none" />
-            <div className="text-[13px] font-medium">Two-factor is on for your account.</div>
+            <div className="text-[13px] font-medium">{t("set.twoFactorOn")}</div>
           </div>
           <Button variant="secondary" size="md" onClick={turnOff} disabled={pending}>
-            <ShieldOff size={15} /> Turn off
+            <ShieldOff size={15} /> {t("set.turnOff")}
           </Button>
         </div>
       )}
 
       {!enabled && !enrolling && (
         <Button onClick={begin} disabled={pending}>
-          <ShieldCheck size={15} /> {pending ? "Starting…" : "Enable two-factor"}
+          <ShieldCheck size={15} /> {pending ? t("set.starting") : t("set.enableTwoFactor")}
         </Button>
       )}
 
       {enrolling && (
         <div className="space-y-4">
           <div>
-            <p className="text-[13px] font-medium mb-2">1. Scan this with your authenticator app</p>
+            <p className="text-[13px] font-medium mb-2">{t("set.scanStep")}</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={enrolling.qrCode}
-              alt="Two-factor QR code"
+              alt={t("set.qrAlt")}
               className="w-40 h-40 rounded-xl border border-line bg-white p-2"
             />
-            <p className="mt-2 text-[12px] text-text-2">
-              Can&apos;t scan? Enter this key manually:
-            </p>
+            <p className="mt-2 text-[12px] text-text-2">{t("set.cantScan")}</p>
             <code className="mt-1 block break-all rounded-lg bg-hover px-2.5 py-1.5 text-[12px] font-mono">
               {enrolling.secret}
             </code>
           </div>
 
           <div>
-            <Label htmlFor="mfa_code">2. Enter the 6-digit code it shows</Label>
+            <Label htmlFor="mfa_code">{t("set.codeStep")}</Label>
             <div className="flex gap-2">
               <Input
                 id="mfa_code"
@@ -124,7 +120,7 @@ export function SecurityPanel({ enabled: initialEnabled }: { enabled: boolean })
                 maxLength={6}
               />
               <Button onClick={confirmCode} disabled={pending || code.replace(/\D/g, "").length < 6}>
-                {pending ? "Verifying…" : "Verify"}
+                {pending ? t("set.verifying") : t("set.verify")}
               </Button>
             </div>
           </div>
@@ -137,7 +133,7 @@ export function SecurityPanel({ enabled: initialEnabled }: { enabled: boolean })
             }}
             className="text-[12.5px] text-text-2 hover:text-text transition-colors"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       )}

@@ -53,7 +53,7 @@ export function Topbar({
         <button
           onClick={onMenuClick}
           className="w-9 h-9 rounded-full flex items-center justify-center text-text hover:bg-hover md:hidden flex-none"
-          aria-label="Open menu"
+          aria-label={t("common.openMenu")}
         >
           <Menu size={19} />
         </button>

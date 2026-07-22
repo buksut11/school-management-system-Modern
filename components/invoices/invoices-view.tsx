@@ -276,7 +276,7 @@ export function InvoicesView({
       {active.hasMore && (
         <div className="flex justify-center pt-1">
           <Button variant="secondary" size="md" onClick={active.loadMore} disabled={active.pending}>
-            {active.pending ? "Loading…" : "Load more"}
+            {active.pending ? t("common.loading") : t("common.loadMore")}
           </Button>
         </div>
       )}

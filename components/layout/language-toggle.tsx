@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react";
 import { Languages, Check } from "lucide-react";
 import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/config";
-import { useLocale } from "@/lib/i18n/client";
+import { useLocale, useT } from "@/lib/i18n/client";
 import { setLocale } from "@/lib/actions/locale";
 import { cn } from "@/lib/utils";
 
 export function LanguageToggle() {
   const locale = useLocale();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
 
@@ -24,7 +25,7 @@ export function LanguageToggle() {
         onClick={() => setOpen((v) => !v)}
         disabled={pending}
         className="w-9 h-9 rounded-full flex items-center justify-center text-text hover:bg-hover transition-colors"
-        aria-label="Change language"
+        aria-label={t("common.changeLanguage")}
       >
         <Languages size={18} />
       </button>

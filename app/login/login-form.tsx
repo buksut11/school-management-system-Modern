@@ -83,7 +83,7 @@ export function LoginForm({
         <input type="hidden" name="next" value={next} />
         <div>
           <Label htmlFor="full_name">{t("auth.fullName")}</Label>
-          <Input id="full_name" name="full_name" placeholder="Your name" autoComplete="name" required />
+          <Input id="full_name" name="full_name" placeholder={t("auth.namePlaceholder")} autoComplete="name" required />
         </div>
         <div>
           <Label htmlFor="email">{t("auth.email")}</Label>
@@ -91,7 +91,7 @@ export function LoginForm({
         </div>
         <div>
           <Label htmlFor="password">{t("auth.password")}</Label>
-          <Input id="password" name="password" type="password" placeholder="At least 8 characters" autoComplete="new-password" required />
+          <Input id="password" name="password" type="password" placeholder={t("auth.newPasswordPlaceholder")} autoComplete="new-password" required />
         </div>
         {signupState?.error && (
           <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2">{signupState.error}</p>

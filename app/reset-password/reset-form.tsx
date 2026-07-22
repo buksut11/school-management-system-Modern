@@ -9,6 +9,7 @@ import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/client";
 
 // The recovery email's link lands here with the session tokens in the
 // URL FRAGMENT (#access_token=...), which never reaches the server — so
@@ -21,6 +22,7 @@ export function ResetPasswordForm() {
   const clientRef = useRef<SupabaseClient<Database> | null>(null);
   const getSupabase = () => (clientRef.current ??= createClient());
   const router = useRouter();
+  const t = useT();
   const [stage, setStage] = useState<"checking" | "ready" | "invalid">("checking");
   const [email, setEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,11 +75,11 @@ export function ResetPasswordForm() {
     const password = String(form.get("password") || "");
     const confirm = String(form.get("confirm") || "");
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("reset.pwTooShort"));
       return;
     }
     if (password !== confirm) {
-      setError("The two passwords don't match.");
+      setError(t("reset.pwMismatch"));
       return;
     }
     setSaving(true);
@@ -95,19 +97,16 @@ export function ResetPasswordForm() {
   }
 
   if (stage === "checking") {
-    return <p className="text-[13px] text-text-2">Checking your reset link…</p>;
+    return <p className="text-[13px] text-text-2">{t("reset.checking")}</p>;
   }
 
   if (stage === "invalid") {
     return (
       <div className="text-center space-y-3">
         <AlertTriangle size={24} className="mx-auto text-orange" />
-        <p className="text-[13px] text-text-2">
-          This reset link has expired or was already used. Request a new one from the sign-in
-          page — each link works once.
-        </p>
+        <p className="text-[13px] text-text-2">{t("reset.invalid")}</p>
         <Link href="/login" className="inline-block text-[13.5px] font-medium text-blue hover:underline">
-          Back to sign in →
+          {t("reset.backToSignIn")}
         </Link>
       </div>
     );
@@ -117,34 +116,34 @@ export function ResetPasswordForm() {
     <form onSubmit={onSubmit} className="space-y-4">
       {email && (
         <p className="text-[13px] text-text-2 -mt-2">
-          for <span className="font-medium text-text">{email}</span>
+          {t("reset.for")} <span className="font-medium text-text">{email}</span>
         </p>
       )}
       <div>
-        <Label htmlFor="password">New password</Label>
+        <Label htmlFor="password">{t("reset.newPassword")}</Label>
         <Input
           id="password"
           name="password"
           type="password"
-          placeholder="At least 8 characters"
+          placeholder={t("auth.newPasswordPlaceholder")}
           autoComplete="new-password"
           required
         />
       </div>
       <div>
-        <Label htmlFor="confirm">Repeat it</Label>
+        <Label htmlFor="confirm">{t("reset.repeatIt")}</Label>
         <Input
           id="confirm"
           name="confirm"
           type="password"
-          placeholder="Same password again"
+          placeholder={t("auth.repeatPasswordPlaceholder")}
           autoComplete="new-password"
           required
         />
       </div>
       {error && <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2">{error}</p>}
       <Button type="submit" disabled={saving} className="w-full">
-        {saving ? "Saving…" : "Save new password"}
+        {saving ? t("common.saving") : t("reset.saveNewPassword")}
       </Button>
     </form>
   );
