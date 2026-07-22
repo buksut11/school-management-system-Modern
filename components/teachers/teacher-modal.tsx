@@ -8,6 +8,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { PhotoPicker } from "@/components/ui/photo-picker";
 import { saveTeacher } from "@/lib/actions/teachers";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 import type { TeacherWithClass } from "@/lib/data/teachers";
 import type { GradebookSubject } from "@/lib/data/exams";
@@ -103,10 +104,11 @@ export function TeacherModal({
 }) {
   const [state, formAction, pending] = useActionState(saveTeacher, undefined);
   const { show } = useToast();
+  const t = useT();
 
   useEffect(() => {
     if (state?.success) {
-      show(teacher ? "Teacher updated" : "Teacher added");
+      show(teacher ? t("teacher.updated") : t("teacher.added"));
       onSaved?.();
       onClose();
     }
@@ -114,7 +116,7 @@ export function TeacherModal({
   }, [state]);
 
   return (
-    <Modal open={open} onClose={onClose} title={teacher ? "Edit Teacher" : "Add Teacher"}>
+    <Modal open={open} onClose={onClose} title={teacher ? t("teacher.edit") : t("teacher.add")}>
       <form action={formAction} className="space-y-4">
         {teacher && <input type="hidden" name="id" value={teacher.id} />}
 
@@ -126,47 +128,47 @@ export function TeacherModal({
         />
 
         <div>
-          <Label htmlFor="full_name">Full name</Label>
+          <Label htmlFor="full_name">{t("field.fullName")}</Label>
           <Input id="full_name" name="full_name" defaultValue={teacher?.full_name} required />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="dob">Date of birth</Label>
+            <Label htmlFor="dob">{t("field.dob")}</Label>
             <Input id="dob" name="dob" type="date" defaultValue={teacher?.dob ?? ""} />
           </div>
           <div>
-            <Label>Gender</Label>
+            <Label>{t("field.gender")}</Label>
             <SegmentedField
               name="gender"
               defaultValue={teacher?.gender ?? "male"}
               options={[
-                { value: "male", label: "Male" },
-                { value: "female", label: "Female" },
+                { value: "male", label: t("gender.male") },
+                { value: "female", label: t("gender.female") },
               ]}
             />
           </div>
         </div>
 
         <div>
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="address">{t("field.address")}</Label>
           <Input id="address" name="address" defaultValue={teacher?.address ?? ""} />
         </div>
 
         <div>
-          <Label htmlFor="mobile">Mobile</Label>
+          <Label htmlFor="mobile">{t("field.mobile")}</Label>
           <Input id="mobile" name="mobile" defaultValue={teacher?.mobile ?? ""} />
         </div>
 
         <div>
-          <Label>Subjects taught</Label>
+          <Label>{t("field.subjectsTaught")}</Label>
           <SubjectPicker subjects={subjects} initialIds={teacher?.subject_ids ?? []} />
         </div>
 
         <div>
-          <Label htmlFor="class_id">Assigned class</Label>
+          <Label htmlFor="class_id">{t("field.assignedClass")}</Label>
           <Select id="class_id" name="class_id" defaultValue={teacher?.class_id ?? ""}>
-            <option value="">— Select —</option>
+            <option value="">{t("select.choose")}</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -176,13 +178,13 @@ export function TeacherModal({
         </div>
 
         <div>
-          <Label>Employment status</Label>
+          <Label>{t("field.employmentStatus")}</Label>
           <SegmentedField
             name="status"
             defaultValue={teacher?.status ?? "active"}
             options={[
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
+              { value: "active", label: t("status.active") },
+              { value: "inactive", label: t("status.inactive") },
             ]}
           />
         </div>
@@ -193,10 +195,10 @@ export function TeacherModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Save"}
+            {pending ? t("common.saving") : t("common.save")}
           </Button>
         </div>
       </form>

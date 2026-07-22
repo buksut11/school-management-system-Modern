@@ -14,6 +14,7 @@ import { deleteTeacher, searchTeachers } from "@/lib/actions/teachers";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
+import { useT } from "@/lib/i18n/client";
 import { TEACHERS_PAGE_SIZE } from "@/lib/pagination";
 import type { TeacherWithClass, TeachersPage } from "@/lib/data/teachers";
 import type { GradebookSubject } from "@/lib/data/exams";
@@ -40,26 +41,27 @@ export function TeachersView({
   const [exporting, startExport] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   function openAdd() {
     setEditing(null);
     setModalOpen(true);
   }
 
-  function openEdit(t: TeacherWithClass) {
-    setEditing(t);
+  function openEdit(tc: TeacherWithClass) {
+    setEditing(tc);
     setModalOpen(true);
   }
 
-  async function onDelete(t: TeacherWithClass) {
-    const ok = await confirm({ title: `Remove ${t.full_name}?`, confirmLabel: "Remove" });
+  async function onDelete(tc: TeacherWithClass) {
+    const ok = await confirm({ title: t("teacher.removeTitle", { name: tc.full_name }), confirmLabel: t("common.remove") });
     if (!ok) return;
     try {
-      await deleteTeacher(t.id, t.full_name);
-      show("Teacher removed");
+      await deleteTeacher(tc.id, tc.full_name);
+      show(t("teacher.removed"));
       refresh();
     } catch (e) {
-      show(e instanceof Error ? e.message : "Could not remove teacher");
+      show(e instanceof Error ? e.message : t("teacher.couldNotRemove"));
     }
   }
 
@@ -70,14 +72,14 @@ export function TeachersView({
       const all = await searchTeachers({ search: query.trim(), offset: 0, limit: 100000 });
       downloadCsv(
         "teachers.csv",
-        all.rows.map((t) => ({
-          id: `TCH-${100 + t.seq}`,
-          name: t.full_name,
-          class: t.class_name ?? "",
-          subjects: t.subjects.join("; "),
-          gender: t.gender ?? "",
-          mobile: t.mobile ?? "",
-          status: t.status,
+        all.rows.map((tc) => ({
+          id: `TCH-${100 + tc.seq}`,
+          name: tc.full_name,
+          class: tc.class_name ?? "",
+          subjects: tc.subjects.join("; "),
+          gender: tc.gender ?? "",
+          mobile: tc.mobile ?? "",
+          status: tc.status,
         }))
       );
     });
@@ -91,16 +93,16 @@ export function TeachersView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, ID, or subject…"
+            placeholder={t("teacher.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv} disabled={exporting}>
-          <Download size={15} /> {exporting ? "Exporting…" : "Export"}
+          <Download size={15} /> {exporting ? t("common.exporting") : t("common.export")}
         </Button>
         <Button onClick={openAdd}>
-          <Plus size={15} /> Add Teacher
+          <Plus size={15} /> {t("teacher.add")}
         </Button>
       </div>
 
@@ -111,13 +113,13 @@ export function TeachersView({
       )}
 
       {rows.length === 0 && query.trim() && !pending && (
-        <p className="text-center text-[13px] text-text-2 py-6">No teachers match “{query.trim()}”.</p>
+        <p className="text-center text-[13px] text-text-2 py-6">{t("teacher.none", { query: query.trim() })}</p>
       )}
 
       {hasMore && (
         <div className="flex justify-center pt-1">
           <Button variant="secondary" size="md" onClick={loadMore} disabled={pending}>
-            {pending ? "Loading…" : "Load more"}
+            {pending ? t("common.loading") : t("common.loadMore")}
           </Button>
         </div>
       )}

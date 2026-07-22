@@ -237,6 +237,23 @@ const en = {
 
   // ---- attendance ----
   "attendance.searchPlaceholder": "Search students…",
+
+  // ---- teachers ----
+  "col.teacher": "Teacher",
+  "field.mobile": "Mobile",
+  "field.subjectsTaught": "Subjects taught",
+  "field.assignedClass": "Assigned class",
+  "field.employmentStatus": "Employment status",
+  "teacher.add": "Add Teacher",
+  "teacher.edit": "Edit Teacher",
+  "teacher.added": "Teacher added",
+  "teacher.updated": "Teacher updated",
+  "teacher.removed": "Teacher removed",
+  "teacher.couldNotRemove": "Could not remove teacher",
+  "teacher.searchPlaceholder": "Search by name, ID, or subject…",
+  "teacher.notFound": "No teachers found.",
+  "teacher.removeTitle": "Remove {name}?",
+  "teacher.none": "No teachers match “{query}”.",
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -475,6 +492,23 @@ const so: Record<MessageKey, string> = {
 
   // ---- attendance ----
   "attendance.searchPlaceholder": "Ku raadi ardayda…",
+
+  // ---- teachers ----
+  "col.teacher": "Macallin",
+  "field.mobile": "Taleefan",
+  "field.subjectsTaught": "Maadooyinka la dhigo",
+  "field.assignedClass": "Fasalka loo qoondeeyay",
+  "field.employmentStatus": "Xaaladda shaqada",
+  "teacher.add": "Ku dar Macallin",
+  "teacher.edit": "Wax ka beddel Macallin",
+  "teacher.added": "Macallinka waa la daray",
+  "teacher.updated": "Macallinka waa la cusboonaysiiyay",
+  "teacher.removed": "Macallinka waa la saaray",
+  "teacher.couldNotRemove": "Lama saari karin macallinka",
+  "teacher.searchPlaceholder": "Ku raadi magac, ID, ama maado…",
+  "teacher.notFound": "Lama helin macallimiin.",
+  "teacher.removeTitle": "Ka saar {name}?",
+  "teacher.none": "Ma jiraan macallimiin u dhigma “{query}”.",
 };
 
 export const messages: Record<Locale, Record<MessageKey, string>> = { en, so };
