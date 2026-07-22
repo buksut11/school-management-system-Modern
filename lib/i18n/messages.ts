@@ -63,6 +63,20 @@ const en = {
   "auth.mfaHint": "Enter the 6-digit code from your authenticator app.",
   "auth.verifyAndSignIn": "Verify & sign in",
   "auth.verifying": "Verifying…",
+
+  // ---- dashboard ----
+  "dash.totalStudents": "Total Students",
+  "dash.totalTeachers": "Total Teachers",
+  "dash.attendanceToday": "Attendance Today",
+  "dash.feesCollected": "Fees Collected ({rate}%)",
+  "dash.glanceTitle": "Today at a Glance",
+  "dash.present": "Present",
+  "dash.late": "Late",
+  "dash.absent": "Absent",
+  "dash.totalStudentsShort": "Total students",
+  "dash.recentActivity": "Recent Activity",
+  "dash.activityEmpty": "Nothing yet — activity will show up here as you use the app.",
+  "dash.by": "by {name}",
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -127,6 +141,20 @@ const so: Record<MessageKey, string> = {
   "auth.mfaHint": "Geli koodhka 6-lambar ee ka yimaada abka xaqiijinta.",
   "auth.verifyAndSignIn": "Xaqiiji oo gal",
   "auth.verifying": "Waa la xaqiijinayaa…",
+
+  // ---- dashboard ----
+  "dash.totalStudents": "Wadarta Ardayda",
+  "dash.totalTeachers": "Wadarta Macallimiinta",
+  "dash.attendanceToday": "Xaadiriska Maanta",
+  "dash.feesCollected": "Lacagaha la aruuriyay ({rate}%)",
+  "dash.glanceTitle": "Maanta oo Kooban",
+  "dash.present": "Joogaya",
+  "dash.late": "Daahay",
+  "dash.absent": "Maqan",
+  "dash.totalStudentsShort": "Wadarta ardayda",
+  "dash.recentActivity": "Dhaqdhaqaaqii ugu Dambeeyay",
+  "dash.activityEmpty": "Weli waxba ma jiraan — dhaqdhaqaaqu halkan ayuu ka muuqan doonaa markaad isticmaasho appka.",
+  "dash.by": "waxaa sameeyay {name}",
 };
 
 export const messages: Record<Locale, Record<MessageKey, string>> = { en, so };
