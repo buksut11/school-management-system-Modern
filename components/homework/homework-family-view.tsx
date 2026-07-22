@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toggleHomeworkDone } from "@/lib/actions/homework";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import type { FamilyHomeworkRow } from "@/lib/data/homework";
 
 export function HomeworkFamilyView({ rows }: { rows: FamilyHomeworkRow[] }) {
@@ -20,6 +21,7 @@ export function HomeworkFamilyView({ rows }: { rows: FamilyHomeworkRow[] }) {
   );
   const [, start] = useTransition();
   const { show } = useToast();
+  const t = useT();
 
   function toggle(homeworkId: string, studentId: string) {
     const key = `${homeworkId}:${studentId}`;
@@ -48,7 +50,7 @@ export function HomeworkFamilyView({ rows }: { rows: FamilyHomeworkRow[] }) {
     return (
       <Card className="p-10 text-center">
         <NotebookPen size={26} className="mx-auto mb-3 text-text-2" />
-        <p className="text-[13px] text-text-2">No homework has been set yet.</p>
+        <p className="text-[13px] text-text-2">{t("hw.emptyFamily")}</p>
       </Card>
     );
   }
@@ -63,7 +65,7 @@ export function HomeworkFamilyView({ rows }: { rows: FamilyHomeworkRow[] }) {
           </div>
           <div className="text-[12px] text-text-2">
             {h.class_name}
-            {h.due_date ? ` · Due ${formatDate(h.due_date)}` : ""}
+            {h.due_date ? ` · ${t("hw.due", { date: formatDate(h.due_date) })}` : ""}
           </div>
           {h.details && <p className="mt-2 text-[13px] text-text whitespace-pre-wrap">{h.details}</p>}
 
@@ -84,7 +86,7 @@ export function HomeworkFamilyView({ rows }: { rows: FamilyHomeworkRow[] }) {
                     className="w-4 h-4 accent-green"
                   />
                   <span>
-                    {h.students.length > 1 ? s.full_name : "Mark done"}
+                    {h.students.length > 1 ? s.full_name : t("hw.markDone")}
                   </span>
                 </label>
               );

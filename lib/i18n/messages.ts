@@ -217,6 +217,23 @@ const en = {
   "mfa.verifyTitle": "Two-factor verification",
   "mfa.verifyIntro": "Enter the 6-digit code from your authenticator app to continue.",
   "mfa.verify": "Verify",
+
+  // ---- homework ----
+  "hw.new": "New Homework",
+  "hw.edit": "Edit Homework",
+  "hw.set": "Homework set",
+  "hw.updated": "Homework updated",
+  "hw.removed": "Homework removed",
+  "hw.titlePlaceholder": "e.g. Exercises 4.1–4.3",
+  "hw.detailsPlaceholder": "What to do, page numbers, anything the class needs to know…",
+  "hw.allClasses": "All classes",
+  "hw.doneCount": "{done} of {total} marked done",
+  "hw.removeTitle": "Remove “{title}”?",
+  "hw.removeMessage": "This homework and its completion ticks will be removed.",
+  "hw.emptyStaff": "No homework yet. Use “New Homework” to set the first assignment.",
+  "hw.emptyFamily": "No homework has been set yet.",
+  "hw.markDone": "Mark done",
+  "hw.due": "Due {date}",
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -435,6 +452,23 @@ const so: Record<MessageKey, string> = {
   "mfa.verifyTitle": "Xaqiijinta laba-tallaabo",
   "mfa.verifyIntro": "Geli koodhka 6-lambar ee ka yimaada abka xaqiijinta si aad u sii wadato.",
   "mfa.verify": "Xaqiiji",
+
+  // ---- homework ----
+  "hw.new": "Shaqo Cusub",
+  "hw.edit": "Wax ka beddel Shaqada",
+  "hw.set": "Shaqada waa la dejiyay",
+  "hw.updated": "Shaqada waa la cusboonaysiiyay",
+  "hw.removed": "Shaqada waa la saaray",
+  "hw.titlePlaceholder": "tusaale: Layliga 4.1–4.3",
+  "hw.detailsPlaceholder": "Waxa la sameynayo, lambarrada bogagga, wax kasta oo fasalku u baahan yahay inuu ogaado…",
+  "hw.allClasses": "Dhammaan fasalada",
+  "hw.doneCount": "{done} ka mid ah {total} ayaa dhammaystiray",
+  "hw.removeTitle": "Ka saar “{title}”?",
+  "hw.removeMessage": "Shaqadan iyo calaamadaha dhammaystirka waa la saarayaa.",
+  "hw.emptyStaff": "Weli shaqo ma jirto. Isticmaal “Shaqo Cusub” si aad u dejiso tan ugu horreysa.",
+  "hw.emptyFamily": "Weli shaqo lama dejin.",
+  "hw.markDone": "Calaamadee dhammaystiran",
+  "hw.due": "Waqtiga: {date}",
 };
 
 export const messages: Record<Locale, Record<MessageKey, string>> = { en, so };

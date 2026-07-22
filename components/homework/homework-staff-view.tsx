@@ -11,6 +11,7 @@ import { deleteHomework } from "@/lib/actions/homework";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { formatDate } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import type { HomeworkRow } from "@/lib/data/homework";
 
 export function HomeworkStaffView({
@@ -28,6 +29,7 @@ export function HomeworkStaffView({
   const [, startTransition] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   const filtered = useMemo(
     () => (classFilter === "all" ? rows : rows.filter((r) => r.class_id === classFilter)),
@@ -46,14 +48,14 @@ export function HomeworkStaffView({
 
   async function onDelete(h: HomeworkRow) {
     const ok = await confirm({
-      title: `Remove "${h.title}"?`,
-      message: "This homework and its completion ticks will be removed.",
-      confirmLabel: "Remove",
+      title: t("hw.removeTitle", { title: h.title }),
+      message: t("hw.removeMessage"),
+      confirmLabel: t("common.remove"),
     });
     if (!ok) return;
     startTransition(async () => {
       const result = await deleteHomework(h.id, h.title);
-      show(result?.error ?? "Homework removed");
+      show(result?.error ?? t("hw.removed"));
     });
   }
 
@@ -62,7 +64,7 @@ export function HomeworkStaffView({
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="min-w-[180px]">
           <Select value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
-            <option value="all">All classes</option>
+            <option value="all">{t("hw.allClasses")}</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -72,7 +74,7 @@ export function HomeworkStaffView({
         </div>
         <div className="flex-1" />
         <Button onClick={openAdd}>
-          <Plus size={15} /> New Homework
+          <Plus size={15} /> {t("hw.new")}
         </Button>
       </div>
 
@@ -87,28 +89,28 @@ export function HomeworkStaffView({
                 </div>
                 <div className="text-[12px] text-text-2">
                   {h.class_name}
-                  {h.due_date ? ` · Due ${formatDate(h.due_date)}` : ""}
+                  {h.due_date ? ` · ${t("hw.due", { date: formatDate(h.due_date) })}` : ""}
                 </div>
                 {h.details && (
                   <p className="mt-2 text-[13px] text-text whitespace-pre-wrap">{h.details}</p>
                 )}
                 <div className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-text-2">
                   <CheckCircle2 size={14} className={h.done_count > 0 ? "text-green" : "text-text-2"} />
-                  {h.done_count} of {h.total_count} marked done
+                  {t("hw.doneCount", { done: h.done_count, total: h.total_count })}
                 </div>
               </div>
               <div className="flex flex-none items-center gap-1">
                 <button
                   onClick={() => openEdit(h)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                  aria-label="Edit"
+                  aria-label={t("common.edit")}
                 >
                   <Pencil size={14} />
                 </button>
                 <button
                   onClick={() => onDelete(h)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-red/10 hover:text-red transition-colors"
-                  aria-label="Delete"
+                  aria-label={t("common.delete")}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -120,9 +122,7 @@ export function HomeworkStaffView({
         {filtered.length === 0 && (
           <Card className="p-10 text-center">
             <NotebookPen size={26} className="mx-auto mb-3 text-text-2" />
-            <p className="text-[13px] text-text-2">
-              No homework yet. Use “New Homework” to set the first assignment.
-            </p>
+            <p className="text-[13px] text-text-2">{t("hw.emptyStaff")}</p>
           </Card>
         )}
       </div>
