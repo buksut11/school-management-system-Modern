@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -26,7 +27,7 @@ export async function saveLesson(input: {
     p_subject_id: input.subjectId,
     p_teacher_id: input.teacherId,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   revalidatePath("/timetable");
   return { success: true };
@@ -40,7 +41,7 @@ export async function clearLesson(classId: string, day: number, slotId: string):
     .eq("class_id", classId)
     .eq("day", day)
     .eq("slot_id", slotId);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   revalidatePath("/timetable");
   return { success: true };
@@ -62,7 +63,7 @@ export async function saveTimetableSlots(items: SlotInput[]): Promise<FormState>
   // Updates kept periods in place (their lessons survive), inserts new
   // ones, removes the rest — all validated in the database (0039).
   const { data, error } = await supabase.rpc("set_timetable_slots", { p_items: cleaned });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(
     supabase,

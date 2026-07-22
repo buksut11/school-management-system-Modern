@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,6 +12,7 @@ import {
   BookOpen,
   Building2,
   ClipboardList,
+  NotebookPen,
   FileBarChart,
   Wallet,
   Receipt,
@@ -35,6 +35,7 @@ const NAV = [
   { href: "/timetable", label: "Timetable", icon: CalendarRange },
   { href: "/attendance", label: "Attendance", icon: CalendarCheck, badgeKey: "attendance" as const },
   { href: "/exams", label: "Exams & Grades", icon: ClipboardList },
+  { href: "/homework", label: "Homework", icon: NotebookPen },
   { href: "/academic-records", label: "Academic Records", icon: FileBarChart },
   { href: "/fees", label: "Fees", icon: Wallet, badgeKey: "fees" as const },
   { href: "/expenses", label: "Expenses", icon: Receipt, badgeKey: "expenses" as const },
@@ -59,22 +60,25 @@ const ROLE_NAV: Record<Role, string[]> = {
     "/timetable",
     "/attendance",
     "/exams",
+    "/homework",
     "/academic-records",
     "/reports",
   ],
-  student: ["/", "/timetable", "/attendance", "/exams", "/academic-records", "/fees", "/invoices"],
-  parent: ["/", "/timetable", "/attendance", "/exams", "/academic-records", "/fees", "/invoices"],
+  student: ["/", "/timetable", "/attendance", "/exams", "/homework", "/academic-records", "/fees", "/invoices"],
+  parent: ["/", "/timetable", "/attendance", "/exams", "/homework", "/academic-records", "/fees", "/invoices"],
   pending: [],
 };
 
 export function Sidebar({
   counts,
   role,
+  schoolName,
   onNavigate,
   className,
 }: {
   counts: SidebarCounts;
   role: Role;
+  schoolName: string;
   onNavigate?: () => void;
   className?: string;
 }) {
@@ -90,13 +94,12 @@ export function Sidebar({
       )}
     >
       <div className="flex items-center gap-2.5 px-2 pt-1.5 pb-4">
-        <div className="w-[34px] h-[34px] rounded-lg bg-white shadow flex items-center justify-center overflow-hidden flex-none">
-          <Image src="/brand/school-logo.jpg" alt="" width={34} height={34} className="object-contain" />
+        <div className="w-[34px] h-[34px] rounded-lg bg-blue text-white shadow flex items-center justify-center overflow-hidden flex-none text-[15px] font-bold">
+          {schoolInitial(schoolName)}
         </div>
         <div className="leading-tight min-w-0">
-          <div className="text-[13.5px] font-semibold tracking-tight truncate">Sh.Asharow</div>
-          <div className="text-[10.5px] text-text-2 font-medium truncate">
-            Primary &amp; Secondary School
+          <div className="text-[13.5px] font-semibold tracking-tight line-clamp-2" title={schoolName}>
+            {schoolName}
           </div>
         </div>
       </div>
@@ -146,6 +149,14 @@ export function Sidebar({
       </nav>
     </aside>
   );
+}
+
+// First letter/digit of the school's name, for the sidebar mark. Skips
+// honorific prefixes like "Sh." so "Sh.Asharow" reads as "A".
+function schoolInitial(name: string) {
+  const cleaned = name.replace(/^(sh|dr|mr|mrs|ms)\.?\s*/i, "");
+  const match = (cleaned || name).match(/[a-z0-9]/i);
+  return match ? match[0].toUpperCase() : "S";
 }
 
 function Badge({ children, active }: { children: React.ReactNode; active: boolean }) {

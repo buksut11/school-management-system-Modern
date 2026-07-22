@@ -127,7 +127,13 @@ export function ClassesView({
         />
       )}
 
-      <ClassModal open={modalOpen} onClose={() => setModalOpen(false)} klass={editing} teachers={teachers} />
+      <ClassModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        klass={editing}
+        teachers={teachers}
+        classes={classes.map((c) => ({ id: c.id, name: c.name }))}
+      />
     </div>
   );
 }

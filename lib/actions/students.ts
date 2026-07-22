@@ -2,12 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import { normalizePhotoPath } from "@/lib/utils";
 import { removeReplacedPhoto } from "@/lib/photo-cleanup";
+import { listStudents, type StudentsPage } from "@/lib/data/students";
 import type { Gender, PersonStatus } from "@/lib/types/database";
 
 export type FormState = { error?: string; success?: boolean } | undefined;
+
+// Client-callable pagination/search for the students list.
+export async function searchStudents(opts: {
+  search: string;
+  offset: number;
+  limit?: number;
+}): Promise<StudentsPage> {
+  return listStudents(opts);
+}
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);
@@ -42,12 +53,12 @@ export async function saveStudent(_prev: FormState, formData: FormData): Promise
       .eq("id", id)
       .single();
     const { error } = await supabase.from("students").update(record).eq("id", id);
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyError(error) };
     await removeReplacedPhoto(supabase, existing?.photo_url, record.photo_url);
     await logActivity(supabase, "student", `Updated student · ${fullName}`);
   } else {
     const { error } = await supabase.from("students").insert(record);
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyError(error) };
     await logActivity(supabase, "student", `New student enrolled · ${fullName}`);
   }
 
@@ -72,7 +83,7 @@ export async function deleteStudent(id: string, fullName: string): Promise<FormS
         error: `${fullName} has fee payment history, which must be kept. Set their status to inactive instead.`,
       };
     }
-    return { error: error.message };
+    return { error: friendlyError(error) };
   }
   await removeReplacedPhoto(supabase, existing?.photo_url, null);
   await logActivity(supabase, "student", `Removed student · ${fullName}`);

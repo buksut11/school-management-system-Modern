@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -22,7 +23,7 @@ export async function addAcademicYear(_prev: FormState, formData: FormData): Pro
   });
   if (error) {
     if (error.code === "23505") return { error: `A year named "${name}" already exists.` };
-    return { error: error.message };
+    return { error: friendlyError(error) };
   }
 
   await logActivity(supabase, "settings", `Added academic year · ${name}`);
@@ -37,7 +38,7 @@ export async function setCurrentAcademicYear(id: string, name: string): Promise<
   // flag atomically, verifies the caller is an admin, and carries every
   // active student's class into the new year as their starting enrollment.
   const { data, error } = await supabase.rpc("set_current_academic_year", { p_year_id: id });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(
     supabase,

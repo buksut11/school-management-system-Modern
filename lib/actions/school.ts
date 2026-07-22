@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -16,7 +17,7 @@ export async function joinSchool(_prev: FormState, formData: FormData): Promise<
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("join_school", { p_code: code });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `Staff member joined · ${data?.name ?? "school"}`);
   revalidatePath("/", "layout");
@@ -30,7 +31,7 @@ export async function joinSchoolWithCode(code: string): Promise<{ error?: string
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("join_school", { p_code: code.trim() });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `Staff member joined via invite link · ${data?.name ?? "school"}`);
   revalidatePath("/", "layout");
@@ -46,7 +47,7 @@ export async function renameSchool(_prev: FormState, formData: FormData): Promis
   // .select() so an RLS-blocked update (0 rows, no error) doesn't pass
   // as success — only admins of this school may rename it.
   const { data, error } = await supabase.from("schools").update({ name }).eq("id", id).select("id");
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   if (!data?.length) return { error: "Only an admin account can rename the school." };
 
   await logActivity(supabase, "settings", `School renamed · ${name}`);

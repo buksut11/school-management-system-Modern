@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -15,7 +16,7 @@ export async function platformCreateSchool(_prev: FormState, formData: FormData)
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("create_school", { p_name: trimmed });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `School registered · ${trimmed}`);
   revalidatePath("/", "layout");
@@ -29,7 +30,7 @@ export async function platformAdminInvite(
 ): Promise<{ error?: string; code?: string }> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("platform_admin_invite", { p_school_id: schoolId });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   return { code: data ?? undefined };
 }
 
@@ -39,7 +40,7 @@ export async function platformDeleteSchool(
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("platform_delete_school", { p_school_id: schoolId });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `School removed from platform · ${schoolName}`);
   revalidatePath("/", "layout");

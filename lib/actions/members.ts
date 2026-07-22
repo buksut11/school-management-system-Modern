@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { AssignableRole } from "@/lib/types/database";
 
@@ -20,7 +21,7 @@ export async function createInvite(input: {
     p_teacher_id: input.teacherId ?? null,
     p_student_ids: input.studentIds ?? [],
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `Invite created · ${input.role}`);
   revalidatePath("/settings");
@@ -32,7 +33,7 @@ export async function revokeInvite(id: string): Promise<MemberActionResult> {
   // .select() so an RLS-blocked delete (0 rows, no error) doesn't pass
   // as success.
   const { data, error } = await supabase.from("invites").delete().eq("id", id).select("id");
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   if (!data?.length) return { error: "Only an admin account can revoke invites." };
 
   await logActivity(supabase, "settings", "Invite revoked");
@@ -47,7 +48,7 @@ export async function setMemberRole(
 ): Promise<MemberActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_member_role", { p_user_id: userId, p_role: role });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `Member role changed · ${memberName} → ${role}`);
   revalidatePath("/", "layout");
@@ -64,7 +65,7 @@ export async function linkMemberTeacher(
     p_user_id: userId,
     p_teacher_id: teacherId,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `Teacher record linked · ${memberName}`);
   revalidatePath("/", "layout");
@@ -81,7 +82,7 @@ export async function linkMemberStudents(
     p_user_id: userId,
     p_student_ids: studentIds,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `Student records linked · ${memberName}`);
   revalidatePath("/", "layout");
@@ -91,7 +92,7 @@ export async function linkMemberStudents(
 export async function removeMember(userId: string, memberName: string): Promise<MemberActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("remove_member", { p_user_id: userId });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "settings", `Member removed · ${memberName}`);
   revalidatePath("/", "layout");

@@ -4,7 +4,9 @@ import { BackupPanel } from "./backup-panel";
 import { RestorePanel } from "./restore-panel";
 import { DemoDataPanel } from "./demo-data-panel";
 import { AcademicYearPanel } from "./academic-year-panel";
+import { PromotionPanel } from "./promotion-panel";
 import { SchoolPanel } from "./school-panel";
+import { SecurityPanel } from "./security-panel";
 import { MembersPanel } from "./members-panel";
 import { PlatformPanel } from "./platform-panel";
 import type { AcademicYear, Invite, School } from "@/lib/types/database";
@@ -22,6 +24,7 @@ export function SettingsView({
   platformSchools,
   studentOptions,
   teacherOptions,
+  mfaEnabled,
 }: {
   counts: Record<string, number>;
   years: AcademicYear[];
@@ -33,6 +36,7 @@ export function SettingsView({
   platformSchools: PlatformSchool[] | null;
   studentOptions: PersonOption[];
   teacherOptions: PersonOption[];
+  mfaEnabled: boolean;
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -52,10 +56,12 @@ export function SettingsView({
           />
         )}
         <AcademicYearPanel years={years} />
+        {isAdmin && <PromotionPanel />}
         <ExportPanel counts={counts} />
         <ImportWizard />
       </div>
       <div className="space-y-4">
+        <SecurityPanel enabled={mfaEnabled} />
         <DemoDataPanel />
         <BackupPanel />
         <RestorePanel />

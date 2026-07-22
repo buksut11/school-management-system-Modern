@@ -89,12 +89,14 @@ function SegmentedField({
 export function TeacherModal({
   open,
   onClose,
+  onSaved,
   teacher,
   classes,
   subjects,
 }: {
   open: boolean;
   onClose: () => void;
+  onSaved?: () => void;
   teacher: TeacherWithClass | null;
   classes: { id: string; name: string }[];
   subjects: GradebookSubject[];
@@ -105,6 +107,7 @@ export function TeacherModal({
   useEffect(() => {
     if (state?.success) {
       show(teacher ? "Teacher updated" : "Teacher added");
+      onSaved?.();
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

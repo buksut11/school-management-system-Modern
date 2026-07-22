@@ -1,14 +1,17 @@
 import { redirect } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getSidebarCounts, type SidebarCounts } from "@/lib/data/dashboard";
+import { getSchool } from "@/lib/data/school";
 import { AppShell } from "@/components/layout/app-shell";
 import { SchoolOnboarding } from "@/components/onboarding/school-onboarding";
 import { PendingApproval } from "@/components/onboarding/pending-approval";
+import { MfaChallenge } from "@/components/onboarding/mfa-challenge";
 import type { Role } from "@/lib/types/database";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   let fullName = "Admin";
   let role: Role = "admin";
+  let schoolName = "School";
   let counts: SidebarCounts = {
     students: 0,
     teachers: 0,
@@ -26,6 +29,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     } = await supabase.auth.getUser();
 
     if (!user) redirect("/login");
+
+    // Two-factor gate: if this account has an active authenticator but the
+    // session is still password-only (AAL1), require the code before the
+    // app renders — catches direct navigation, not just the login form.
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel === "aal1" && aal.nextLevel === "aal2") {
+      return <MfaChallenge />;
+    }
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -48,11 +59,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       return <PendingApproval fullName={profile?.full_name || ""} />;
     }
 
-    counts = await getSidebarCounts();
+    const [sidebarCounts, school] = await Promise.all([getSidebarCounts(), getSchool()]);
+    counts = sidebarCounts;
+    schoolName = school?.name || "School";
   }
 
   return (
-    <AppShell counts={counts} fullName={fullName} role={role}>
+    <AppShell counts={counts} fullName={fullName} role={role} schoolName={schoolName}>
       {children}
     </AppShell>
   );

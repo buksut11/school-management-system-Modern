@@ -2,6 +2,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/server";
 import {
   listInvoices,
   listReceipts,
+  getInvoiceSummary,
+  getReceiptSummary,
   listStudentOptions,
   listTeacherContactOptions,
 } from "@/lib/data/invoices";
@@ -13,14 +15,23 @@ export default async function InvoicesPage() {
     return <SetupNotice what="invoices" />;
   }
 
-  const [invoices, receipts, students, teachers] = await Promise.all([
+  const [invoices, receipts, invoiceSummary, receiptSummary, students, teachers] = await Promise.all([
     listInvoices(),
     listReceipts(),
+    getInvoiceSummary(),
+    getReceiptSummary(),
     listStudentOptions(),
     listTeacherContactOptions(),
   ]);
 
   return (
-    <InvoicesView invoices={invoices} receipts={receipts} students={students} teachers={teachers} />
+    <InvoicesView
+      initialInvoices={invoices}
+      initialReceipts={receipts}
+      invoiceSummary={invoiceSummary}
+      receiptSummary={receiptSummary}
+      students={students}
+      teachers={teachers}
+    />
   );
 }

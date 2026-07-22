@@ -3,6 +3,7 @@
 import { CircleDollarSign, FileDown, Pencil, Printer, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, formatDate } from "@/lib/utils";
+import { useSchoolName } from "@/components/layout/school-context";
 import type { InvoiceRow } from "@/lib/data/invoices";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
@@ -20,8 +21,10 @@ export function InvoicesTable({
   onDelete: (inv: InvoiceRow) => void;
   onPay: (inv: InvoiceRow) => void;
 }) {
+  const schoolName = useSchoolName();
+
   function download(inv: InvoiceRow) {
-    import("@/lib/pdf/invoice").then((m) => m.downloadInvoicePdf(inv));
+    import("@/lib/pdf/invoice").then((m) => m.downloadInvoicePdf(inv, schoolName));
   }
 
   async function print(inv: InvoiceRow) {
@@ -29,7 +32,7 @@ export function InvoicesTable({
       import("@/lib/pdf/invoice"),
       import("@/lib/pdf/print"),
     ]);
-    printPdf(buildInvoicePdf(inv));
+    printPdf(buildInvoicePdf(inv, schoolName));
   }
 
   return (

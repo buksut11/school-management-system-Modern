@@ -34,7 +34,7 @@ export function StudentsTable({
 
       <div className="divide-y divide-line/60">
         {students.map((s) => (
-          <div key={s.id} className="r-card flex items-center gap-3 px-5 py-3" style={{ opacity: s.status === "inactive" ? 0.55 : 1 }}>
+          <div key={s.id} className="r-card flex items-center gap-3 px-5 py-3" style={{ opacity: s.status === "active" ? 1 : 0.55 }}>
             <div className="r-cell w-20 flex-none" data-label="ID">
               <Badge tone="blue">STU-{1000 + s.seq}</Badge>
             </div>
@@ -70,8 +70,8 @@ export function StudentsTable({
               )}
             </div>
             <div className="r-cell w-24 flex-none" data-label="Status">
-              <Badge tone={s.status === "active" ? "green" : "gray"}>
-                {s.status === "active" ? "Active" : "Inactive"}
+              <Badge tone={s.status === "active" ? "green" : s.status === "graduated" ? "blue" : "gray"}>
+                {s.status === "active" ? "Active" : s.status === "graduated" ? "Graduated" : "Inactive"}
               </Badge>
             </div>
             <div className="r-actions w-20 flex-none flex items-center justify-end gap-1">

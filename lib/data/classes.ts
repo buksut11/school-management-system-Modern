@@ -9,6 +9,8 @@ export type ClassWithStats = {
   capacity: number;
   teacher_id: string | null;
   teacher_name: string | null;
+  next_class_id: string | null;
+  next_class_name: string | null;
   enrolled: number;
   boys: number;
   girls: number;
@@ -22,9 +24,11 @@ export async function listClasses(): Promise<ClassWithStats[]> {
       .from("classes")
       .select("*, teachers(full_name)")
       .order("name")
-      .returns<Array<{ id: string; seq: number; name: string; room: string | null; base_fees: number; capacity: number; teacher_id: string | null; teachers: { full_name: string } | null }>>(),
+      .returns<Array<{ id: string; seq: number; name: string; room: string | null; base_fees: number; capacity: number; teacher_id: string | null; next_class_id: string | null; teachers: { full_name: string } | null }>>(),
     supabase.from("students").select("class_id, gender").eq("status", "active"),
   ]);
+
+  const nameById = new Map((classes ?? []).map((c) => [c.id, c.name]));
 
   return (classes ?? []).map((c) => {
     const roster = (students ?? []).filter((s) => s.class_id === c.id);
@@ -37,6 +41,8 @@ export async function listClasses(): Promise<ClassWithStats[]> {
       capacity: c.capacity,
       teacher_id: c.teacher_id,
       teacher_name: c.teachers?.full_name ?? null,
+      next_class_id: c.next_class_id,
+      next_class_name: c.next_class_id ? nameById.get(c.next_class_id) ?? null : null,
       enrolled: roster.length,
       boys: roster.filter((s) => s.gender === "male").length,
       girls: roster.filter((s) => s.gender === "female").length,

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { signPhotoUrls } from "@/lib/data/photos";
-import type { Teacher } from "@/lib/types/database";
+import { TEACHERS_PAGE_SIZE } from "@/lib/pagination";
+import type { Teacher, PersonStatus } from "@/lib/types/database";
 
 type TeacherJoinRow = Teacher & {
   classes: { id: string; name: string }[];
@@ -20,23 +21,48 @@ export type TeacherWithClass = {
   subjects: string[];
   subject_ids: string[];
   photo_url: string | null;
-  status: "active" | "inactive";
+  status: PersonStatus;
   class_id: string | null;
   class_name: string | null;
 };
 
-export async function listTeachers(): Promise<TeacherWithClass[]> {
+export type TeachersPage = { rows: TeacherWithClass[]; hasMore: boolean };
+
+// One page of teachers, searched/ordered in the database. Text search
+// matches the name; a numeric query matches the teacher number
+// (TCH-100+seq, or the raw seq).
+export async function listTeachers(
+  opts: { search?: string; offset?: number; limit?: number } = {}
+): Promise<TeachersPage> {
   const supabase = await createClient();
+  const limit = opts.limit ?? TEACHERS_PAGE_SIZE;
+  const offset = opts.offset ?? 0;
+  const search = (opts.search ?? "").trim();
+
   // "classes" is embedded in reverse here — classes.teacher_id -> teachers.id
   // is the only FK between the two tables now, so a teacher can show the
   // one class (if any) that names them as its class teacher.
-  const { data } = await supabase
+  let query = supabase
     .from("teachers")
     .select("*, classes(id, name), teacher_subjects(subject_id)")
     .order("seq", { ascending: true })
-    .returns<TeacherJoinRow[]>();
+    .range(offset, offset + limit - 1);
 
-  return signPhotoUrls((data ?? []).map((t) => {
+  if (search) {
+    const digits = search.replace(/[^0-9]/g, "");
+    if (digits && /^\s*(tch[-\s]?)?\d+\s*$/i.test(search)) {
+      const n = Number(digits);
+      query = query.eq("seq", n >= 100 ? n - 100 : n);
+    } else {
+      query = query.ilike("full_name", `%${search}%`);
+    }
+  }
+
+  const { data } = await query.returns<TeacherJoinRow[]>();
+  const rows = data ?? [];
+  const hasMore = rows.length === limit;
+
+  const mapped = rows.map((t) => {
     const assignedClass = t.classes?.[0] ?? null;
     return {
       id: t.id,
@@ -53,7 +79,9 @@ export async function listTeachers(): Promise<TeacherWithClass[]> {
       class_id: assignedClass?.id ?? null,
       class_name: assignedClass?.name ?? null,
     };
-  }));
+  });
+
+  return { rows: await signPhotoUrls(mapped), hasMore };
 }
 
 export async function listTeacherOptions() {

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { login, signup, requestPasswordReset } from "@/lib/actions/auth";
+import { verifyLoginMfa } from "@/lib/actions/mfa";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +17,39 @@ export function LoginForm({
   const [state, formAction, pending] = useActionState(login, undefined);
   const [signupState, signupAction, signingUp] = useActionState(signup, undefined);
   const [forgotState, forgotAction, sendingReset] = useActionState(requestPasswordReset, undefined);
+  const [mfaState, mfaAction, verifyingMfa] = useActionState(verifyLoginMfa, undefined);
+
+  // After a correct password, an account with 2FA lands here to enter the
+  // 6-digit code from its authenticator app.
+  if (state?.mfaRequired) {
+    return (
+      <form action={mfaAction} className="space-y-4">
+        <input type="hidden" name="next" value={state.next ?? next} />
+        <div>
+          <Label htmlFor="code">Authentication code</Label>
+          <Input
+            id="code"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="123456"
+            maxLength={6}
+            autoFocus
+            required
+          />
+          <p className="mt-1.5 text-[12px] text-text-2">
+            Enter the 6-digit code from your authenticator app.
+          </p>
+        </div>
+        {mfaState?.error && (
+          <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2">{mfaState.error}</p>
+        )}
+        <Button type="submit" disabled={verifyingMfa} className="w-full">
+          {verifyingMfa ? "Verifying…" : "Verify & sign in"}
+        </Button>
+      </form>
+    );
+  }
 
   if (mode === "forgot") {
     return (

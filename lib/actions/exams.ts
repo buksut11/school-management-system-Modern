@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { Term } from "@/lib/types/database";
@@ -43,7 +44,7 @@ export async function saveExam(_prev: FormState, formData: FormData): Promise<Fo
     p_attendance_pct: num(formData, "attendance_pct"),
     p_test_score: num(formData, "test_score"),
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(
     supabase,
@@ -57,7 +58,7 @@ export async function saveExam(_prev: FormState, formData: FormData): Promise<Fo
 export async function deleteExam(id: string, studentName: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("exams").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
   await logActivity(supabase, "exam", `Removed exam record · ${studentName}`);
   revalidatePath("/", "layout");
 }

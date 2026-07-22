@@ -1,7 +1,7 @@
 export type Gender = "male" | "female";
 export type Role = "admin" | "staff" | "finance" | "teacher" | "student" | "parent" | "pending";
 export type AssignableRole = Exclude<Role, "pending">;
-export type PersonStatus = "active" | "inactive";
+export type PersonStatus = "active" | "inactive" | "graduated";
 export type AttendanceStatus = "present" | "late" | "absent";
 export type SubjectType = "core" | "elective";
 export type Term = "Term 1" | "Term 2" | "Term 3";
@@ -84,6 +84,7 @@ export interface Database {
           base_fees: number;
           capacity: number;
           teacher_id: string | null;
+          next_class_id: string | null;
           school_id: string;
           created_at: string;
           updated_at: string;
@@ -348,6 +349,39 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["lessons"]["Row"]>;
         Relationships: [];
       };
+      homework: {
+        Row: {
+          id: string;
+          school_id: string;
+          class_id: string;
+          subject_id: string | null;
+          title: string;
+          details: string | null;
+          due_date: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["homework"]["Row"]> & {
+          class_id: string;
+          title: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["homework"]["Row"]>;
+        Relationships: [];
+      };
+      homework_completions: {
+        Row: {
+          homework_id: string;
+          student_id: string;
+          school_id: string;
+          completed_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["homework_completions"]["Row"]> & {
+          homework_id: string;
+          student_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["homework_completions"]["Row"]>;
+        Relationships: [];
+      };
       fee_installments: {
         Row: {
           id: string;
@@ -556,8 +590,28 @@ export interface Database {
         };
         Relationships: [];
       };
+      invoice_balances: {
+        Row: Database["public"]["Tables"]["invoices"]["Row"] & {
+          paid: number;
+          balance: number;
+          status: "paid" | "partial" | "unpaid";
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      invoice_summary: {
+        Args: Record<string, never>;
+        Returns: { invoiced: number; paid: number; outstanding: number; open_count: number }[];
+      };
+      receipt_summary: {
+        Args: Record<string, never>;
+        Returns: { count: number; money_in: number; money_out: number }[];
+      };
+      promote_students: {
+        Args: { p_hold_ids?: string[] };
+        Returns: { promoted: number; graduated: number };
+      };
       create_invite: {
         Args: {
           p_role: Exclude<AssignableRole, "admin">;
@@ -735,3 +789,4 @@ export type FeePayment = Database["public"]["Tables"]["fee_payments"]["Row"];
 export type Expense = Database["public"]["Tables"]["expenses"]["Row"];
 export type Invoice = Database["public"]["Tables"]["invoices"]["Row"];
 export type Receipt = Database["public"]["Tables"]["receipts"]["Row"];
+export type Homework = Database["public"]["Tables"]["homework"]["Row"];

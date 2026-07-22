@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 
 export async function setAttendance(
@@ -21,7 +22,7 @@ export async function setAttendance(
     { student_id: studentId, date, status, class_id: student?.class_id ?? null },
     { onConflict: "student_id,date" }
   );
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
 
   if (status !== "present") {
     await logActivity(supabase, "attendance", `Marked ${status} · ${student?.full_name ?? "Student"}`);

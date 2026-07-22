@@ -418,6 +418,49 @@ select public.record_invoice_payment('aaaa1111-0000-0000-0000-0000000009a1', 40)
 call must_fail('paying an already-settled invoice is rejected',
   $q$ select public.record_invoice_payment('aaaa1111-0000-0000-0000-0000000009a1', 1) $q$);
 
+-- ---- 0041: invoice_balances view + finance summaries ----
+-- A part-paid and an unpaid invoice alongside the settled 09a1 above.
+insert into public.invoices (id, party_type, party_name, items, total)
+values ('aaaa1111-0000-0000-0000-0000000009b1', 'staff', 'Guard Gary',
+        '[{"description":"April wages","qty":1,"unit_price":100}]'::jsonb, 100);
+select public.record_invoice_payment('aaaa1111-0000-0000-0000-0000000009b1', 30);
+insert into public.invoices (id, party_type, party_name, items, total)
+values ('aaaa1111-0000-0000-0000-0000000009c1', 'staff', 'Cook Kim',
+        '[{"description":"May wages","qty":1,"unit_price":50}]'::jsonb, 50);
+
+call must_equal('invoice_balances marks a fully-paid invoice paid',
+  $q$ select status from public.invoice_balances where id = 'aaaa1111-0000-0000-0000-0000000009a1' $q$,
+  'paid');
+call must_equal('invoice_balances marks a part-paid invoice partial',
+  $q$ select status from public.invoice_balances where id = 'aaaa1111-0000-0000-0000-0000000009b1' $q$,
+  'partial');
+call must_equal('invoice_balances marks an unpaid invoice unpaid',
+  $q$ select status from public.invoice_balances where id = 'aaaa1111-0000-0000-0000-0000000009c1' $q$,
+  'unpaid');
+call must_equal('invoice_balances computes the outstanding balance',
+  $q$ select balance::text from public.invoice_balances where id = 'aaaa1111-0000-0000-0000-0000000009b1' $q$,
+  '70.00');
+call must_equal('invoice_summary counts only open invoices',
+  $q$ select open_count::text from public.invoice_summary() $q$, '2');
+call must_equal('invoice_summary totals what was invoiced',
+  $q$ select invoiced::text from public.invoice_summary() $q$, '250.00');
+
+-- ---- 0043: homework board + completions ----
+insert into public.homework (id, school_id, class_id, title)
+values ('aaaa1111-0000-0000-0000-00000000f001', '11111111-1111-1111-1111-111111111111',
+        'aaaa1111-0000-0000-0000-00000000c1a1', 'Read chapter 3');
+call must_fail('homework cannot reference another school''s class',
+  $q$ insert into public.homework (class_id, title)
+      values ('bbbb2222-0000-0000-0000-00000000c1b1', 'cross-tenant') $q$);
+insert into public.homework_completions (homework_id, student_id)
+values ('aaaa1111-0000-0000-0000-00000000f001', 'aaaa1111-0000-0000-0000-0000000005a1');
+call must_equal('a homework completion is recorded',
+  $q$ select count(*)::text from public.homework_completions
+      where homework_id = 'aaaa1111-0000-0000-0000-00000000f001' $q$, '1');
+call must_fail('a completion cannot cross schools',
+  $q$ insert into public.homework_completions (homework_id, student_id)
+      values ('aaaa1111-0000-0000-0000-00000000f001', 'bbbb2222-0000-0000-0000-0000000005b1') $q$);
+
 -- ---- 0031: expense payment ledger ----
 insert into public.expenses (id, payee, category, amount)
 values ('aaaa1111-0000-0000-0000-000000000ea1', 'Teaching payroll', 'salaries', 100);
@@ -565,6 +608,45 @@ select test_login('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
 call must_equal('school B untouched by school A''s restore',
   $q$ select full_name from public.students $q$, 'Student B1');
+
+-- ---- 0042: promotion workflow ----
+-- Runs last: promote_students() acts on every final-class student in the
+-- school, so keep it after the assertions that count students. Grade 1
+-- promotes into Grade 2; Grade 2 is a final class (its students graduate).
+reset role;
+select test_login('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+
+insert into public.classes (id, school_id, name, base_fees) values
+  ('aaaa1111-0000-0000-0000-00000000c201', '11111111-1111-1111-1111-111111111111', 'Grade 1', 100),
+  ('aaaa1111-0000-0000-0000-00000000c202', '11111111-1111-1111-1111-111111111111', 'Grade 2', 100);
+update public.classes set next_class_id = 'aaaa1111-0000-0000-0000-00000000c202'
+  where id = 'aaaa1111-0000-0000-0000-00000000c201';
+insert into public.students (id, school_id, full_name, class_id, base_fees) values
+  ('aaaa1111-0000-0000-0000-0000000005f1', '11111111-1111-1111-1111-111111111111', 'Promote Pat',
+   'aaaa1111-0000-0000-0000-00000000c201', 100),
+  ('aaaa1111-0000-0000-0000-0000000005f2', '11111111-1111-1111-1111-111111111111', 'Graduate Gwen',
+   'aaaa1111-0000-0000-0000-00000000c202', 100),
+  ('aaaa1111-0000-0000-0000-0000000005f3', '11111111-1111-1111-1111-111111111111', 'Repeat Rae',
+   'aaaa1111-0000-0000-0000-00000000c201', 100);
+
+call must_fail('a class cannot promote into itself',
+  $q$ update public.classes set next_class_id = id where id = 'aaaa1111-0000-0000-0000-00000000c201' $q$);
+
+select public.promote_students(array['aaaa1111-0000-0000-0000-0000000005f3']::uuid[]);
+
+call must_equal('promotion advances a student to the next class',
+  $q$ select class_id::text from public.students where id = 'aaaa1111-0000-0000-0000-0000000005f1' $q$,
+  'aaaa1111-0000-0000-0000-00000000c202');
+call must_equal('a promoted student is not graduated in the same run',
+  $q$ select status from public.students where id = 'aaaa1111-0000-0000-0000-0000000005f1' $q$,
+  'active');
+call must_equal('promotion graduates a final-class student',
+  $q$ select status from public.students where id = 'aaaa1111-0000-0000-0000-0000000005f2' $q$,
+  'graduated');
+call must_equal('a held-back student stays in place',
+  $q$ select class_id::text from public.students where id = 'aaaa1111-0000-0000-0000-0000000005f3' $q$,
+  'aaaa1111-0000-0000-0000-00000000c201');
 
 reset role;
 \echo ''

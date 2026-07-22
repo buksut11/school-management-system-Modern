@@ -3,6 +3,7 @@
 import { FileDown, Printer, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, formatDate } from "@/lib/utils";
+import { useSchoolName } from "@/components/layout/school-context";
 import type { ReceiptRow } from "@/lib/data/invoices";
 
 const TYPE_TONE = { student: "blue", teacher: "purple", staff: "teal" } as const;
@@ -21,8 +22,10 @@ export function ReceiptsTable({
   receipts: ReceiptRow[];
   onDelete: (r: ReceiptRow) => void;
 }) {
+  const schoolName = useSchoolName();
+
   function download(r: ReceiptRow) {
-    import("@/lib/pdf/receipt").then((m) => m.downloadReceiptPdf(r));
+    import("@/lib/pdf/receipt").then((m) => m.downloadReceiptPdf(r, schoolName));
   }
 
   async function print(r: ReceiptRow) {
@@ -30,7 +33,7 @@ export function ReceiptsTable({
       import("@/lib/pdf/receipt"),
       import("@/lib/pdf/print"),
     ]);
-    printPdf(buildReceiptPdf(r));
+    printPdf(buildReceiptPdf(r, schoolName));
   }
 
   return (

@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
+import { GraduationCap } from "lucide-react";
 import { AmbientBackground } from "@/components/layout/ambient-bg";
 import { LoginForm } from "./login-form";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
@@ -27,17 +27,11 @@ export default async function LoginPage({
       <AmbientBackground />
       <div className="relative z-10 w-full max-w-sm rounded-[24px] bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card-lg p-8">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center overflow-hidden mb-4">
-            <Image
-              src="/brand/school-logo.jpg"
-              alt="Sh.Asharow School logo"
-              width={56}
-              height={56}
-              className="object-contain"
-            />
+          <div className="w-14 h-14 rounded-2xl bg-blue text-white shadow-md flex items-center justify-center mb-4">
+            <GraduationCap size={28} strokeWidth={1.8} />
           </div>
-          <h1 className="text-[17px] font-semibold tracking-tight">Sh.Asharow</h1>
-          <p className="text-[13px] text-text-2">Primary &amp; Secondary School</p>
+          <h1 className="text-[17px] font-semibold tracking-tight">School Management System</h1>
+          <p className="text-[13px] text-text-2">Sign in to your account</p>
         </div>
 
         {notice === "link-expired" && (

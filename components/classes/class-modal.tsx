@@ -13,11 +13,13 @@ export function ClassModal({
   onClose,
   klass,
   teachers,
+  classes,
 }: {
   open: boolean;
   onClose: () => void;
   klass: ClassWithStats | null;
   teachers: { id: string; full_name: string }[];
+  classes: { id: string; name: string }[];
 }) {
   const [state, formAction, pending] = useActionState(saveClass, undefined);
   const { show } = useToast();
@@ -66,6 +68,24 @@ export function ClassModal({
         <div>
           <Label htmlFor="base_fees">Term fees ($)</Label>
           <Input id="base_fees" name="base_fees" type="number" min={0} defaultValue={klass?.base_fees ?? 0} />
+        </div>
+
+        <div>
+          <Label htmlFor="next_class_id">Promotes to</Label>
+          <Select id="next_class_id" name="next_class_id" defaultValue={klass?.next_class_id ?? ""}>
+            <option value="">— Final class (students graduate) —</option>
+            {classes
+              .filter((c) => c.id !== klass?.id)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+          </Select>
+          <p className="mt-1.5 text-[12px] text-text-2">
+            Where this class&apos;s students move at year-end promotion. Leave as final class for
+            the top year.
+          </p>
         </div>
 
         {state?.error && (

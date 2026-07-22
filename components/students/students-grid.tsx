@@ -27,7 +27,7 @@ export function StudentsGrid({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {students.map((s) => (
-        <Card key={s.id} className="p-4" style={{ opacity: s.status === "inactive" ? 0.6 : 1 }}>
+        <Card key={s.id} className="p-4" style={{ opacity: s.status === "active" ? 1 : 0.6 }}>
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <Avatar name={s.full_name} photoUrl={s.photo_url} size={40} />
@@ -57,8 +57,8 @@ export function StudentsGrid({
             </div>
             <div className="flex justify-between items-center">
               <span>Status</span>
-              <Badge tone={s.status === "active" ? "green" : "gray"}>
-                {s.status === "active" ? "Active" : "Inactive"}
+              <Badge tone={s.status === "active" ? "green" : s.status === "graduated" ? "blue" : "gray"}>
+                {s.status === "active" ? "Active" : s.status === "graduated" ? "Graduated" : "Inactive"}
               </Badge>
             </div>
           </div>

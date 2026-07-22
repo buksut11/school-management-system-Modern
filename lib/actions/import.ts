@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { Gender } from "@/lib/types/database";
 
@@ -50,7 +51,7 @@ export async function bulkImportStudents(rows: ImportStudentRow[]) {
   });
 
   const { error } = await supabase.from("students").insert(records);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(
     supabase,

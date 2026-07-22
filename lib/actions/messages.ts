@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import { deliverPending } from "@/lib/sms/deliver";
 
@@ -20,7 +21,7 @@ export async function queueFeeReminders(template: string | null): Promise<QueueR
   const { data, error } = await supabase.rpc("queue_fee_reminders", {
     p_template: template,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   if (data?.queued) {
     await logActivity(supabase, "message", `Queued ${data.queued} fee reminder${data.queued === 1 ? "" : "s"}`);
@@ -42,7 +43,7 @@ export async function queueAbsenceAlerts(
     p_date: date,
     p_template: template,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   if (data?.queued) {
     await logActivity(supabase, "message", `Queued ${data.queued} absence alert${data.queued === 1 ? "" : "s"}`);
@@ -89,7 +90,7 @@ export async function retryFailedNotifications(): Promise<{ error?: string; retr
     .update({ status: "pending", error: null })
     .eq("status", "failed")
     .select("id");
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   revalidatePath("/messages");
   return { retried: data?.length ?? 0 };
@@ -104,7 +105,7 @@ export async function markNotificationsSent(ids: string[]): Promise<{ error?: st
     .in("id", ids)
     .eq("status", "pending")
     .select("id");
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "message", `Marked ${data?.length ?? 0} messages as sent`);
   revalidatePath("/messages");
@@ -114,7 +115,7 @@ export async function markNotificationsSent(ids: string[]): Promise<{ error?: st
 export async function deleteNotification(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase.from("notifications").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/messages");
   return {};
 }

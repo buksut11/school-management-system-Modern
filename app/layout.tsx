@@ -5,8 +5,8 @@ import { ToastProvider } from "@/components/ui/toast";
 import { ConfirmProvider } from "@/components/ui/confirm";
 
 export const metadata: Metadata = {
-  title: "Sh.Asharow LMS",
-  description: "Sh.Asharow Primary & Secondary School — management system",
+  title: "School Management System",
+  description: "Manage students, staff, attendance, exams, and fees.",
 };
 
 export default function RootLayout({
