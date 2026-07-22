@@ -201,6 +201,22 @@ const en = {
   "dept.statDepartments": "Departments",
   "dept.statSubjectsOffered": "Subjects offered",
   "dept.statHeads": "Heads assigned",
+
+  // ---- onboarding / gates / setup ----
+  "setup.title": "Connect Supabase to load {what}",
+  "onboard.welcome": "Welcome",
+  "onboard.welcomeName": "Welcome, {name}",
+  "onboard.intro": "Your account isn't part of a school yet. Open the invite link you were sent — or enter its code here. Invites are personal and work once, so if yours was already used or expired, ask the school for a new one.",
+  "onboard.joinCode": "Join code",
+  "onboard.joining": "Joining…",
+  "onboard.joinSchool": "Join school",
+  "onboard.notOnPlatform": "School not on the platform yet? Contact the administrator to have it registered.",
+  "pending.title": "Almost there",
+  "pending.titleName": "Almost there, {name}",
+  "pending.body": "You've joined the school — the office just needs to link your account to the right student record and set your access. Check back soon, or ask the school office to approve you in Settings → Members.",
+  "mfa.verifyTitle": "Two-factor verification",
+  "mfa.verifyIntro": "Enter the 6-digit code from your authenticator app to continue.",
+  "mfa.verify": "Verify",
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -403,6 +419,22 @@ const so: Record<MessageKey, string> = {
   "dept.statDepartments": "Waaxo",
   "dept.statSubjectsOffered": "Maadooyinka la bixiyo",
   "dept.statHeads": "Madaxyada la magacaabay",
+
+  // ---- onboarding / gates / setup ----
+  "setup.title": "Ku xir Supabase si aad u soo raarto {what}",
+  "onboard.welcome": "Ku soo dhawoow",
+  "onboard.welcomeName": "Ku soo dhawoow, {name}",
+  "onboard.intro": "Akoonkaagu weli kama tirsana dugsi. Fur xiriiriyaha casuumaadda lagugu soo diray — ama halkan geli koodhkiisa. Casuumaaduhu waa shakhsi ah oo hal mar shaqeeya; haddii kaagii horay loo isticmaalay ama dhacay, dugsiga weydiiso mid cusub.",
+  "onboard.joinCode": "Koodhka biirista",
+  "onboard.joining": "Waa la biirinayaa…",
+  "onboard.joinSchool": "Ku biir dugsiga",
+  "onboard.notOnPlatform": "Dugsigu weli kuma jiro barta? La xiriir maamulaha si loo diiwaangeliyo.",
+  "pending.title": "Ku dhawaad dhammaatay",
+  "pending.titleName": "Ku dhawaad dhammaatay, {name}",
+  "pending.body": "Waad ku biirtay dugsiga — xafiisku wuxuu u baahan yahay inuu akoonkaaga ku xiro diiwaanka ardayga saxda ah oo uu dejiyo gelitaankaaga. Dib u eeg dhawaan, ama weydiiso xafiiska dugsiga inuu kugu ansixiyo Dejinta → Xubnaha.",
+  "mfa.verifyTitle": "Xaqiijinta laba-tallaabo",
+  "mfa.verifyIntro": "Geli koodhka 6-lambar ee ka yimaada abka xaqiijinta si aad u sii wadato.",
+  "mfa.verify": "Xaqiiji",
 };
 
 export const messages: Record<Locale, Record<MessageKey, string>> = { en, so };

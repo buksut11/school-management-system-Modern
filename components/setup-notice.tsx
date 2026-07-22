@@ -1,12 +1,14 @@
 import { DatabaseZap } from "lucide-react";
+import { getT } from "@/lib/i18n/server";
 
-export function SetupNotice({ what }: { what: string }) {
+export async function SetupNotice({ what }: { what: string }) {
+  const t = await getT();
   return (
     <div className="rounded-2xl border border-dashed border-line bg-card-2 p-10 flex flex-col items-center text-center gap-3">
       <div className="w-12 h-12 rounded-full bg-orange/10 text-orange flex items-center justify-center">
         <DatabaseZap size={22} />
       </div>
-      <h3 className="text-[15px] font-semibold">Connect Supabase to load {what}</h3>
+      <h3 className="text-[15px] font-semibold">{t("setup.title", { what })}</h3>
       <p className="text-[13px] text-text-2 max-w-sm">
         Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
         <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to <code>.env.local</code> (see{" "}
