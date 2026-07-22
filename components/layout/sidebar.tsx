@@ -22,27 +22,29 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { SidebarCounts } from "@/lib/data/dashboard";
 import type { Role } from "@/lib/types/database";
 
-const NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutGrid },
-  { href: "/students", label: "Students", icon: Users, badgeKey: "students" as const },
-  { href: "/teachers", label: "Teachers", icon: GraduationCap, badgeKey: "teachers" as const },
-  { href: "/classes", label: "Classes", icon: School },
-  { href: "/subjects", label: "Subjects", icon: BookOpen },
-  { href: "/departments", label: "Departments", icon: Building2 },
-  { href: "/timetable", label: "Timetable", icon: CalendarRange },
-  { href: "/attendance", label: "Attendance", icon: CalendarCheck, badgeKey: "attendance" as const },
-  { href: "/exams", label: "Exams & Grades", icon: ClipboardList },
-  { href: "/homework", label: "Homework", icon: NotebookPen },
-  { href: "/academic-records", label: "Academic Records", icon: FileBarChart },
-  { href: "/fees", label: "Fees", icon: Wallet, badgeKey: "fees" as const },
-  { href: "/expenses", label: "Expenses", icon: Receipt, badgeKey: "expenses" as const },
-  { href: "/invoices", label: "Invoices & Receipts", icon: FileText },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/settings", label: "Data & Settings", icon: Settings },
+const NAV: { href: string; label: MessageKey; icon: typeof LayoutGrid; badgeKey?: "students" | "teachers" | "attendance" | "fees" | "expenses" }[] = [
+  { href: "/", label: "nav.dashboard", icon: LayoutGrid },
+  { href: "/students", label: "nav.students", icon: Users, badgeKey: "students" },
+  { href: "/teachers", label: "nav.teachers", icon: GraduationCap, badgeKey: "teachers" },
+  { href: "/classes", label: "nav.classes", icon: School },
+  { href: "/subjects", label: "nav.subjects", icon: BookOpen },
+  { href: "/departments", label: "nav.departments", icon: Building2 },
+  { href: "/timetable", label: "nav.timetable", icon: CalendarRange },
+  { href: "/attendance", label: "nav.attendance", icon: CalendarCheck, badgeKey: "attendance" },
+  { href: "/exams", label: "nav.exams", icon: ClipboardList },
+  { href: "/homework", label: "nav.homework", icon: NotebookPen },
+  { href: "/academic-records", label: "nav.academicRecords", icon: FileBarChart },
+  { href: "/fees", label: "nav.fees", icon: Wallet, badgeKey: "fees" },
+  { href: "/expenses", label: "nav.expenses", icon: Receipt, badgeKey: "expenses" },
+  { href: "/invoices", label: "nav.invoices", icon: FileText },
+  { href: "/messages", label: "nav.messages", icon: MessageSquare },
+  { href: "/reports", label: "nav.reports", icon: BarChart3 },
+  { href: "/settings", label: "nav.settings", icon: Settings },
 ];
 
 // Which pages each role can see. RLS enforces the data underneath —
@@ -83,6 +85,7 @@ export function Sidebar({
   className?: string;
 }) {
   const pathname = usePathname();
+  const t = useT();
   const allowed = new Set(ROLE_NAV[role] ?? ALL);
   const nav = NAV.filter((item) => allowed.has(item.href));
 
@@ -105,7 +108,7 @@ export function Sidebar({
       </div>
 
       <div className="text-[11px] font-semibold text-text-2 uppercase tracking-wide px-2.5 pb-2">
-        Manage
+        {t("nav.section.manage")}
       </div>
 
       <nav className="flex flex-col gap-0.5">
@@ -123,7 +126,7 @@ export function Sidebar({
               )}
             >
               <Icon size={17} strokeWidth={1.8} className="flex-none" />
-              <span className="flex-1 truncate">{item.label}</span>
+              <span className="flex-1 truncate">{t(item.label)}</span>
               {item.badgeKey === "students" && counts.students > 0 && (
                 <Badge active={active}>{counts.students}</Badge>
               )}
