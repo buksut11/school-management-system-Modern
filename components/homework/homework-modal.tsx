@@ -6,6 +6,7 @@ import { Input, Label, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { saveHomework } from "@/lib/actions/homework";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 import type { HomeworkRow } from "@/lib/data/homework";
 
 export function HomeworkModal({
@@ -23,26 +24,27 @@ export function HomeworkModal({
 }) {
   const [state, formAction, pending] = useActionState(saveHomework, undefined);
   const { show } = useToast();
+  const t = useT();
 
   useEffect(() => {
     if (state?.success) {
-      show(homework ? "Homework updated" : "Homework set");
+      show(homework ? t("hw.updated") : t("hw.set"));
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   return (
-    <Modal open={open} onClose={onClose} title={homework ? "Edit Homework" : "New Homework"}>
+    <Modal open={open} onClose={onClose} title={homework ? t("hw.edit") : t("hw.new")}>
       <form action={formAction} className="space-y-4">
         {homework && <input type="hidden" name="id" value={homework.id} />}
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="class_id">Class</Label>
+            <Label htmlFor="class_id">{t("field.class")}</Label>
             <Select id="class_id" name="class_id" defaultValue={homework?.class_id ?? ""} required>
               <option value="" disabled>
-                Select a class
+                {t("select.choose")}
               </option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -52,9 +54,9 @@ export function HomeworkModal({
             </Select>
           </div>
           <div>
-            <Label htmlFor="subject_id">Subject</Label>
+            <Label htmlFor="subject_id">{t("field.subject")}</Label>
             <Select id="subject_id" name="subject_id" defaultValue={homework?.subject_id ?? ""}>
-              <option value="">— None —</option>
+              <option value="">{t("select.none")}</option>
               {subjects.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -65,23 +67,23 @@ export function HomeworkModal({
         </div>
 
         <div>
-          <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" defaultValue={homework?.title} placeholder="e.g. Exercises 4.1–4.3" required />
+          <Label htmlFor="title">{t("field.title")}</Label>
+          <Input id="title" name="title" defaultValue={homework?.title} placeholder={t("hw.titlePlaceholder")} required />
         </div>
 
         <div>
-          <Label htmlFor="due_date">Due date</Label>
+          <Label htmlFor="due_date">{t("field.dueDate")}</Label>
           <Input id="due_date" name="due_date" type="date" defaultValue={homework?.due_date ?? ""} />
         </div>
 
         <div>
-          <Label htmlFor="details">Details</Label>
+          <Label htmlFor="details">{t("field.details")}</Label>
           <textarea
             id="details"
             name="details"
             defaultValue={homework?.details ?? ""}
             rows={4}
-            placeholder="What to do, page numbers, anything the class needs to know…"
+            placeholder={t("hw.detailsPlaceholder")}
             className="w-full rounded-xl px-3.5 py-2.5 text-[14px] bg-input text-text placeholder:text-text-2 border border-transparent transition-all duration-200 focus:bg-solid focus:border-blue/30 focus:ring-4 focus:ring-blue-soft resize-y"
           />
         </div>
@@ -92,10 +94,10 @@ export function HomeworkModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Save"}
+            {pending ? t("common.saving") : t("common.save")}
           </Button>
         </div>
       </form>

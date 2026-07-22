@@ -2,6 +2,7 @@
 
 import { LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 
 export function ViewToggle({
   view,
@@ -12,6 +13,7 @@ export function ViewToggle({
   onChange: (v: "list" | "grid") => void;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div
       className={cn(
@@ -25,7 +27,7 @@ export function ViewToggle({
           "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
           view === "list" ? "bg-solid shadow-sm text-blue" : "text-text-2 hover:text-text"
         )}
-        aria-label="List view"
+        aria-label={t("common.listView")}
       >
         <List size={16} />
       </button>
@@ -35,7 +37,7 @@ export function ViewToggle({
           "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
           view === "grid" ? "bg-solid shadow-sm text-blue" : "text-text-2 hover:text-text"
         )}
-        aria-label="Grid view"
+        aria-label={t("common.gridView")}
       >
         <LayoutGrid size={16} />
       </button>

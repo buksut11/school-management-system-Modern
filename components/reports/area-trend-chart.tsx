@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Table2, ChartLine } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 
 export type Series = { key: string; label: string; color: string };
 
@@ -24,6 +25,7 @@ export function AreaTrendChart({
 }) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
+  const t = useT();
 
   const width = 720;
   const height = 220;
@@ -80,7 +82,7 @@ export function AreaTrendChart({
         <button
           onClick={() => setShowTable((v) => !v)}
           className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-text transition-colors"
-          aria-label={showTable ? "Show chart" : "Show table"}
+          aria-label={showTable ? t("rep.showChart") : t("rep.showTable")}
         >
           {showTable ? <ChartLine size={14} /> : <Table2 size={14} />}
         </button>
@@ -102,7 +104,7 @@ export function AreaTrendChart({
           <table className="w-full text-[12.5px] border-collapse">
             <thead>
               <tr className="text-text-2 text-left">
-                <th className="py-1.5 pr-3 font-medium">Date</th>
+                <th className="py-1.5 pr-3 font-medium">{t("field.date")}</th>
                 {series.map((s) => (
                   <th key={s.key} className="py-1.5 pr-3 font-medium text-right">
                     {s.label}
@@ -205,7 +207,7 @@ export function AreaTrendChart({
                     fontWeight={600}
                     className="fill-text"
                   >
-                    Peak {valueFormatter(peak.value)} · {formatDate(String(data[peak.idx].date)).replace(/,.*/, "")}
+                    {t("rep.peak", { value: valueFormatter(peak.value), date: formatDate(String(data[peak.idx].date)).replace(/,.*/, "") })}
                   </text>
                 </g>
               );

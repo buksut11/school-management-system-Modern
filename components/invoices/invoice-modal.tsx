@@ -7,6 +7,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { saveInvoice } from "@/lib/actions/invoices";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 import { formatMoney } from "@/lib/utils";
 import { EMPTY_PARTY, PartyFields, type PartyState, type TeacherOption } from "./party-fields";
 import type { InvoiceRow, StudentOption } from "@/lib/data/invoices";
@@ -32,6 +33,7 @@ export function InvoiceModal({
 }) {
   const [state, formAction, pending] = useActionState(saveInvoice, undefined);
   const { show } = useToast();
+  const t = useT();
 
   const [party, setParty] = useState<PartyState>(
     invoice
@@ -59,7 +61,7 @@ export function InvoiceModal({
 
   useEffect(() => {
     if (state?.success) {
-      show(invoice ? "Invoice updated" : "Invoice created");
+      show(invoice ? t("invoice.updated") : t("invoice.created"));
       onSaved?.();
       onClose();
     }
@@ -88,7 +90,7 @@ export function InvoiceModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={invoice ? `Edit Invoice · ${invoice.invoice_no}` : "New Invoice"}
+      title={invoice ? t("invoice.editTitle", { no: invoice.invoice_no }) : t("invoice.new")}
       widthClass="max-w-2xl"
     >
       <form action={formAction} className="space-y-4">
@@ -103,7 +105,7 @@ export function InvoiceModal({
         />
 
         <div>
-          <Label>Line items</Label>
+          <Label>{t("invoice.lineItems")}</Label>
           <div className="space-y-2">
             {items.map((it, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -111,7 +113,7 @@ export function InvoiceModal({
                   value={it.description}
                   onChange={(e) => setItem(i, { description: e.target.value })}
                   placeholder={
-                    party.type === "student" ? "e.g. Term 1 fees" : "e.g. Monthly salary — June"
+                    party.type === "student" ? t("invoice.itemPlaceholderStudent") : t("invoice.itemPlaceholderStaff")
                   }
                   className="flex-1"
                 />
@@ -121,7 +123,7 @@ export function InvoiceModal({
                   type="number"
                   min={1}
                   step="1"
-                  aria-label="Quantity"
+                  aria-label={t("invoice.quantity")}
                   className="w-16 flex-none"
                 />
                 <Input
@@ -131,7 +133,7 @@ export function InvoiceModal({
                   min={0}
                   step="0.01"
                   placeholder="0.00"
-                  aria-label="Unit price"
+                  aria-label={t("invoice.unitPrice")}
                   className="w-24 flex-none"
                 />
                 <button
@@ -139,7 +141,7 @@ export function InvoiceModal({
                   onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}
                   disabled={items.length === 1}
                   className="w-8 h-8 flex-none rounded-lg flex items-center justify-center text-text-2 hover:bg-red/10 hover:text-red transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                  aria-label="Remove line"
+                  aria-label={t("invoice.removeLine")}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -152,10 +154,10 @@ export function InvoiceModal({
               onClick={() => setItems((prev) => [...prev, { ...EMPTY_ITEM }])}
               className="text-[12.5px] text-blue hover:underline inline-flex items-center gap-1"
             >
-              <Plus size={13} /> Add line
+              <Plus size={13} /> {t("invoice.addLine")}
             </button>
             <div className="text-[13px]">
-              <span className="text-text-2">Total </span>
+              <span className="text-text-2">{t("invoice.totalLabel")} </span>
               <span className="font-semibold">{formatMoney(total)}</span>
             </div>
           </div>
@@ -174,7 +176,7 @@ export function InvoiceModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="issued_date">Issued</Label>
+            <Label htmlFor="issued_date">{t("field.issued")}</Label>
             <Input
               id="issued_date"
               name="issued_date"
@@ -183,18 +185,18 @@ export function InvoiceModal({
             />
           </div>
           <div>
-            <Label htmlFor="due_date">Due (optional)</Label>
+            <Label htmlFor="due_date">{t("field.dueOptional")}</Label>
             <Input id="due_date" name="due_date" type="date" defaultValue={invoice?.due_date ?? ""} />
           </div>
         </div>
 
         <div>
-          <Label htmlFor="note">Note (optional)</Label>
+          <Label htmlFor="note">{t("field.noteOptional")}</Label>
           <Input
             id="note"
             name="note"
             defaultValue={invoice?.note ?? ""}
-            placeholder="e.g. Payable at the school office"
+            placeholder={t("invoice.notePlaceholder")}
           />
         </div>
 
@@ -204,10 +206,10 @@ export function InvoiceModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Saving…" : invoice ? "Save Changes" : "Create Invoice"}
+            {pending ? t("common.saving") : invoice ? t("invoice.saveChanges") : t("invoice.create")}
           </Button>
         </div>
       </form>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { Term } from "@/lib/types/database";
@@ -18,7 +19,7 @@ function num(formData: FormData, key: string) {
 export async function saveExam(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const studentId = str(formData, "student_id");
-  if (!studentId) return { error: "Select a student." };
+  if (!studentId) return { error: (await getT())("err.selectStudent") };
 
   // One score input per subject the school teaches, named by subject id
   // (the gradebook is the subjects table since migration 0035).

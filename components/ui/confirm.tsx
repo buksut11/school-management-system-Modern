@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Modal } from "./modal";
 import { Button } from "./button";
+import { useT } from "@/lib/i18n/client";
 
 export type ConfirmOptions = {
   title: string;
@@ -21,6 +22,7 @@ const ConfirmContext = createContext<((options: ConfirmOptions) => Promise<boole
  *  that resolves true when confirmed, false when cancelled or dismissed. */
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [request, setRequest] = useState<Request | null>(null);
+  const t = useT();
 
   const confirm = useCallback((options: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => setRequest({ ...options, resolve }));
@@ -55,19 +57,19 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
             <AlertTriangle size={18} />
           </div>
           <p className="text-[13.5px] leading-relaxed text-text-2 pt-1">
-            {request?.message ?? "This action cannot be undone."}
+            {request?.message ?? t("common.cannotUndo")}
           </p>
         </div>
 
         <div className="flex justify-end gap-2 pt-5">
           <Button variant="secondary" onClick={() => settle(false)}>
-            {request?.cancelLabel ?? "Cancel"}
+            {request?.cancelLabel ?? t("common.cancel")}
           </Button>
           <Button
             onClick={() => settle(true)}
             className={tone === "danger" ? "bg-red text-white hover:bg-red/90" : undefined}
           >
-            {request?.confirmLabel ?? "Confirm"}
+            {request?.confirmLabel ?? t("common.confirm")}
           </Button>
         </div>
       </Modal>

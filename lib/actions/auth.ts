@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient as createBareClient } from "@supabase/supabase-js";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { getT } from "@/lib/i18n/server";
 import { safeNext } from "@/lib/utils";
 
 export type LoginState = { error?: string; mfaRequired?: boolean; next?: string } | undefined;
@@ -12,11 +13,9 @@ export async function login(
   _prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
+  const t = await getT();
   if (!isSupabaseConfigured) {
-    return {
-      error:
-        "Supabase isn't configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.",
-    };
+    return { error: t("err.supabaseNotConfiguredLong") };
   }
 
   const email = String(formData.get("email") || "").trim();
@@ -24,7 +23,7 @@ export async function login(
   const next = String(formData.get("next") || "/");
 
   if (!email || !password) {
-    return { error: "Enter your email and password." };
+    return { error: t("err.enterEmailPassword") };
   }
 
   const supabase = await createClient();
@@ -47,8 +46,9 @@ export async function login(
 export type SignupState = { error?: string; message?: string } | undefined;
 
 export async function signup(_prevState: SignupState, formData: FormData): Promise<SignupState> {
+  const t = await getT();
   if (!isSupabaseConfigured) {
-    return { error: "Supabase isn't configured yet." };
+    return { error: t("err.supabaseNotConfigured") };
   }
 
   const fullName = String(formData.get("full_name") || "").trim();
@@ -57,10 +57,10 @@ export async function signup(_prevState: SignupState, formData: FormData): Promi
   const next = String(formData.get("next") || "/");
 
   if (!fullName || !email || !password) {
-    return { error: "Enter your name, email and a password." };
+    return { error: t("err.enterNameEmailPassword") };
   }
   if (password.length < 8) {
-    return { error: "Password must be at least 8 characters." };
+    return { error: t("err.passwordMin8") };
   }
 
   // The confirmation email must link back to THIS deployment's callback,
@@ -86,10 +86,7 @@ export async function signup(_prevState: SignupState, formData: FormData): Promi
   // disabled the user is signed in and lands wherever they were headed
   // (the invite link they clicked, or the school onboarding).
   if (!data.session) {
-    return {
-      message:
-        "Check your email to confirm your account, then come back to this link and sign in.",
-    };
+    return { message: t("ok.checkEmailConfirm") };
   }
   redirect(safeNext(next));
 }
@@ -98,11 +95,12 @@ export async function requestPasswordReset(
   _prevState: SignupState,
   formData: FormData
 ): Promise<SignupState> {
+  const t = await getT();
   if (!isSupabaseConfigured) {
-    return { error: "Supabase isn't configured yet." };
+    return { error: t("err.supabaseNotConfigured") };
   }
   const email = String(formData.get("email") || "").trim();
-  if (!email) return { error: "Enter your email address." };
+  if (!email) return { error: t("err.enterEmail") };
 
   const hdrs = await headers();
   const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "";
@@ -123,9 +121,7 @@ export async function requestPasswordReset(
   await bare.auth.resetPasswordForEmail(email, {
     redirectTo: host ? `${proto}://${host}/reset-password` : undefined,
   });
-  return {
-    message: "If that email has an account, a reset link is on its way. Check your inbox.",
-  };
+  return { message: t("ok.resetLinkSent") };
 }
 
 export async function logout() {

@@ -7,17 +7,19 @@ import { Button } from "@/components/ui/button";
 import { seedDemoData } from "@/lib/actions/demo";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
+import { useT } from "@/lib/i18n/client";
 
 export function DemoDataPanel() {
   const [busy, setBusy] = useState(false);
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   async function load() {
     const ok = await confirm({
-      title: "Load demo data?",
-      message: "Sample teachers, students, attendance, exams, fees and expenses will be added to the database.",
-      confirmLabel: "Load",
+      title: t("set.demoLoadTitle"),
+      message: t("set.demoLoadMsg"),
+      confirmLabel: t("set.load"),
       tone: "primary",
     });
     if (!ok) return;
@@ -27,7 +29,7 @@ export function DemoDataPanel() {
       if ("error" in result) {
         show(result.error);
       } else {
-        show(`Demo data loaded: ${result.summary}`);
+        show(t("set.demoLoaded", { summary: result.summary }));
       }
     } finally {
       setBusy(false);
@@ -36,14 +38,10 @@ export function DemoDataPanel() {
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">Demo Data</h3>
-      <p className="text-[12.5px] text-text-2 mb-4">
-        Fill every module with realistic sample records — teachers, students, class assignments,
-        attendance, exam grades, fee payments and expenses — so you can explore the system before
-        entering real data. Only available while the school has no students yet.
-      </p>
+      <h3 className="text-[15px] font-semibold tracking-tight mb-1">{t("set.demoData")}</h3>
+      <p className="text-[12.5px] text-text-2 mb-4">{t("set.demoDataDesc")}</p>
       <Button onClick={load} disabled={busy} variant="secondary">
-        <Sparkles size={15} /> {busy ? "Loading…" : "Load Demo Data"}
+        <Sparkles size={15} /> {busy ? t("set.loading") : t("set.loadDemo")}
       </Button>
     </Card>
   );

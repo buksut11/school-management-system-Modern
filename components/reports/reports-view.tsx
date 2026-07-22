@@ -5,6 +5,8 @@ import { Segmented } from "@/components/ui/segmented";
 import { AreaTrendChart } from "./area-trend-chart";
 import { BarComparisonChart } from "./bar-comparison-chart";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { AttendanceTrendPoint, FeeTrendPoint, ClassPerformancePoint, ExpenseCategoryPoint } from "@/lib/data/reports";
 
 const CATEGORY_COLORS = ["--chart-1", "--chart-2", "--chart-3", "--chart-4", "--chart-5", "--chart-6"];
@@ -23,6 +25,7 @@ export function ReportsView({
   expenses: ExpenseCategoryPoint[];
 }) {
   const router = useRouter();
+  const t = useT();
 
   return (
     <div className="viz-root space-y-4">
@@ -50,47 +53,47 @@ export function ReportsView({
           value={String(days)}
           onChange={(v) => router.push(`/reports?days=${v}`)}
           options={[
-            { value: "7", label: "Last 7 days" },
-            { value: "30", label: "Last 30 days" },
-            { value: "90", label: "Last 90 days" },
+            { value: "7", label: t("rep.last7") },
+            { value: "30", label: t("rep.last30") },
+            { value: "90", label: t("rep.last90") },
           ]}
         />
       </div>
 
       <AreaTrendChart
-        title="Attendance"
+        title={t("rep.attendance")}
         data={attendance}
         series={[
-          { key: "present", label: "Present", color: "var(--chart-5)" },
-          { key: "late", label: "Late", color: "var(--chart-3)" },
-          { key: "absent", label: "Absent", color: "var(--chart-6)" },
+          { key: "present", label: t("dash.present"), color: "var(--chart-5)" },
+          { key: "late", label: t("dash.late"), color: "var(--chart-3)" },
+          { key: "absent", label: t("dash.absent"), color: "var(--chart-6)" },
         ]}
         annotatePeakKey="present"
       />
 
       <AreaTrendChart
-        title="Fees collected"
+        title={t("rep.feesCollected")}
         data={fees}
-        series={[{ key: "collected", label: "Collected", color: "var(--chart-1)" }]}
+        series={[{ key: "collected", label: t("rep.collected"), color: "var(--chart-1)" }]}
         valueFormatter={(v) => formatMoney(v)}
         annotatePeakKey="collected"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <BarComparisonChart
-          title="Average exam score by class"
+          title={t("rep.avgExamByClass")}
           data={classPerformance.map((c) => ({ label: `${c.className} (${c.studentCount})`, value: c.average }))}
-          emptyMessage="No exam records yet — add scores in Exams & Grades."
+          emptyMessage={t("rep.noExamRecords")}
         />
         <BarComparisonChart
-          title="Expenses by category"
+          title={t("rep.expensesByCategory")}
           data={expenses.map((e, i) => ({
-            label: e.category[0].toUpperCase() + e.category.slice(1),
+            label: t(`expenseCat.${e.category}` as MessageKey),
             value: e.total,
             color: `var(${CATEGORY_COLORS[i % CATEGORY_COLORS.length]})`,
           }))}
           valueFormatter={(v) => formatMoney(v)}
-          emptyMessage="No expenses recorded yet."
+          emptyMessage={t("rep.noExpenses")}
         />
       </div>
     </div>

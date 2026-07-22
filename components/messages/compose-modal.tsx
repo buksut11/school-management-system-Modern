@@ -6,24 +6,11 @@ import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { queueFeeReminders, queueAbsenceAlerts } from "@/lib/actions/messages";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 
-const DEFAULTS = {
-  fees: {
-    title: "Queue fee reminders",
-    template:
-      "Dear parent, {student} has an outstanding school fee balance of ${balance}. Kindly arrange payment. — {school}",
-    placeholders: "{student} {class} {balance} {overdue} {school}",
-    explain:
-      "One message per active student with an outstanding balance and a parent phone number. Students with a reminder already pending are skipped.",
-  },
-  absence: {
-    title: "Queue absence alerts",
-    template:
-      "Dear parent, {student} was marked absent from school on {date}. Please contact the office if this is unexpected. — {school}",
-    placeholders: "{student} {class} {date} {school}",
-    explain:
-      "One message per student marked absent on the chosen day. Each absence is only ever alerted once.",
-  },
+const PLACEHOLDERS = {
+  fees: "{student} {class} {balance} {overdue} {school}",
+  absence: "{student} {class} {date} {school}",
 } as const;
 
 export function ComposeModal({
@@ -35,7 +22,19 @@ export function ComposeModal({
   kind: "fees" | "absence";
   onClose: () => void;
 }) {
-  const cfg = DEFAULTS[kind];
+  const t = useT();
+  const cfg =
+    kind === "fees"
+      ? {
+          title: t("msg.queueFeeReminders"),
+          template: t("msg.feesTemplate"),
+          explain: t("msg.feeRemindersDesc"),
+        }
+      : {
+          title: t("msg.queueAbsenceAlerts"),
+          template: t("msg.absenceTemplate"),
+          explain: t("msg.absenceAlertsDesc"),
+        };
   const [template, setTemplate] = useState<string>(cfg.template);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [error, setError] = useState("");
@@ -53,9 +52,9 @@ export function ComposeModal({
         setError(result.error);
         return;
       }
-      const parts = [`${result.queued} queued`];
-      if (result.no_phone) parts.push(`${result.no_phone} without a parent number`);
-      if (result.already) parts.push(`${result.already} already covered`);
+      const parts = [t("msg.nQueued", { count: result.queued ?? 0 })];
+      if (result.no_phone) parts.push(t("msg.nNoPhone", { count: result.no_phone }));
+      if (result.already) parts.push(t("msg.nAlready", { count: result.already }));
       show(parts.join(" · "));
       onClose();
     });
@@ -68,7 +67,7 @@ export function ComposeModal({
 
         {kind === "absence" && (
           <div>
-            <Label htmlFor="alert-date">Day</Label>
+            <Label htmlFor="alert-date">{t("field.day")}</Label>
             <Input
               id="alert-date"
               type="date"
@@ -79,7 +78,7 @@ export function ComposeModal({
         )}
 
         <div>
-          <Label htmlFor="msg-template">Message</Label>
+          <Label htmlFor="msg-template">{t("field.message")}</Label>
           <textarea
             id="msg-template"
             value={template}
@@ -88,7 +87,7 @@ export function ComposeModal({
             className="w-full rounded-xl px-3.5 py-2.5 text-[14px] bg-input text-text placeholder:text-text-2 border border-transparent transition-all duration-200 focus:bg-solid focus:border-blue/30 focus:ring-4 focus:ring-blue-soft resize-y"
           />
           <p className="text-[11.5px] text-text-2 mt-1">
-            Placeholders: <span className="font-mono">{cfg.placeholders}</span>
+            {t("msg.placeholdersLabel")} <span className="font-mono">{PLACEHOLDERS[kind]}</span>
           </p>
         </div>
 
@@ -96,10 +95,10 @@ export function ComposeModal({
 
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button onClick={queue} disabled={pending || !template.trim()}>
-            {pending ? "Queueing…" : "Queue messages"}
+            {pending ? t("msg.queueing") : t("msg.queueMessages")}
           </Button>
         </div>
       </div>

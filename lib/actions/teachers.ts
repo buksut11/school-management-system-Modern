@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import { normalizePhotoPath } from "@/lib/utils";
 import { removeReplacedPhoto } from "@/lib/photo-cleanup";
@@ -43,7 +44,7 @@ async function assignTeacherClass(
 export async function saveTeacher(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const fullName = str(formData, "full_name");
-  if (!fullName) return { error: "Teacher name is required." };
+  if (!fullName) return { error: (await getT())("err.teacherNameRequired") };
 
   const supabase = await createClient();
   const classId = str(formData, "class_id");

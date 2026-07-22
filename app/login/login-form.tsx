@@ -5,6 +5,7 @@ import { login, signup, requestPasswordReset } from "@/lib/actions/auth";
 import { verifyLoginMfa } from "@/lib/actions/mfa";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/client";
 
 export function LoginForm({
   next,
@@ -13,6 +14,7 @@ export function LoginForm({
   next: string;
   initialMode?: "login" | "signup";
 }) {
+  const t = useT();
   const [mode, setMode] = useState<"login" | "signup" | "forgot">(initialMode);
   const [state, formAction, pending] = useActionState(login, undefined);
   const [signupState, signupAction, signingUp] = useActionState(signup, undefined);
@@ -26,7 +28,7 @@ export function LoginForm({
       <form action={mfaAction} className="space-y-4">
         <input type="hidden" name="next" value={state.next ?? next} />
         <div>
-          <Label htmlFor="code">Authentication code</Label>
+          <Label htmlFor="code">{t("auth.mfaCode")}</Label>
           <Input
             id="code"
             name="code"
@@ -37,15 +39,13 @@ export function LoginForm({
             autoFocus
             required
           />
-          <p className="mt-1.5 text-[12px] text-text-2">
-            Enter the 6-digit code from your authenticator app.
-          </p>
+          <p className="mt-1.5 text-[12px] text-text-2">{t("auth.mfaHint")}</p>
         </div>
         {mfaState?.error && (
           <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2">{mfaState.error}</p>
         )}
         <Button type="submit" disabled={verifyingMfa} className="w-full">
-          {verifyingMfa ? "Verifying…" : "Verify & sign in"}
+          {verifyingMfa ? t("auth.verifying") : t("auth.verifyAndSignIn")}
         </Button>
       </form>
     );
@@ -55,7 +55,7 @@ export function LoginForm({
     return (
       <form action={forgotAction} className="space-y-4">
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <Input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
         </div>
         {forgotState?.error && (
@@ -65,12 +65,12 @@ export function LoginForm({
           <p className="text-[13px] text-green bg-green/10 rounded-lg px-3 py-2">{forgotState.message}</p>
         )}
         <Button type="submit" disabled={sendingReset} className="w-full">
-          {sendingReset ? "Sending…" : "Send reset link"}
+          {sendingReset ? t("auth.sending") : t("auth.sendReset")}
         </Button>
         <p className="text-[12.5px] text-text-2 text-center">
-          Remembered it?{" "}
+          {t("auth.rememberedIt")}{" "}
           <button type="button" onClick={() => setMode("login")} className="text-blue hover:underline">
-            Sign in
+            {t("auth.signIn")}
           </button>
         </p>
       </form>
@@ -82,16 +82,16 @@ export function LoginForm({
       <form action={signupAction} className="space-y-4">
         <input type="hidden" name="next" value={next} />
         <div>
-          <Label htmlFor="full_name">Full name</Label>
-          <Input id="full_name" name="full_name" placeholder="Your name" autoComplete="name" required />
+          <Label htmlFor="full_name">{t("auth.fullName")}</Label>
+          <Input id="full_name" name="full_name" placeholder={t("auth.namePlaceholder")} autoComplete="name" required />
         </div>
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <Input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
         </div>
         <div>
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" placeholder="At least 8 characters" autoComplete="new-password" required />
+          <Label htmlFor="password">{t("auth.password")}</Label>
+          <Input id="password" name="password" type="password" placeholder={t("auth.newPasswordPlaceholder")} autoComplete="new-password" required />
         </div>
         {signupState?.error && (
           <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2">{signupState.error}</p>
@@ -100,12 +100,12 @@ export function LoginForm({
           <p className="text-[13px] text-green bg-green/10 rounded-lg px-3 py-2">{signupState.message}</p>
         )}
         <Button type="submit" disabled={signingUp} className="w-full">
-          {signingUp ? "Creating account…" : "Create account"}
+          {signingUp ? t("auth.creatingAccount") : t("auth.createAccount")}
         </Button>
         <p className="text-[12.5px] text-text-2 text-center">
-          Already have an account?{" "}
+          {t("auth.alreadyHaveAccount")}{" "}
           <button type="button" onClick={() => setMode("login")} className="text-blue hover:underline">
-            Sign in
+            {t("auth.signIn")}
           </button>
         </p>
       </form>
@@ -116,27 +116,27 @@ export function LoginForm({
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="next" value={next} />
       <div>
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" placeholder="you@shasharow.edu" autoComplete="email" required />
+        <Label htmlFor="email">{t("auth.email")}</Label>
+        <Input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
       </div>
       <div>
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("auth.password")}</Label>
         <Input id="password" name="password" type="password" placeholder="••••••••" autoComplete="current-password" required />
       </div>
       {state?.error && (
         <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2">{state.error}</p>
       )}
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? t("auth.signingIn") : t("auth.signIn")}
       </Button>
       <p className="text-[12.5px] text-text-2 text-center">
-        Invited to a school?{" "}
+        {t("auth.invitedPrompt")}{" "}
         <button type="button" onClick={() => setMode("signup")} className="text-blue hover:underline">
-          Create an account
+          {t("auth.createAccount")}
         </button>
         {" · "}
         <button type="button" onClick={() => setMode("forgot")} className="text-blue hover:underline">
-          Forgot password?
+          {t("auth.forgotPassword")}
         </button>
       </p>
     </form>

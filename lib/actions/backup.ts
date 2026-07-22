@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database";
@@ -122,28 +123,29 @@ export async function createBackupSnapshot(): Promise<BackupSnapshot> {
 export type RestoreResult = { error?: string; success?: boolean };
 
 export async function restoreFromBackup(password: string, snapshot: BackupSnapshot): Promise<RestoreResult> {
+  const t = await getT();
   if (!snapshot?.data || typeof snapshot.data !== "object") {
-    return { error: "This file doesn't look like a backup from this system." };
+    return { error: t("err.notBackupFile") };
   }
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user?.email) return { error: "Not signed in." };
+  if (!user?.email) return { error: t("err.notSignedIn") };
 
   // Reauthenticating proves *this* user's password, not that they're
   // authorized for a whole-system wipe — check role explicitly rather
   // than relying only on RLS.
   if (!(await isCurrentUserAdmin(supabase))) {
-    return { error: "Only an admin account can restore from backup." };
+    return { error: t("err.onlyAdminRestore") };
   }
 
   const { error: authError } = await supabase.auth.signInWithPassword({
     email: user.email,
     password,
   });
-  if (authError) return { error: "Incorrect password." };
+  if (authError) return { error: t("err.incorrectPassword") };
 
   // The entire wipe-and-reload runs as ONE database transaction
   // (migration 0032): any failure rolls the whole thing back, so the

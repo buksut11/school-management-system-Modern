@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 
 export function Modal({
   open,
@@ -18,6 +19,7 @@ export function Modal({
   children: React.ReactNode;
   widthClass?: string;
 }) {
+  const t = useT();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -45,7 +47,7 @@ export function Modal({
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center text-text-2 hover:bg-hover hover:text-text transition-colors"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X size={18} />
           </button>

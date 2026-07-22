@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { getT } from "@/lib/i18n/server";
 
 function Row({
   label,
@@ -32,7 +33,7 @@ function Row({
   );
 }
 
-export function GlanceCard({
+export async function GlanceCard({
   present,
   late,
   absent,
@@ -43,14 +44,15 @@ export function GlanceCard({
   absent: number;
   total: number;
 }) {
+  const t = await getT();
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-4">Today at a Glance</h3>
-      <Row label="Present" value={String(present)} count={present} total={total} color="var(--green)" />
-      <Row label="Late" value={String(late)} count={late} total={total} color="var(--orange)" />
-      <Row label="Absent" value={String(absent)} count={absent} total={total} color="var(--red)" />
+      <h3 className="text-[15px] font-semibold tracking-tight mb-4">{t("dash.glanceTitle")}</h3>
+      <Row label={t("dash.present")} value={String(present)} count={present} total={total} color="var(--green)" />
+      <Row label={t("dash.late")} value={String(late)} count={late} total={total} color="var(--orange)" />
+      <Row label={t("dash.absent")} value={String(absent)} count={absent} total={total} color="var(--red)" />
       <div className="flex items-center justify-between pt-3 mt-1 border-t border-line text-[13px]">
-        <span className="text-text-2">Total students</span>
+        <span className="text-text-2">{t("dash.totalStudentsShort")}</span>
         <span className="font-semibold">{total}</span>
       </div>
     </Card>

@@ -8,16 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Select, Label } from "@/components/ui/input";
 import { bulkImportStudents, type ImportStudentRow } from "@/lib/actions/import";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-const FIELDS: { key: keyof ImportStudentRow; label: string; required?: boolean; keywords: string[] }[] = [
-  { key: "full_name", label: "Full name", required: true, keywords: ["name"] },
-  { key: "class_name", label: "Class", keywords: ["class", "form"] },
-  { key: "gender", label: "Gender", keywords: ["gender", "sex"] },
-  { key: "dob", label: "Date of birth", keywords: ["dob", "birth"] },
-  { key: "address", label: "Address", keywords: ["address"] },
-  { key: "mobile", label: "Student mobile", keywords: ["student mobile", "mobile"] },
-  { key: "parent_mobile", label: "Parent mobile", keywords: ["parent", "guardian"] },
-  { key: "base_fees", label: "Fees", keywords: ["fee"] },
+const FIELDS: { key: keyof ImportStudentRow; labelKey: MessageKey; required?: boolean; keywords: string[] }[] = [
+  { key: "full_name", labelKey: "imp.fullName", required: true, keywords: ["name"] },
+  { key: "class_name", labelKey: "imp.class", keywords: ["class", "form"] },
+  { key: "gender", labelKey: "imp.gender", keywords: ["gender", "sex"] },
+  { key: "dob", labelKey: "imp.dob", keywords: ["dob", "birth"] },
+  { key: "address", labelKey: "imp.address", keywords: ["address"] },
+  { key: "mobile", labelKey: "imp.studentMobile", keywords: ["student mobile", "mobile"] },
+  { key: "parent_mobile", labelKey: "imp.parentMobile", keywords: ["parent", "guardian"] },
+  { key: "base_fees", labelKey: "imp.fees", keywords: ["fee"] },
 ];
 
 function guessColumn(columns: string[], keywords: string[]) {
@@ -40,6 +42,7 @@ export function ImportWizard() {
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const { show } = useToast();
+  const t = useT();
 
   function reset() {
     setStep(1);
@@ -61,7 +64,7 @@ export function ImportWizard() {
       complete: (results) => {
         const cols = results.meta.fields ?? [];
         if (cols.length === 0 || results.data.length === 0) {
-          setError("Couldn't find any rows in that CSV.");
+          setError(t("imp.noRows"));
           return;
         }
         setColumns(cols);
@@ -74,13 +77,13 @@ export function ImportWizard() {
         setMapping(guessed);
         setStep(2);
       },
-      error: () => setError("Couldn't parse that file — make sure it's a valid CSV."),
+      error: () => setError(t("imp.parseError")),
     });
   }
 
   async function startImport() {
     if (!mapping.full_name) {
-      setError("Map a column to Full name before importing.");
+      setError(t("imp.mapFullName"));
       return;
     }
     setImporting(true);
@@ -103,15 +106,13 @@ export function ImportWizard() {
     }
     setImportedCount(result.count ?? mapped.length);
     setStep(3);
-    show("Import complete");
+    show(t("imp.complete"));
   }
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">Import Legacy Data</h3>
-      <p className="text-[12.5px] text-text-2 mb-4">
-        Upload a CSV of students from your old system — map the columns, then import.
-      </p>
+      <h3 className="text-[15px] font-semibold tracking-tight mb-1">{t("imp.title")}</h3>
+      <p className="text-[12.5px] text-text-2 mb-4">{t("imp.desc")}</p>
 
       {step === 1 && (
         <button
@@ -120,7 +121,7 @@ export function ImportWizard() {
           className="w-full rounded-2xl border border-dashed border-line bg-card-2/60 hover:bg-card-2 transition-colors py-8 flex flex-col items-center gap-2"
         >
           <Upload size={20} className="text-text-2" />
-          <span className="text-[13px] font-medium">Drop a CSV file or click to browse</span>
+          <span className="text-[13px] font-medium">{t("imp.dropCsv")}</span>
         </button>
       )}
       <input ref={inputRef} type="file" accept=".csv,text/csv" onChange={onFile} className="hidden" />
@@ -128,14 +129,14 @@ export function ImportWizard() {
       {step === 2 && (
         <div className="space-y-4">
           <div className="text-[13px] text-text-2">
-            <span className="font-medium text-text">{fileName}</span> · {rows.length} records detected ·{" "}
-            {columns.length} columns
+            <span className="font-medium text-text">{fileName}</span> ·{" "}
+            {t("imp.recordsDetected", { rows: rows.length, cols: columns.length })}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {FIELDS.map((f) => (
               <div key={f.key}>
                 <Label htmlFor={`map-${f.key}`}>
-                  {f.label}
+                  {t(f.labelKey)}
                   {f.required && <span className="text-red"> *</span>}
                 </Label>
                 <Select
@@ -143,7 +144,7 @@ export function ImportWizard() {
                   value={mapping[f.key] ?? ""}
                   onChange={(e) => setMapping((m) => ({ ...m, [f.key]: e.target.value }))}
                 >
-                  <option value="">— None —</option>
+                  <option value="">{t("imp.none")}</option>
                   {columns.map((c) => (
                     <option key={c} value={c}>
                       {c}
@@ -158,10 +159,10 @@ export function ImportWizard() {
 
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={reset}>
-              <ArrowLeft size={14} /> Cancel
+              <ArrowLeft size={14} /> {t("common.cancel")}
             </Button>
             <Button onClick={startImport} disabled={importing}>
-              {importing ? "Importing…" : "Start Import"} <ArrowRight size={14} />
+              {importing ? t("imp.importing") : t("imp.startImport")} <ArrowRight size={14} />
             </Button>
           </div>
         </div>
@@ -172,9 +173,9 @@ export function ImportWizard() {
           <div className="w-12 h-12 rounded-full bg-green/10 text-green flex items-center justify-center">
             <CircleCheck size={24} />
           </div>
-          <p className="text-[14px] font-medium">{importedCount} student records added</p>
+          <p className="text-[14px] font-medium">{t("imp.added", { count: importedCount ?? 0 })}</p>
           <Button variant="secondary" onClick={reset}>
-            Import another file
+            {t("imp.importAnother")}
           </Button>
         </div>
       )}

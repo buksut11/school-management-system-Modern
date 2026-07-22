@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { SubjectType } from "@/lib/types/database";
@@ -15,7 +16,7 @@ function str(formData: FormData, key: string) {
 export async function saveDepartment(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const name = str(formData, "name");
-  if (!name) return { error: "Department name is required." };
+  if (!name) return { error: (await getT())("err.deptNameRequired") };
 
   const supabase = await createClient();
   const record = { name, head_teacher_id: str(formData, "head_teacher_id") };
@@ -42,7 +43,7 @@ export async function deleteDepartment(id: string, name: string) {
 export async function saveSubject(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const name = str(formData, "name");
-  if (!name) return { error: "Subject name is required." };
+  if (!name) return { error: (await getT())("err.subjectNameRequired") };
 
   const supabase = await createClient();
   const record = {

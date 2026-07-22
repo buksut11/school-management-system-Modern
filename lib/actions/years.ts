@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -13,7 +14,8 @@ function str(formData: FormData, key: string) {
 
 export async function addAcademicYear(_prev: FormState, formData: FormData): Promise<FormState> {
   const name = str(formData, "name");
-  if (!name) return { error: "Year name is required (e.g. 2026-2027)." };
+  const t = await getT();
+  if (!name) return { error: t("err.yearNameRequired") };
 
   const supabase = await createClient();
   const { error } = await supabase.from("academic_years").insert({
@@ -22,7 +24,7 @@ export async function addAcademicYear(_prev: FormState, formData: FormData): Pro
     ends_on: str(formData, "ends_on"),
   });
   if (error) {
-    if (error.code === "23505") return { error: `A year named "${name}" already exists.` };
+    if (error.code === "23505") return { error: t("err.yearExists", { name }) };
     return { error: friendlyError(error) };
   }
 

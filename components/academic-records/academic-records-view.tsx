@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Segmented } from "@/components/ui/segmented";
 import { downloadCsv } from "@/lib/csv";
 import { useSchoolName } from "@/components/layout/school-context";
+import { useT } from "@/lib/i18n/client";
 import type { AcademicYear } from "@/lib/types/database";
 
 type AcademicRecordRow = {
@@ -48,6 +49,7 @@ export function AcademicRecordsView({
 }) {
   const router = useRouter();
   const schoolName = useSchoolName();
+  const t = useT();
   const [classFilter, setClassFilter] = useState("all");
   const [query, setQuery] = useState("");
 
@@ -81,19 +83,19 @@ export function AcademicRecordsView({
         <Segmented
           value={classFilter}
           onChange={setClassFilter}
-          options={[{ value: "all", label: "All" }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
+          options={[{ value: "all", label: t("common.all") }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
         />
         {years.length > 1 && (
           <Select
             value={year?.id ?? ""}
             onChange={(e) => router.push(`/academic-records?year=${e.target.value}`)}
             className="w-auto"
-            aria-label="Academic year"
+            aria-label={t("field.academicYear")}
           >
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
-                {y.is_current ? " (current)" : ""}
+                {y.is_current ? ` (${t("common.current")})` : ""}
               </option>
             ))}
           </Select>
@@ -103,12 +105,12 @@ export function AcademicRecordsView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search students…"
+            placeholder={t("ar.searchStudents")}
             className="pl-9"
           />
         </div>
         <Button variant="secondary" size="md" onClick={exportCsv}>
-          <Download size={15} /> Export
+          <Download size={15} /> {t("common.export")}
         </Button>
       </div>
 
@@ -117,14 +119,14 @@ export function AcademicRecordsView({
           <table className="w-full border-collapse text-[13px]" style={{ minWidth: 720 }}>
             <thead>
               <tr className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                <th className="text-left px-5 py-3 border-b border-line min-w-[190px]">Student</th>
-                <th className="px-3 py-3 border-b border-line text-center min-w-[90px]">Term 1</th>
-                <th className="px-3 py-3 border-b border-line text-center min-w-[90px]">Term 2</th>
-                <th className="px-3 py-3 border-b border-line text-center min-w-[90px]">Term 3</th>
-                <th className="px-3 py-3 border-b border-line text-center min-w-[90px] bg-card-2/50">Average</th>
-                <th className="px-3 py-3 border-b border-line text-center min-w-[70px]">Grade</th>
-                <th className="px-3 py-3 border-b border-line text-center min-w-[70px]">Trend</th>
-                <th className="px-3 py-3 border-b border-line text-right min-w-[70px]">Report</th>
+                <th className="text-left px-5 py-3 border-b border-line min-w-[190px]">{t("col.student")}</th>
+                <th className="px-3 py-3 border-b border-line text-center min-w-[90px]">{t("col.term1")}</th>
+                <th className="px-3 py-3 border-b border-line text-center min-w-[90px]">{t("col.term2")}</th>
+                <th className="px-3 py-3 border-b border-line text-center min-w-[90px]">{t("col.term3")}</th>
+                <th className="px-3 py-3 border-b border-line text-center min-w-[90px] bg-card-2/50">{t("col.average")}</th>
+                <th className="px-3 py-3 border-b border-line text-center min-w-[70px]">{t("col.grade")}</th>
+                <th className="px-3 py-3 border-b border-line text-center min-w-[70px]">{t("col.trend")}</th>
+                <th className="px-3 py-3 border-b border-line text-right min-w-[70px]">{t("col.report")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line/60">
@@ -150,7 +152,7 @@ export function AcademicRecordsView({
                       <button
                         onClick={() => import("@/lib/pdf/report-card").then((m) => m.downloadReportCard(r, schoolName))}
                         className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                        aria-label="Download report card"
+                        aria-label={t("ar.downloadReportCard")}
                       >
                         <FileText size={14} />
                       </button>
@@ -162,7 +164,7 @@ export function AcademicRecordsView({
           </table>
           {filtered.length === 0 && (
             <div className="py-12 text-center text-[13px] text-text-2">
-              No academic records yet — add exam scores first.
+              {t("ar.noRecords")}
             </div>
           )}
         </div>

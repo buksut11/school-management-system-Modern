@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { recordInvoicePayment } from "@/lib/actions/invoices";
 import { useToast } from "@/components/ui/toast";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import type { InvoiceRow } from "@/lib/data/invoices";
 
 export function InvoicePaymentModal({
@@ -23,10 +24,11 @@ export function InvoicePaymentModal({
   const [state, formAction, pending] = useActionState(recordInvoicePayment, undefined);
   const { show } = useToast();
   const amountRef = useRef<HTMLInputElement>(null);
+  const t = useT();
 
   useEffect(() => {
     if (state?.success) {
-      show("Payment recorded — receipt created");
+      show(t("invoice.paymentRecorded"));
       onSaved?.();
       onClose();
     }
@@ -36,7 +38,7 @@ export function InvoicePaymentModal({
   if (!invoice) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title={`Record Payment · ${invoice.invoice_no}`}>
+    <Modal open={open} onClose={onClose} title={t("fee.recordTitle", { name: invoice.invoice_no })}>
       <form key={invoice.id} action={formAction} className="space-y-4">
         <input type="hidden" name="invoice_id" value={invoice.id} />
 
@@ -46,13 +48,13 @@ export function InvoicePaymentModal({
             <span className="text-text-2">{invoice.party_detail ?? ""}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-text-2">Balance due</span>
+            <span className="text-text-2">{t("fee.balanceDue")}</span>
             <span className="font-semibold">{formatMoney(invoice.balance)}</span>
           </div>
         </div>
 
         <div>
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount">{t("field.amount")}</Label>
           <Input
             ref={amountRef}
             id="amount"
@@ -70,23 +72,23 @@ export function InvoicePaymentModal({
             }}
             className="text-[12.5px] text-blue hover:underline mt-1.5"
           >
-            Pay full balance
+            {t("fee.payFull")}
           </button>
         </div>
 
         <div>
-          <Label htmlFor="method">Method</Label>
+          <Label htmlFor="method">{t("field.method")}</Label>
           <Select id="method" name="method" defaultValue="cash">
-            <option value="cash">Cash</option>
-            <option value="mobile_money">Mobile Money</option>
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="other">Other</option>
+            <option value="cash">{t("method.cash")}</option>
+            <option value="mobile_money">{t("method.mobile_money")}</option>
+            <option value="bank_transfer">{t("method.bank_transfer")}</option>
+            <option value="other">{t("method.other")}</option>
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="note">Note (optional)</Label>
-          <Input id="note" name="note" placeholder="e.g. First installment" />
+          <Label htmlFor="note">{t("field.noteOptional")}</Label>
+          <Input id="note" name="note" placeholder={t("invoice.paymentNotePlaceholder")} />
         </div>
 
         {state?.error && (
@@ -95,10 +97,10 @@ export function InvoicePaymentModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Recording…" : "Record Payment"}
+            {pending ? t("fee.recording") : t("fee.recordPayment")}
           </Button>
         </div>
       </form>

@@ -6,6 +6,7 @@ import { Input, Label, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { saveClass } from "@/lib/actions/classes";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 import type { ClassWithStats } from "@/lib/data/classes";
 
 export function ClassModal({
@@ -23,57 +24,58 @@ export function ClassModal({
 }) {
   const [state, formAction, pending] = useActionState(saveClass, undefined);
   const { show } = useToast();
+  const t = useT();
 
   useEffect(() => {
     if (state?.success) {
-      show(klass ? "Class updated" : "Class created");
+      show(klass ? t("class.updated") : t("class.created"));
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   return (
-    <Modal open={open} onClose={onClose} title={klass ? "Edit Class" : "Add Class"}>
+    <Modal open={open} onClose={onClose} title={klass ? t("class.edit") : t("class.add")}>
       <form action={formAction} className="space-y-4">
         {klass && <input type="hidden" name="id" value={klass.id} />}
 
         <div>
-          <Label htmlFor="name">Class name</Label>
+          <Label htmlFor="name">{t("class.name")}</Label>
           <Input id="name" name="name" defaultValue={klass?.name} placeholder="Form 1C" required />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="room">Room</Label>
+            <Label htmlFor="room">{t("field.room")}</Label>
             <Input id="room" name="room" defaultValue={klass?.room ?? ""} />
           </div>
           <div>
-            <Label htmlFor="capacity">Capacity</Label>
+            <Label htmlFor="capacity">{t("field.capacity")}</Label>
             <Input id="capacity" name="capacity" type="number" min={1} defaultValue={klass?.capacity ?? 40} />
           </div>
         </div>
 
         <div>
-          <Label htmlFor="teacher_id">Class teacher</Label>
+          <Label htmlFor="teacher_id">{t("field.classTeacher")}</Label>
           <Select id="teacher_id" name="teacher_id" defaultValue={klass?.teacher_id ?? ""}>
-            <option value="">— Unassigned —</option>
-            {teachers.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.full_name}
+            <option value="">{t("select.unassigned")}</option>
+            {teachers.map((tr) => (
+              <option key={tr.id} value={tr.id}>
+                {tr.full_name}
               </option>
             ))}
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="base_fees">Term fees ($)</Label>
+          <Label htmlFor="base_fees">{t("field.termFees")}</Label>
           <Input id="base_fees" name="base_fees" type="number" min={0} defaultValue={klass?.base_fees ?? 0} />
         </div>
 
         <div>
-          <Label htmlFor="next_class_id">Promotes to</Label>
+          <Label htmlFor="next_class_id">{t("class.promotesTo")}</Label>
           <Select id="next_class_id" name="next_class_id" defaultValue={klass?.next_class_id ?? ""}>
-            <option value="">— Final class (students graduate) —</option>
+            <option value="">{t("class.finalOption")}</option>
             {classes
               .filter((c) => c.id !== klass?.id)
               .map((c) => (
@@ -82,10 +84,7 @@ export function ClassModal({
                 </option>
               ))}
           </Select>
-          <p className="mt-1.5 text-[12px] text-text-2">
-            Where this class&apos;s students move at year-end promotion. Leave as final class for
-            the top year.
-          </p>
+          <p className="mt-1.5 text-[12px] text-text-2">{t("class.promotesHelp")}</p>
         </div>
 
         {state?.error && (
@@ -94,10 +93,10 @@ export function ClassModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Save"}
+            {pending ? t("common.saving") : t("common.save")}
           </Button>
         </div>
       </form>

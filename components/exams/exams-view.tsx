@@ -13,8 +13,16 @@ import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { TERMS } from "@/lib/constants";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { ExamRow, GradebookSubject } from "@/lib/data/exams";
 import type { AcademicYear, Term } from "@/lib/types/database";
+
+const TERM_KEY: Record<Term, MessageKey> = {
+  "Term 1": "col.term1",
+  "Term 2": "col.term2",
+  "Term 3": "col.term3",
+};
 
 export function ExamsView({
   term,
@@ -34,6 +42,7 @@ export function ExamsView({
   eligibleStudents: { id: string; full_name: string; class_id: string | null; class_name: string | null }[];
 }) {
   const router = useRouter();
+  const t = useT();
   const [classFilter, setClassFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -51,11 +60,14 @@ export function ExamsView({
   }, [rows, classFilter, query]);
 
   async function onDelete(r: ExamRow) {
-    const ok = await confirm({ title: `Remove ${r.student_name}'s ${term} record?`, confirmLabel: "Remove" });
+    const ok = await confirm({
+      title: t("exam.removeTitle", { name: r.student_name, term: t(TERM_KEY[term]) }),
+      confirmLabel: t("common.remove"),
+    });
     if (!ok) return;
     startTransition(async () => {
       await deleteExam(r.id, r.student_name);
-      show("Exam record removed");
+      show(t("exam.removed"));
     });
   }
 
@@ -81,19 +93,19 @@ export function ExamsView({
           onChange={(v) =>
             router.push(`/exams?term=${encodeURIComponent(v)}${year ? `&year=${year.id}` : ""}`)
           }
-          options={TERMS.map((t) => ({ value: t, label: t }))}
+          options={TERMS.map((tm) => ({ value: tm, label: t(TERM_KEY[tm]) }))}
         />
         {years.length > 1 && (
           <Select
             value={year?.id ?? ""}
             onChange={(e) => router.push(`/exams?term=${encodeURIComponent(term)}&year=${e.target.value}`)}
             className="w-auto"
-            aria-label="Academic year"
+            aria-label={t("field.academicYear")}
           >
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
-                {y.is_current ? " (current)" : ""}
+                {y.is_current ? ` (${t("common.current")})` : ""}
               </option>
             ))}
           </Select>
@@ -101,19 +113,19 @@ export function ExamsView({
         <Segmented
           value={classFilter}
           onChange={setClassFilter}
-          options={[{ value: "all", label: "All" }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
+          options={[{ value: "all", label: t("common.all") }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
         />
         <div className="relative flex-1 min-w-[180px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search students…"
+            placeholder={t("ar.searchStudents")}
             className="pl-9"
           />
         </div>
         <Button variant="secondary" size="md" onClick={exportCsv}>
-          <Download size={15} /> Export
+          <Download size={15} /> {t("common.export")}
         </Button>
         <Button
           onClick={() => {
@@ -121,7 +133,7 @@ export function ExamsView({
             setModalOpen(true);
           }}
         >
-          <Plus size={15} /> Add Exam
+          <Plus size={15} /> {t("exam.add")}
         </Button>
       </div>
 

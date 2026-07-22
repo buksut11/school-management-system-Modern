@@ -10,6 +10,7 @@ import { addAcademicYear, setCurrentAcademicYear } from "@/lib/actions/years";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { formatDate } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import type { AcademicYear } from "@/lib/types/database";
 import type { FormState } from "@/lib/actions/students";
 
@@ -19,6 +20,7 @@ export function AcademicYearPanel({ years }: { years: AcademicYear[] }) {
   const [state, formAction, pending] = useActionState(addAcademicYear, undefined);
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   // Close the add form as soon as the action succeeds (state adjusted
   // during render, per React's derived-state pattern); the toast is a
@@ -30,23 +32,22 @@ export function AcademicYearPanel({ years }: { years: AcademicYear[] }) {
   }
 
   useEffect(() => {
-    if (state?.success) show("Academic year added");
+    if (state?.success) show(t("set.yearAdded"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   async function makeCurrent(y: AcademicYear) {
     const ok = await confirm({
-      title: `Switch to ${y.name}?`,
-      message:
-        "Exams and fee balances are tracked per academic year. Switching resets every student's outstanding balance for the new year, and each active student's class is carried over as their starting enrollment — prior years stay on record.",
-      confirmLabel: "Switch",
+      title: t("set.switchTitle", { name: y.name }),
+      message: t("set.switchMsg"),
+      confirmLabel: t("set.switch"),
       tone: "primary",
     });
     if (!ok) return;
     setBusy(true);
     try {
       const result = await setCurrentAcademicYear(y.id, y.name);
-      show(result?.error ?? `Current year is now ${y.name}`);
+      show(result?.error ?? t("set.currentYearNow", { name: y.name }));
     } finally {
       setBusy(false);
     }
@@ -54,12 +55,8 @@ export function AcademicYearPanel({ years }: { years: AcademicYear[] }) {
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">Academic Years</h3>
-      <p className="text-[12.5px] text-text-2 mb-4">
-        Exams and fee balances are kept per academic year. Add the next year here and switch to it
-        when the new session starts — every prior year&apos;s records stay browsable on the Exams
-        and Academic Records pages.
-      </p>
+      <h3 className="text-[15px] font-semibold tracking-tight mb-1">{t("set.academicYears")}</h3>
+      <p className="text-[12.5px] text-text-2 mb-4">{t("set.academicYearsDesc")}</p>
 
       <div className="space-y-2 mb-4">
         {years.map((y) => (
@@ -79,32 +76,32 @@ export function AcademicYearPanel({ years }: { years: AcademicYear[] }) {
               </div>
             </div>
             {y.is_current ? (
-              <Badge tone="green">Current</Badge>
+              <Badge tone="green">{t("set.currentBadge")}</Badge>
             ) : (
               <Button variant="secondary" size="sm" disabled={busy} onClick={() => makeCurrent(y)}>
-                Make current
+                {t("set.makeCurrent")}
               </Button>
             )}
           </div>
         ))}
         {years.length === 0 && (
-          <p className="text-[12.5px] text-text-2">No academic years yet — add one below.</p>
+          <p className="text-[12.5px] text-text-2">{t("set.noYears")}</p>
         )}
       </div>
 
       {adding ? (
         <form action={formAction} className="space-y-3">
           <div>
-            <Label htmlFor="year_name">Name</Label>
-            <Input id="year_name" name="name" placeholder="e.g. 2026-2027" required />
+            <Label htmlFor="year_name">{t("field.name")}</Label>
+            <Input id="year_name" name="name" placeholder={t("set.yearPlaceholder")} required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="year_starts">Starts</Label>
+              <Label htmlFor="year_starts">{t("tt.starts")}</Label>
               <Input id="year_starts" name="starts_on" type="date" />
             </div>
             <div>
-              <Label htmlFor="year_ends">Ends</Label>
+              <Label htmlFor="year_ends">{t("tt.ends")}</Label>
               <Input id="year_ends" name="ends_on" type="date" />
             </div>
           </div>
@@ -113,16 +110,16 @@ export function AcademicYearPanel({ years }: { years: AcademicYear[] }) {
           )}
           <div className="flex gap-2">
             <Button type="submit" disabled={pending}>
-              {pending ? "Adding…" : "Add Year"}
+              {pending ? t("set.adding") : t("set.addYear")}
             </Button>
             <Button type="button" variant="secondary" onClick={() => setAdding(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </form>
       ) : (
         <Button variant="secondary" onClick={() => setAdding(true)}>
-          <Plus size={15} /> Add Academic Year
+          <Plus size={15} /> {t("set.addAcademicYear")}
         </Button>
       )}
     </Card>

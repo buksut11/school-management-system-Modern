@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import type {
   InvoiceRow,
   InvoicesPage,
@@ -73,6 +74,7 @@ export function InvoicesView({
   const [exporting, startExport] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   // A payment creates a receipt and changes an invoice's balance, so any
   // finance mutation refreshes both lists (the summary cards refresh from
@@ -84,33 +86,33 @@ export function InvoicesView({
 
   async function onDeleteInvoice(inv: InvoiceRow) {
     const ok = await confirm({
-      title: `Remove invoice ${inv.invoice_no}?`,
-      message: `This invoice for ${inv.party_name} will be permanently removed.`,
-      confirmLabel: "Remove",
+      title: t("invoice.removeInvoiceTitle", { no: inv.invoice_no }),
+      message: t("invoice.removeInvoiceMsg", { name: inv.party_name }),
+      confirmLabel: t("common.remove"),
     });
     if (!ok) return;
     try {
       await deleteInvoice(inv.id, inv.party_name);
-      show("Invoice removed");
+      show(t("invoice.invoiceRemoved"));
       refreshAll();
     } catch (e) {
-      show(e instanceof Error ? e.message : "Could not remove invoice");
+      show(e instanceof Error ? e.message : t("invoice.couldNotRemoveInvoice"));
     }
   }
 
   async function onDeleteReceipt(r: ReceiptRow) {
     const ok = await confirm({
-      title: `Remove receipt ${r.receipt_no}?`,
-      message: `This receipt for ${r.party_name} will be permanently removed.`,
-      confirmLabel: "Remove",
+      title: t("invoice.removeReceiptTitle", { no: r.receipt_no }),
+      message: t("invoice.removeReceiptMsg", { name: r.party_name }),
+      confirmLabel: t("common.remove"),
     });
     if (!ok) return;
     try {
       await deleteReceipt(r.id, r.party_name);
-      show("Receipt removed");
+      show(t("invoice.receiptRemoved"));
       refreshAll();
     } catch (e) {
-      show(e instanceof Error ? e.message : "Could not remove receipt");
+      show(e instanceof Error ? e.message : t("invoice.couldNotRemoveReceipt"));
     }
   }
 
@@ -172,17 +174,17 @@ export function InvoicesView({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {tab === "invoices" ? (
           <>
-            <Stat label="Total invoiced" value={formatMoney(invoiceSummary.invoiced)} />
-            <Stat label="Paid" value={formatMoney(invoiceSummary.paid)} color="var(--green)" />
-            <Stat label="Outstanding" value={formatMoney(invoiceSummary.outstanding)} color="var(--red)" />
-            <Stat label="Invoices open" value={String(invoiceSummary.openCount)} />
+            <Stat label={t("invoice.statTotalInvoiced")} value={formatMoney(invoiceSummary.invoiced)} />
+            <Stat label={t("invoice.statPaid")} value={formatMoney(invoiceSummary.paid)} color="var(--green)" />
+            <Stat label={t("invoice.statOutstanding")} value={formatMoney(invoiceSummary.outstanding)} color="var(--red)" />
+            <Stat label={t("invoice.statOpen")} value={String(invoiceSummary.openCount)} />
           </>
         ) : (
           <>
-            <Stat label="Receipts issued" value={String(receiptSummary.count)} />
-            <Stat label="Money in (students)" value={formatMoney(receiptSummary.moneyIn)} color="var(--green)" />
-            <Stat label="Money out (staff)" value={formatMoney(receiptSummary.moneyOut)} color="var(--red)" />
-            <Stat label="Net" value={formatMoney(receiptSummary.moneyIn - receiptSummary.moneyOut)} />
+            <Stat label={t("invoice.statReceipts")} value={String(receiptSummary.count)} />
+            <Stat label={t("invoice.statMoneyIn")} value={formatMoney(receiptSummary.moneyIn)} color="var(--green)" />
+            <Stat label={t("invoice.statMoneyOut")} value={formatMoney(receiptSummary.moneyOut)} color="var(--red)" />
+            <Stat label={t("invoice.statNet")} value={formatMoney(receiptSummary.moneyIn - receiptSummary.moneyOut)} />
           </>
         )}
       </div>
@@ -192,18 +194,18 @@ export function InvoicesView({
           value={tab}
           onChange={(v) => setTab(v as "invoices" | "receipts")}
           options={[
-            { value: "invoices", label: "Invoices" },
-            { value: "receipts", label: "Receipts" },
+            { value: "invoices", label: t("invoice.tabInvoices") },
+            { value: "receipts", label: t("invoice.tabReceipts") },
           ]}
         />
         <Segmented
           value={partyFilter}
           onChange={setPartyFilter}
           options={[
-            { value: "all", label: "All" },
-            { value: "student", label: "Students" },
-            { value: "teacher", label: "Teachers" },
-            { value: "staff", label: "Other staff" },
+            { value: "all", label: t("common.all") },
+            { value: "student", label: t("nav.students") },
+            { value: "teacher", label: t("nav.teachers") },
+            { value: "staff", label: t("party.otherStaff") },
           ]}
         />
         {tab === "invoices" && (
@@ -211,10 +213,10 @@ export function InvoicesView({
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
-              { value: "all", label: "All" },
-              { value: "paid", label: "Paid" },
-              { value: "partial", label: "Partial" },
-              { value: "unpaid", label: "Unpaid" },
+              { value: "all", label: t("common.all") },
+              { value: "paid", label: t("feeStatus.paid") },
+              { value: "partial", label: t("feeStatus.partial") },
+              { value: "unpaid", label: t("feeStatus.unpaid") },
             ]}
           />
         )}
@@ -226,12 +228,12 @@ export function InvoicesView({
           <Input
             value={active.query}
             onChange={(e) => active.setQuery(e.target.value)}
-            placeholder={tab === "invoices" ? "Search invoices…" : "Search receipts…"}
+            placeholder={tab === "invoices" ? t("invoice.searchInvoices") : t("invoice.searchReceipts")}
             className="pl-9"
           />
         </div>
         <Button variant="secondary" size="md" onClick={exportCsv} disabled={exporting}>
-          <Download size={15} /> {exporting ? "Exporting…" : "Export"}
+          <Download size={15} /> {exporting ? t("common.exporting") : t("common.export")}
         </Button>
         {tab === "invoices" ? (
           <Button
@@ -240,11 +242,11 @@ export function InvoicesView({
               setInvoiceModalOpen(true);
             }}
           >
-            <Plus size={15} /> New Invoice
+            <Plus size={15} /> {t("invoice.newInvoiceBtn")}
           </Button>
         ) : (
           <Button onClick={() => setReceiptModalOpen(true)}>
-            <Plus size={15} /> New Receipt
+            <Plus size={15} /> {t("invoice.newReceiptBtn")}
           </Button>
         )}
       </div>
@@ -265,14 +267,16 @@ export function InvoicesView({
 
       {active.rows.length === 0 && active.query.trim() && !active.pending && (
         <p className="text-center text-[13px] text-text-2 py-6">
-          No {tab} match “{active.query.trim()}”.
+          {tab === "invoices"
+            ? t("invoice.noInvoices", { query: active.query.trim() })
+            : t("invoice.noReceipts", { query: active.query.trim() })}
         </p>
       )}
 
       {active.hasMore && (
         <div className="flex justify-center pt-1">
           <Button variant="secondary" size="md" onClick={active.loadMore} disabled={active.pending}>
-            {active.pending ? "Loading…" : "Load more"}
+            {active.pending ? t("common.loading") : t("common.loadMore")}
           </Button>
         </div>
       )}

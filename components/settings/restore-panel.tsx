@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { restoreFromBackup, type BackupSnapshot } from "@/lib/actions/backup";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 
 export function RestorePanel() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -17,6 +18,7 @@ export function RestorePanel() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const { show } = useToast();
+  const t = useT();
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -29,7 +31,7 @@ export function RestorePanel() {
       setSnapshot(parsed);
       setFileName(file.name);
     } catch {
-      setError("That doesn't look like a valid backup file from this system.");
+      setError(t("set.restoreInvalid"));
       setSnapshot(null);
       setFileName("");
     }
@@ -38,11 +40,11 @@ export function RestorePanel() {
   async function onRestore() {
     if (!snapshot) return;
     if (confirmText !== "RESTORE") {
-      setError('Type "RESTORE" to confirm.');
+      setError(t("set.restoreTypeToConfirm"));
       return;
     }
     if (!password) {
-      setError("Enter your account password to confirm.");
+      setError(t("set.restoreEnterPassword"));
       return;
     }
     setBusy(true);
@@ -53,7 +55,7 @@ export function RestorePanel() {
       setError(result.error);
       return;
     }
-    show("System restored from backup");
+    show(t("set.restored"));
     setSnapshot(null);
     setFileName("");
     setPassword("");
@@ -62,11 +64,8 @@ export function RestorePanel() {
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">Restore from Backup</h3>
-      <p className="text-[12.5px] text-text-2 mb-4">
-        Uploading a backup <span className="text-red font-medium">replaces all current data</span>. This
-        cannot be undone.
-      </p>
+      <h3 className="text-[15px] font-semibold tracking-tight mb-1">{t("set.restore")}</h3>
+      <p className="text-[12.5px] text-text-2 mb-4">{t("set.restoreDesc")}</p>
 
       <button
         type="button"
@@ -74,7 +73,7 @@ export function RestorePanel() {
         className="w-full rounded-2xl border border-dashed border-line bg-card-2/60 hover:bg-card-2 transition-colors py-6 flex flex-col items-center gap-2 mb-4"
       >
         <Upload size={18} className="text-text-2" />
-        <span className="text-[13px] font-medium">{fileName || "Choose a .json backup file"}</span>
+        <span className="text-[13px] font-medium">{fileName || t("set.chooseBackup")}</span>
       </button>
       <input ref={fileRef} type="file" accept="application/json" onChange={onFile} className="hidden" />
 
@@ -82,15 +81,11 @@ export function RestorePanel() {
         <div className="space-y-3">
           <div className="rounded-xl bg-orange/10 text-orange px-3.5 py-2.5 text-[12.5px] flex gap-2">
             <TriangleAlert size={15} className="flex-none mt-0.5" />
-            <span>
-              This will delete and replace all students, teachers, classes, attendance, exams, and
-              financial records with the contents of this backup (dated{" "}
-              {new Date(snapshot.created_at).toLocaleString()}).
-            </span>
+            <span>{t("set.restoreWarn", { date: new Date(snapshot.created_at).toLocaleString() })}</span>
           </div>
 
           <div>
-            <Label htmlFor="restore-confirm">Type RESTORE to confirm</Label>
+            <Label htmlFor="restore-confirm">{t("set.typeRestoreLabel")}</Label>
             <Input
               id="restore-confirm"
               value={confirmText}
@@ -100,7 +95,7 @@ export function RestorePanel() {
           </div>
 
           <div>
-            <Label htmlFor="restore-password">Your account password</Label>
+            <Label htmlFor="restore-password">{t("set.accountPassword")}</Label>
             <Input
               id="restore-password"
               type="password"
@@ -112,7 +107,7 @@ export function RestorePanel() {
           {error && <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2">{error}</p>}
 
           <Button variant="danger" onClick={onRestore} disabled={busy} className="w-full">
-            {busy ? "Restoring…" : "Restore Now"}
+            {busy ? t("set.restoring") : t("set.restoreNow")}
           </Button>
         </div>
       )}

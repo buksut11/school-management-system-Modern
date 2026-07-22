@@ -6,15 +6,8 @@ import { KeyRound, LogOut, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { joinSchoolWithCode } from "@/lib/actions/school";
 import { logout } from "@/lib/actions/auth";
-
-const ROLE_BLURB: Record<string, string> = {
-  admin: "as its administrator — you'll run the school and invite everyone else",
-  staff: "as office staff — daily records and the fees desk",
-  finance: "as finance — the school's money, including expenses",
-  teacher: "as a teacher — attendance and grades for your class",
-  student: "as a student — you'll see your own records and fees",
-  parent: "as a parent — you'll follow your child's progress and fees",
-};
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 export function JoinCard({
   code,
@@ -30,6 +23,7 @@ export function JoinCard({
   reason: string | null;
 }) {
   const router = useRouter();
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [joined, setJoined] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -42,7 +36,7 @@ export function JoinCard({
         setError(result.error);
         return;
       }
-      setJoined(result.name ?? "your school");
+      setJoined(result.name ?? t("join.yourSchool"));
       router.push("/");
       router.refresh();
     });
@@ -52,13 +46,13 @@ export function JoinCard({
     return (
       <div className="text-center space-y-3">
         <AlertTriangle size={26} className="mx-auto text-orange" />
-        <h1 className="text-[17px] font-semibold tracking-tight">This invite can&apos;t be used</h1>
-        <p className="text-[13px] text-text-2">{reason ?? "Ask the school for a new invite."}</p>
+        <h1 className="text-[17px] font-semibold tracking-tight">{t("join.invalidTitle")}</h1>
+        <p className="text-[13px] text-text-2">{reason ?? t("join.invalidReason")}</p>
         <button
           onClick={() => logout()}
           className="inline-flex items-center gap-1.5 text-[12.5px] text-text-2 hover:text-text transition-colors"
         >
-          <LogOut size={13} /> Sign out
+          <LogOut size={13} /> {t("join.signOut")}
         </button>
       </div>
     );
@@ -67,32 +61,31 @@ export function JoinCard({
   if (joined) {
     return (
       <div className="text-center space-y-2">
-        <h1 className="text-[17px] font-semibold tracking-tight">Welcome to {joined}!</h1>
-        <p className="text-[13px] text-text-2">Taking you to your dashboard…</p>
+        <h1 className="text-[17px] font-semibold tracking-tight">{t("join.welcomeTo", { name: joined })}</h1>
+        <p className="text-[13px] text-text-2">{t("join.takingYou")}</p>
       </div>
     );
   }
 
+  const blurb = role ? t(`join.blurb.${role}` as MessageKey) : t("join.blurbFallback");
+
   return (
     <div className="text-center space-y-4">
       <h1 className="text-[17px] font-semibold tracking-tight">
-        You&apos;re invited to {schoolName ?? "a school"}
+        {t("join.invitedTo", { name: schoolName ?? t("join.aSchool") })}
       </h1>
-      <p className="text-[13px] text-text-2">
-        This personal invite joins your account {ROLE_BLURB[role ?? ""] ?? "to the school"}. It
-        works exactly once.
-      </p>
+      <p className="text-[13px] text-text-2">{t("join.explain", { blurb })}</p>
       {error && (
         <p className="text-[13px] text-red bg-red/10 rounded-lg px-3 py-2 text-left">{error}</p>
       )}
       <Button onClick={join} disabled={pending} className="w-full">
-        <KeyRound size={15} /> {pending ? "Joining…" : `Join ${schoolName ?? "school"}`}
+        <KeyRound size={15} /> {pending ? t("join.joining") : t("join.joinBtn", { name: schoolName ?? t("join.school") })}
       </Button>
       <button
         onClick={() => logout()}
         className="inline-flex items-center gap-1.5 text-[12.5px] text-text-2 hover:text-text transition-colors"
       >
-        <LogOut size={13} /> Not you? Sign out
+        <LogOut size={13} /> {t("join.notYouSignOut")}
       </button>
     </div>
   );

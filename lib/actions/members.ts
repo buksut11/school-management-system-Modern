@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { AssignableRole } from "@/lib/types/database";
 
@@ -34,7 +35,7 @@ export async function revokeInvite(id: string): Promise<MemberActionResult> {
   // as success.
   const { data, error } = await supabase.from("invites").delete().eq("id", id).select("id");
   if (error) return { error: friendlyError(error) };
-  if (!data?.length) return { error: "Only an admin account can revoke invites." };
+  if (!data?.length) return { error: (await getT())("err.onlyAdminRevoke") };
 
   await logActivity(supabase, "settings", "Invite revoked");
   revalidatePath("/settings");

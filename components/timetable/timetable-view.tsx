@@ -8,18 +8,20 @@ import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
 import { LessonModal } from "./lesson-modal";
 import { SlotsModal } from "./slots-modal";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { TimetableSlot, Lesson } from "@/lib/data/timetable";
 import type { GradebookSubject } from "@/lib/data/exams";
 
 // day values are 0=Monday … 6=Sunday; the grid shows the Sat–Thu week
 // common in Somalia. Change this list to change the school week.
-export const TIMETABLE_DAYS: { value: number; label: string }[] = [
-  { value: 5, label: "Saturday" },
-  { value: 6, label: "Sunday" },
-  { value: 0, label: "Monday" },
-  { value: 1, label: "Tuesday" },
-  { value: 2, label: "Wednesday" },
-  { value: 3, label: "Thursday" },
+export const TIMETABLE_DAYS: { value: number; labelKey: MessageKey }[] = [
+  { value: 5, labelKey: "weekday.sat" },
+  { value: 6, labelKey: "weekday.sun" },
+  { value: 0, labelKey: "weekday.mon" },
+  { value: 1, labelKey: "weekday.tue" },
+  { value: 2, labelKey: "weekday.wed" },
+  { value: 3, labelKey: "weekday.thu" },
 ];
 
 function formatTime(t: string) {
@@ -46,6 +48,7 @@ export function TimetableView({
   canEdit: boolean;
 }) {
   const router = useRouter();
+  const t = useT();
   const [editCell, setEditCell] = useState<{ day: number; slot: TimetableSlot } | null>(null);
   const [slotsOpen, setSlotsOpen] = useState(false);
 
@@ -65,7 +68,7 @@ export function TimetableView({
         <div className="flex-1" />
         {canEdit && (
           <Button variant="secondary" size="md" onClick={() => setSlotsOpen(true)}>
-            <CalendarCog size={15} /> Periods
+            <CalendarCog size={15} /> {t("tt.periods")}
           </Button>
         )}
       </div>
@@ -73,13 +76,12 @@ export function TimetableView({
       {slots.length === 0 ? (
         <Card className="p-8 text-center">
           <p className="text-[13.5px] text-text-2">
-            No periods defined yet
-            {canEdit ? " — set up the school day with the Periods button above." : "."}
+            {canEdit ? t("tt.noPeriodsCanEdit") : t("tt.noPeriods")}
           </p>
         </Card>
       ) : !selectedClassId ? (
         <Card className="p-8 text-center">
-          <p className="text-[13.5px] text-text-2">Add a class first to build its timetable.</p>
+          <p className="text-[13.5px] text-text-2">{t("tt.addClassFirst")}</p>
         </Card>
       ) : (
         <div className="rounded-2xl bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card overflow-hidden">
@@ -88,11 +90,11 @@ export function TimetableView({
               <thead>
                 <tr className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
                   <th className="sticky left-0 z-10 bg-solid text-left px-4 py-3 border-b border-line min-w-[110px]">
-                    Period
+                    {t("tt.period")}
                   </th>
                   {TIMETABLE_DAYS.map((d) => (
                     <th key={d.value} className="px-2 py-3 border-b border-line text-center min-w-[104px]">
-                      {d.label}
+                      {t(d.labelKey)}
                     </th>
                   ))}
                 </tr>
@@ -126,7 +128,7 @@ export function TimetableView({
                                   {lesson.subject_name}
                                 </div>
                                 <div className="text-[11px] text-text-2 truncate">
-                                  {lesson.teacher_name ?? "No teacher"}
+                                  {lesson.teacher_name ?? t("tt.noTeacher")}
                                 </div>
                               </>
                             ) : (
@@ -151,7 +153,10 @@ export function TimetableView({
           onClose={() => setEditCell(null)}
           classId={selectedClassId}
           day={editCell.day}
-          dayLabel={TIMETABLE_DAYS.find((d) => d.value === editCell.day)?.label ?? ""}
+          dayLabel={(() => {
+            const d = TIMETABLE_DAYS.find((d) => d.value === editCell.day);
+            return d ? t(d.labelKey) : "";
+          })()}
           slot={editCell.slot}
           lesson={byCell.get(`${editCell.day}:${editCell.slot.id}`) ?? null}
           subjects={subjects}

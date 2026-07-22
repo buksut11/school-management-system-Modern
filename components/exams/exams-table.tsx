@@ -3,6 +3,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/lib/i18n/client";
 import type { ExamRow } from "@/lib/data/exams";
 
 const GRADE_TONE: Record<string, "green" | "blue" | "orange" | "red"> = {
@@ -24,6 +25,7 @@ export function ExamsTable({
   onEdit: (r: ExamRow) => void;
   onDelete: (r: ExamRow) => void;
 }) {
+  const t = useT();
   return (
     <div className="rounded-2xl bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card overflow-hidden">
       <div className="overflow-x-auto">
@@ -31,17 +33,17 @@ export function ExamsTable({
           <thead>
             <tr className="text-[11px] font-semibold text-text-2 uppercase tracking-wide">
               <th className="sticky left-0 z-10 bg-solid text-left px-5 py-3 border-b border-line min-w-[190px]">
-                Student
+                {t("col.student")}
               </th>
               {subjects.map((s) => (
                 <th key={s} className="px-3 py-3 border-b border-line text-center min-w-[76px]">
                   {s}
                 </th>
               ))}
-              <th className="px-3 py-3 border-b border-line text-center min-w-[70px]">Test</th>
-              <th className="px-3 py-3 border-b border-line text-center min-w-[80px] bg-card-2/50">Total</th>
-              <th className="px-3 py-3 border-b border-line text-center min-w-[60px]">Grade</th>
-              <th className="px-3 py-3 border-b border-line text-right min-w-[90px]">Actions</th>
+              <th className="px-3 py-3 border-b border-line text-center min-w-[70px]">{t("exam.test")}</th>
+              <th className="px-3 py-3 border-b border-line text-center min-w-[80px] bg-card-2/50">{t("col.total")}</th>
+              <th className="px-3 py-3 border-b border-line text-center min-w-[60px]">{t("col.grade")}</th>
+              <th className="px-3 py-3 border-b border-line text-right min-w-[90px]">{t("col.actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line/60">
@@ -71,14 +73,14 @@ export function ExamsTable({
                     <button
                       onClick={() => onEdit(r)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
-                      aria-label="Edit"
+                      aria-label={t("common.edit")}
                     >
                       <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => onDelete(r)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-red/10 hover:text-red transition-colors"
-                      aria-label="Delete"
+                      aria-label={t("common.delete")}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -89,7 +91,7 @@ export function ExamsTable({
           </tbody>
         </table>
         {rows.length === 0 && (
-          <div className="py-12 text-center text-[13px] text-text-2">No exam records for this term yet.</div>
+          <div className="py-12 text-center text-[13px] text-text-2">{t("exam.emptyList")}</div>
         )}
       </div>
     </div>

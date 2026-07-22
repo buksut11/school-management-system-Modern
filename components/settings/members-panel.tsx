@@ -17,19 +17,31 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { formatDate } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { Member, PersonOption } from "@/lib/data/members";
 import type { AssignableRole, Invite, Role } from "@/lib/types/database";
 
 type InvitableRole = Exclude<AssignableRole, "admin">;
 
-const ROLE_OPTIONS: { value: AssignableRole; label: string }[] = [
-  { value: "admin", label: "Admin" },
-  { value: "staff", label: "Staff" },
-  { value: "finance", label: "Finance" },
-  { value: "teacher", label: "Teacher" },
-  { value: "student", label: "Student" },
-  { value: "parent", label: "Parent" },
+const ROLE_OPTIONS: { value: AssignableRole; labelKey: MessageKey }[] = [
+  { value: "admin", labelKey: "role.admin" },
+  { value: "staff", labelKey: "role.staff" },
+  { value: "finance", labelKey: "role.finance" },
+  { value: "teacher", labelKey: "role.teacher" },
+  { value: "student", labelKey: "role.student" },
+  { value: "parent", labelKey: "role.parent" },
 ];
+
+const ROLE_KEY: Record<Role, MessageKey> = {
+  admin: "role.admin",
+  staff: "role.staff",
+  finance: "role.finance",
+  teacher: "role.teacher",
+  student: "role.student",
+  parent: "role.parent",
+  pending: "role.pending",
+};
 
 const ROLE_TONE: Record<Role, "blue" | "gray" | "green" | "purple" | "teal" | "orange"> = {
   admin: "blue",
@@ -59,6 +71,7 @@ export function MembersPanel({
   const [busy, startTransition] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   // invite composer
   const [inviting, setInviting] = useState(false);
@@ -89,7 +102,7 @@ export function MembersPanel({
         return;
       }
       if (result.code) await copyInviteLink(result.code);
-      show("Invite created — link copied, send it to them");
+      show(t("set.inviteCreated"));
       setInviting(false);
       setInvEmail("");
       setInvTeacher("");
@@ -102,24 +115,24 @@ export function MembersPanel({
   function onRevoke(inv: Invite) {
     startTransition(async () => {
       const result = await revokeInvite(inv.id);
-      show(result.error ?? "Invite revoked — its link no longer works");
+      show(result.error ?? t("set.inviteRevoked"));
     });
   }
 
-  const studentName = (id: string) => students.find((s) => s.id === id)?.full_name ?? "Unknown";
+  const studentName = (id: string) => students.find((s) => s.id === id)?.full_name ?? t("set.unknown");
 
   function changeRole(m: Member, role: AssignableRole) {
     if (role === m.role) return;
     startTransition(async () => {
-      const result = await setMemberRole(m.id, role, m.full_name || "Member");
-      show(result.error ?? `${m.full_name || "Member"} is now ${role}`);
+      const result = await setMemberRole(m.id, role, m.full_name || t("set.memberFallback"));
+      show(result.error ?? t("set.roleNow", { name: m.full_name || t("set.memberFallback"), role: t(ROLE_KEY[role]) }));
     });
   }
 
   function changeTeacherLink(m: Member, teacherId: string) {
     startTransition(async () => {
-      const result = await linkMemberTeacher(m.id, teacherId || null, m.full_name || "Member");
-      show(result.error ?? "Teacher record linked");
+      const result = await linkMemberTeacher(m.id, teacherId || null, m.full_name || t("set.memberFallback"));
+      show(result.error ?? t("set.teacherLinked"));
     });
   }
 
@@ -129,9 +142,9 @@ export function MembersPanel({
       const result = await linkMemberStudents(
         m.id,
         [...m.student_ids, studentId],
-        m.full_name || "Member"
+        m.full_name || t("set.memberFallback")
       );
-      show(result.error ?? `Linked to ${studentName(studentId)}`);
+      show(result.error ?? t("set.linkedTo", { name: studentName(studentId) }));
     });
   }
 
@@ -140,35 +153,29 @@ export function MembersPanel({
       const result = await linkMemberStudents(
         m.id,
         m.student_ids.filter((id) => id !== studentId),
-        m.full_name || "Member"
+        m.full_name || t("set.memberFallback")
       );
-      show(result.error ?? "Link removed");
+      show(result.error ?? t("set.linkRemoved"));
     });
   }
 
   async function onRemove(m: Member) {
     const ok = await confirm({
-      title: `Remove ${m.full_name || "this member"}?`,
-      message:
-        "They lose access to the school immediately. Everything they recorded stays. They can rejoin with a current invite link.",
-      confirmLabel: "Remove",
+      title: t("set.removeMemberTitle", { name: m.full_name || t("set.thisMember") }),
+      message: t("set.removeMemberMsg"),
+      confirmLabel: t("set.remove"),
     });
     if (!ok) return;
     startTransition(async () => {
-      const result = await removeMember(m.id, m.full_name || "Member");
-      show(result.error ?? "Member removed");
+      const result = await removeMember(m.id, m.full_name || t("set.memberFallback"));
+      show(result.error ?? t("set.memberRemoved"));
     });
   }
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">Members</h3>
-      <p className="text-[12.5px] text-text-2 mb-4">
-        Admins run everything; staff handle daily records and take fee payments; finance manages
-        all money including expenses; teachers mark attendance and grades for their own class;
-        students and parents see only their own records. Each invite is personal: one link, one
-        person, used once — it carries the role (and class or child) you choose here.
-      </p>
+      <h3 className="text-[15px] font-semibold tracking-tight mb-1">{t("set.members")}</h3>
+      <p className="text-[12.5px] text-text-2 mb-4">{t("set.membersDesc")}</p>
 
       <div className="space-y-2 mb-4">
         {members.map((m) => (
@@ -176,27 +183,27 @@ export function MembersPanel({
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-[13.5px] font-medium truncate">
-                  {m.full_name || "Unnamed account"}
+                  {m.full_name || t("set.unnamedAccount")}
                   {m.id === currentUserId && (
-                    <span className="text-text-2 font-normal"> (you)</span>
+                    <span className="text-text-2 font-normal"> {t("set.you")}</span>
                   )}
                 </div>
-                <div className="text-[11.5px] text-text-2">Joined {formatDate(m.created_at)}</div>
+                <div className="text-[11.5px] text-text-2">{t("set.joined", { date: formatDate(m.created_at) })}</div>
               </div>
               {isAdmin && m.id !== currentUserId ? (
                 <div className="flex items-center gap-1.5 flex-none">
-                  {m.role === "pending" && <Badge tone="orange">pending</Badge>}
+                  {m.role === "pending" && <Badge tone="orange">{t("role.pending")}</Badge>}
                   <Select
                     value={m.role === "pending" ? "" : m.role}
                     disabled={busy}
                     onChange={(e) => changeRole(m, e.target.value as AssignableRole)}
                     className="w-auto h-8 text-[12.5px]"
-                    aria-label={`Role for ${m.full_name}`}
+                    aria-label={t("set.roleForAria", { name: m.full_name })}
                   >
-                    {m.role === "pending" && <option value="">Assign role…</option>}
+                    {m.role === "pending" && <option value="">{t("set.assignRole")}</option>}
                     {ROLE_OPTIONS.map((r) => (
                       <option key={r.value} value={r.value}>
-                        {r.label}
+                        {t(r.labelKey)}
                       </option>
                     ))}
                   </Select>
@@ -204,32 +211,32 @@ export function MembersPanel({
                     onClick={() => onRemove(m)}
                     disabled={busy}
                     className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-text-2 hover:bg-red/10 hover:text-red transition-colors"
-                    aria-label={`Remove ${m.full_name}`}
+                    aria-label={t("set.removeMemberAria", { name: m.full_name })}
                   >
                     <UserMinus size={15} />
                   </button>
                 </div>
               ) : (
                 <Badge tone={ROLE_TONE[m.role]}>
-                  {m.role === "admin" && <ShieldCheck size={12} />} {m.role}
+                  {m.role === "admin" && <ShieldCheck size={12} />} {t(ROLE_KEY[m.role])}
                 </Badge>
               )}
             </div>
 
             {isAdmin && m.role === "teacher" && (
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-text-2 flex-none">Teacher record:</span>
+                <span className="text-[12px] text-text-2 flex-none">{t("set.teacherRecord")}</span>
                 <Select
                   value={m.teacher_id ?? ""}
                   disabled={busy}
                   onChange={(e) => changeTeacherLink(m, e.target.value)}
                   className="w-auto h-8 text-[12.5px]"
-                  aria-label={`Teacher record for ${m.full_name}`}
+                  aria-label={t("set.teacherRecordAria", { name: m.full_name })}
                 >
-                  <option value="">— not linked (no class access) —</option>
-                  {teachers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.full_name}
+                  <option value="">{t("set.notLinkedNoClass")}</option>
+                  {teachers.map((tchr) => (
+                    <option key={tchr.id} value={tchr.id}>
+                      {tchr.full_name}
                     </option>
                   ))}
                 </Select>
@@ -239,7 +246,7 @@ export function MembersPanel({
             {isAdmin && (m.role === "student" || m.role === "parent") && (
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[12px] text-text-2 flex-none">
-                  {m.role === "parent" ? "Children:" : "Student record:"}
+                  {m.role === "parent" ? t("set.children") : t("set.studentRecord")}
                 </span>
                 {m.student_ids.map((sid) => (
                   <span
@@ -250,7 +257,7 @@ export function MembersPanel({
                     <button
                       onClick={() => removeChild(m, sid)}
                       disabled={busy}
-                      aria-label={`Unlink ${studentName(sid)}`}
+                      aria-label={t("set.unlinkAria", { name: studentName(sid) })}
                       className="hover:text-red transition-colors"
                     >
                       <X size={12} />
@@ -263,9 +270,9 @@ export function MembersPanel({
                     disabled={busy}
                     onChange={(e) => addChild(m, e.target.value)}
                     className="w-auto h-8 text-[12.5px]"
-                    aria-label={`Link a student to ${m.full_name}`}
+                    aria-label={t("set.linkStudentToAria", { name: m.full_name })}
                   >
-                    <option value="">Link a student…</option>
+                    <option value="">{t("set.linkStudentOpt")}</option>
                     {students
                       .filter((s) => !m.student_ids.includes(s.id))
                       .map((s) => (
@@ -276,7 +283,7 @@ export function MembersPanel({
                   </Select>
                 )}
                 {m.student_ids.length === 0 && (
-                  <span className="text-[11.5px] text-orange">sees nothing until linked</span>
+                  <span className="text-[11.5px] text-orange">{t("set.seesNothing")}</span>
                 )}
               </div>
             )}
@@ -287,7 +294,7 @@ export function MembersPanel({
       {isAdmin && invites.length > 0 && (
         <div className="mb-4">
           <div className="text-[12px] font-semibold text-text-2 uppercase tracking-wide mb-2">
-            Open invites
+            {t("set.openInvites")}
           </div>
           <div className="space-y-2">
             {invites.map((inv) => (
@@ -296,9 +303,9 @@ export function MembersPanel({
                 className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-line px-3.5 py-2"
               >
                 <div className="min-w-0 text-[12.5px]">
-                  <span className="font-medium capitalize">{inv.role}</span>
+                  <span className="font-medium">{t(ROLE_KEY[inv.role])}</span>
                   {inv.email && <span className="text-text-2"> · {inv.email}</span>}
-                  <span className="text-text-2"> · expires {formatDate(inv.expires_at)}</span>
+                  <span className="text-text-2"> · {t("set.expires", { date: formatDate(inv.expires_at) })}</span>
                 </div>
                 <div className="flex items-center gap-1.5 flex-none">
                   <Button variant="secondary" size="sm" onClick={() => copyInviteLink(inv.code)}>
@@ -307,13 +314,13 @@ export function MembersPanel({
                     ) : (
                       <Link2 size={14} />
                     )}
-                    {copiedCode === inv.code ? "Copied" : "Copy link"}
+                    {copiedCode === inv.code ? t("set.copied") : t("set.copyLink")}
                   </Button>
                   <button
                     onClick={() => onRevoke(inv)}
                     disabled={busy}
                     className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-text-2 hover:bg-red/10 hover:text-red transition-colors"
-                    aria-label="Revoke invite"
+                    aria-label={t("set.revokeAria")}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -332,25 +339,25 @@ export function MembersPanel({
                 value={invRole}
                 onChange={(e) => setInvRole(e.target.value as InvitableRole)}
                 className="w-auto h-9 text-[13px]"
-                aria-label="Invite role"
+                aria-label={t("set.inviteRoleAria")}
               >
-                <option value="staff">Staff</option>
-                <option value="finance">Finance</option>
-                <option value="teacher">Teacher</option>
-                <option value="student">Student</option>
-                <option value="parent">Parent</option>
+                <option value="staff">{t("role.staff")}</option>
+                <option value="finance">{t("role.finance")}</option>
+                <option value="teacher">{t("role.teacher")}</option>
+                <option value="student">{t("role.student")}</option>
+                <option value="parent">{t("role.parent")}</option>
               </Select>
               {invRole === "teacher" && (
                 <Select
                   value={invTeacher}
                   onChange={(e) => setInvTeacher(e.target.value)}
                   className="w-auto h-9 text-[13px]"
-                  aria-label="Teacher record"
+                  aria-label={t("set.teacherRecordSelAria")}
                 >
-                  <option value="">Which teacher record?</option>
-                  {teachers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.full_name}
+                  <option value="">{t("set.whichTeacher")}</option>
+                  {teachers.map((tchr) => (
+                    <option key={tchr.id} value={tchr.id}>
+                      {tchr.full_name}
                     </option>
                   ))}
                 </Select>
@@ -363,10 +370,10 @@ export function MembersPanel({
                     if (id && !invStudents.includes(id)) setInvStudents([...invStudents, id]);
                   }}
                   className="w-auto h-9 text-[13px]"
-                  aria-label="Link a student"
+                  aria-label={t("set.linkStudentSelAria")}
                 >
                   <option value="">
-                    {invRole === "parent" ? "Add a child…" : "Which student?"}
+                    {invRole === "parent" ? t("set.addChild") : t("set.whichStudent")}
                   </option>
                   {students
                     .filter((s) => !invStudents.includes(s.id))
@@ -385,10 +392,10 @@ export function MembersPanel({
                     key={sid}
                     className="inline-flex items-center gap-1 rounded-full bg-teal/10 text-teal px-2.5 py-1 text-[12px] font-medium"
                   >
-                    {students.find((s) => s.id === sid)?.full_name ?? "Unknown"}
+                    {students.find((s) => s.id === sid)?.full_name ?? t("set.unknown")}
                     <button
                       onClick={() => setInvStudents(invStudents.filter((id) => id !== sid))}
-                      aria-label="Remove"
+                      aria-label={t("set.remove")}
                       className="hover:text-red transition-colors"
                     >
                       <X size={12} />
@@ -401,20 +408,20 @@ export function MembersPanel({
               value={invEmail}
               onChange={(e) => setInvEmail(e.target.value)}
               type="email"
-              placeholder="Lock to an email (optional — only that address can use it)"
+              placeholder={t("set.lockEmail")}
             />
             <div className="flex gap-2">
               <Button onClick={onCreateInvite} disabled={creating}>
-                {creating ? "Creating…" : "Create & copy link"}
+                {creating ? t("set.creating") : t("set.createCopyLink")}
               </Button>
               <Button variant="secondary" onClick={() => setInviting(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </div>
         ) : (
           <Button variant="secondary" onClick={() => setInviting(true)}>
-            <UserPlus size={15} /> Invite someone
+            <UserPlus size={15} /> {t("set.inviteSomeone")}
           </Button>
         ))}
     </Card>

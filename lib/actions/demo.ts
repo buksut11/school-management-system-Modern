@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { Gender, PaymentMethod, AttendanceStatus, ExpenseCategory } from "@/lib/types/database";
 
@@ -93,7 +94,7 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
     .select("id", { count: "exact", head: true });
   if (countError) return { error: countError.message };
   if ((studentCount ?? 0) > 0) {
-    return { error: "Demo data can only be loaded while the school has no students yet. Remove existing records first." };
+    return { error: (await getT())("err.demoOnlyEmpty") };
   }
 
   const { data: classes, error: classError } = await supabase
@@ -102,7 +103,7 @@ export async function seedDemoData(): Promise<{ error: string } | { success: tru
     .order("name");
   if (classError) return { error: classError.message };
   if (!classes || classes.length === 0) {
-    return { error: "No classes found — apply the database migrations first." };
+    return { error: (await getT())("err.noClassesMigrate") };
   }
   const classByName = new Map(classes.map((c) => [c.name, c]));
 

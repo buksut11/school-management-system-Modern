@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import { STUDENTS_PAGE_SIZE } from "@/lib/pagination";
 import type { StudentWithClass, StudentsPage } from "@/lib/data/students";
 
@@ -37,6 +38,7 @@ export function StudentsView({
   const [editing, setEditing] = useState<StudentWithClass | null>(null);
   const [exporting, startExport] = useTransition();
   const { show } = useToast();
+  const t = useT();
   const confirm = useConfirm();
 
   function openAdd() {
@@ -51,13 +53,13 @@ export function StudentsView({
 
   async function onDelete(s: StudentWithClass) {
     const ok = await confirm({
-      title: `Remove ${s.full_name}?`,
-      message: "This also removes their attendance history.",
-      confirmLabel: "Remove",
+      title: t("student.removeTitle", { name: s.full_name }),
+      message: t("student.removeMessage"),
+      confirmLabel: t("common.remove"),
     });
     if (!ok) return;
     const result = await deleteStudent(s.id, s.full_name);
-    show(result?.error ?? "Student removed");
+    show(result?.error ?? t("student.removed"));
     if (!result?.error) refresh();
   }
 
@@ -92,16 +94,16 @@ export function StudentsView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, ID, or class…"
+            placeholder={t("student.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv} disabled={exporting}>
-          <Download size={15} /> {exporting ? "Exporting…" : "Export"}
+          <Download size={15} /> {exporting ? t("common.exporting") : t("common.export")}
         </Button>
         <Button onClick={openAdd}>
-          <Plus size={15} /> Add Student
+          <Plus size={15} /> {t("student.add")}
         </Button>
       </div>
 
@@ -112,13 +114,13 @@ export function StudentsView({
       )}
 
       {rows.length === 0 && query.trim() && !pending && (
-        <p className="text-center text-[13px] text-text-2 py-6">No students match “{query.trim()}”.</p>
+        <p className="text-center text-[13px] text-text-2 py-6">{t("student.none", { query: query.trim() })}</p>
       )}
 
       {hasMore && (
         <div className="flex justify-center pt-1">
           <Button variant="secondary" size="md" onClick={loadMore} disabled={pending}>
-            {pending ? "Loading…" : "Load more"}
+            {pending ? t("common.loading") : t("common.loadMore")}
           </Button>
         </div>
       )}

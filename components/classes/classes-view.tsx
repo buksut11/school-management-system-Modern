@@ -14,6 +14,7 @@ import { deleteClass } from "@/lib/actions/classes";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
+import { useT } from "@/lib/i18n/client";
 import type { ClassWithStats } from "@/lib/data/classes";
 
 export function ClassesView({
@@ -32,6 +33,7 @@ export function ClassesView({
   const [, startTransition] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -47,14 +49,14 @@ export function ClassesView({
 
   async function onDelete(c: ClassWithStats) {
     const ok = await confirm({
-      title: `Remove ${c.name}?`,
-      message: "Students assigned to it will become unassigned.",
-      confirmLabel: "Remove",
+      title: t("class.removeTitle", { name: c.name }),
+      message: t("class.removeMessage"),
+      confirmLabel: t("common.remove"),
     });
     if (!ok) return;
     startTransition(async () => {
       await deleteClass(c.id, c.name);
-      show("Class removed");
+      show(t("class.removed"));
     });
   }
 
@@ -77,10 +79,10 @@ export function ClassesView({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Classes" value={classes.length} />
-        <Stat label="Students enrolled" value={totalStudents} />
-        <Stat label="Avg. class size" value={avgSize} />
-        <Stat label="Free seats" value={freeSeats} />
+        <Stat label={t("class.statClasses")} value={classes.length} />
+        <Stat label={t("class.statEnrolled")} value={totalStudents} />
+        <Stat label={t("class.statAvgSize")} value={avgSize} />
+        <Stat label={t("class.statFreeSeats")} value={freeSeats} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
@@ -89,13 +91,13 @@ export function ClassesView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by class or teacher…"
+            placeholder={t("class.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
-          <Download size={15} /> Export
+          <Download size={15} /> {t("common.export")}
         </Button>
         <Button
           onClick={() => {
@@ -103,7 +105,7 @@ export function ClassesView({
             setModalOpen(true);
           }}
         >
-          <Plus size={15} /> Add Class
+          <Plus size={15} /> {t("class.add")}
         </Button>
       </div>
 

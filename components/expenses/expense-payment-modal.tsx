@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { recordExpensePayment } from "@/lib/actions/expenses";
 import { useToast } from "@/components/ui/toast";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import type { ExpenseRow } from "@/lib/data/expenses";
 
 export function ExpensePaymentModal({
@@ -21,13 +22,14 @@ export function ExpensePaymentModal({
   const [state, formAction, pending] = useActionState(recordExpensePayment, undefined);
   const { show } = useToast();
   const amountRef = useRef<HTMLInputElement>(null);
+  const t = useT();
 
   useEffect(() => {
     if (state?.success) {
       show(
         expense?.category === "salaries"
-          ? "Payment recorded — receipt issued"
-          : "Payment recorded"
+          ? t("fee.paymentRecorded")
+          : t("fee.paymentRecordedPlain")
       );
       onClose();
     }
@@ -37,17 +39,17 @@ export function ExpensePaymentModal({
   if (!expense) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title={`Record Payment · ${expense.payee}`}>
+    <Modal open={open} onClose={onClose} title={t("fee.recordTitle", { name: expense.payee })}>
       <form key={expense.id} action={formAction} className="space-y-4">
         <input type="hidden" name="id" value={expense.id} />
 
         <div className="rounded-xl bg-card-2 px-4 py-3 text-[13px] flex justify-between">
-          <span className="text-text-2">Balance due</span>
+          <span className="text-text-2">{t("fee.balanceDue")}</span>
           <span className="font-semibold">{formatMoney(expense.balance)}</span>
         </div>
 
         <div>
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount">{t("field.amount")}</Label>
           <Input
             ref={amountRef}
             id="amount"
@@ -65,7 +67,7 @@ export function ExpensePaymentModal({
             }}
             className="text-[12.5px] text-blue hover:underline mt-1.5"
           >
-            Pay full balance
+            {t("fee.payFull")}
           </button>
         </div>
 
@@ -75,10 +77,10 @@ export function ExpensePaymentModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Recording…" : "Record Payment"}
+            {pending ? t("fee.recording") : t("fee.recordPayment")}
           </Button>
         </div>
       </form>

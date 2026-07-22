@@ -1,11 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-const OPTIONS: { value: "present" | "late" | "absent"; label: string; color: string }[] = [
-  { value: "present", label: "Present", color: "var(--green)" },
-  { value: "late", label: "Late", color: "var(--orange)" },
-  { value: "absent", label: "Absent", color: "var(--red)" },
+const OPTIONS: { value: "present" | "late" | "absent"; label: MessageKey; color: string }[] = [
+  { value: "present", label: "dash.present", color: "var(--green)" },
+  { value: "late", label: "dash.late", color: "var(--orange)" },
+  { value: "absent", label: "dash.absent", color: "var(--red)" },
 ];
 
 export function StatusPills({
@@ -17,6 +19,7 @@ export function StatusPills({
   onChange: (v: "present" | "late" | "absent") => void;
   disabled?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="inline-flex items-center rounded-xl bg-card-2 p-1 gap-1">
       {OPTIONS.map((opt) => {
@@ -35,7 +38,7 @@ export function StatusPills({
               color: active ? "#fff" : "var(--text-2)",
             }}
           >
-            {opt.label}
+            {t(opt.label)}
           </button>
         );
       })}

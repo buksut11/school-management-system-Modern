@@ -1,5 +1,6 @@
 import { Users, GraduationCap, CalendarCheck, Wallet } from "lucide-react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { getT } from "@/lib/i18n/server";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getFamilyChildren } from "@/lib/data/family";
 import { SetupNotice } from "@/components/setup-notice";
@@ -31,20 +32,21 @@ export default async function DashboardPage() {
   }
 
   const data = await getDashboardData();
+  const t = await getT();
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Total Students" value={String(data.studentCount)} icon={Users} tone="blue" />
-        <MetricCard label="Total Teachers" value={String(data.teacherCount)} icon={GraduationCap} tone="purple" />
+        <MetricCard label={t("dash.totalStudents")} value={String(data.studentCount)} icon={Users} tone="blue" />
+        <MetricCard label={t("dash.totalTeachers")} value={String(data.teacherCount)} icon={GraduationCap} tone="purple" />
         <MetricCard
-          label="Attendance Today"
+          label={t("dash.attendanceToday")}
           value={`${data.attendanceRate}%`}
           icon={CalendarCheck}
           tone="green"
         />
         <MetricCard
-          label={`Fees Collected (${data.feesRate}%)`}
+          label={t("dash.feesCollected", { rate: data.feesRate })}
           value={formatMoney(data.feesCollected)}
           icon={Wallet}
           tone="orange"

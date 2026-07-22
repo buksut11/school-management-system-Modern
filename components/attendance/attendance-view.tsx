@@ -13,6 +13,7 @@ import { AttendanceTable } from "./attendance-table";
 import { AttendanceGrid } from "./attendance-grid";
 import { setAttendance } from "@/lib/actions/attendance";
 import { downloadCsv } from "@/lib/csv";
+import { useT } from "@/lib/i18n/client";
 import type { AttendanceRow } from "@/lib/data/attendance";
 
 export function AttendanceView({
@@ -33,6 +34,7 @@ export function AttendanceView({
   const activeView = isCompact ? "grid" : view;
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const t = useT();
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -71,16 +73,16 @@ export function AttendanceView({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3 sm:max-w-md">
-        <Stat label="Present" value={present} color="var(--green)" />
-        <Stat label="Late" value={late} color="var(--orange)" />
-        <Stat label="Absent" value={absent} color="var(--red)" />
+        <Stat label={t("dash.present")} value={present} color="var(--green)" />
+        <Stat label={t("dash.late")} value={late} color="var(--orange)" />
+        <Stat label={t("dash.absent")} value={absent} color="var(--red)" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
         <Segmented
           value={classFilter}
           onChange={setClassFilter}
-          options={[{ value: "all", label: "All" }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
+          options={[{ value: "all", label: t("common.all") }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
         />
         <input
           type="date"
@@ -93,13 +95,13 @@ export function AttendanceView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search students…"
+            placeholder={t("attendance.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
-          <Download size={15} /> Export
+          <Download size={15} /> {t("common.export")}
         </Button>
       </div>
 

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { GraduationCap } from "lucide-react";
+import { getT } from "@/lib/i18n/server";
 import { AmbientBackground } from "@/components/layout/ambient-bg";
 import { LoginForm } from "./login-form";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
@@ -11,6 +12,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; code?: string; notice?: string; mode?: string }>;
 }) {
   const { next, code, notice, mode } = await searchParams;
+  const t = await getT();
 
   // An email confirmation link can land here carrying its one-time code
   // (Supabase redirects to the Site URL root; the middleware bounces
@@ -30,8 +32,8 @@ export default async function LoginPage({
           <div className="w-14 h-14 rounded-2xl bg-blue text-white shadow-md flex items-center justify-center mb-4">
             <GraduationCap size={28} strokeWidth={1.8} />
           </div>
-          <h1 className="text-[17px] font-semibold tracking-tight">School Management System</h1>
-          <p className="text-[13px] text-text-2">Sign in to your account</p>
+          <h1 className="text-[17px] font-semibold tracking-tight">{t("auth.appName")}</h1>
+          <p className="text-[13px] text-text-2">{t("auth.signInSubtitle")}</p>
         </div>
 
         {notice === "link-expired" && (

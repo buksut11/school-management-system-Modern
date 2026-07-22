@@ -14,6 +14,7 @@ import { deleteDepartment } from "@/lib/actions/academics";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
+import { useT } from "@/lib/i18n/client";
 import type { DepartmentRow } from "@/lib/data/academics";
 
 export function DepartmentsView({
@@ -32,6 +33,7 @@ export function DepartmentsView({
   const [, startTransition] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -45,14 +47,14 @@ export function DepartmentsView({
 
   async function onDelete(d: DepartmentRow) {
     const ok = await confirm({
-      title: `Remove ${d.name}?`,
-      message: "Its subjects will become unassigned.",
-      confirmLabel: "Remove",
+      title: t("dept.removeTitle", { name: d.name }),
+      message: t("dept.removeMessage"),
+      confirmLabel: t("common.remove"),
     });
     if (!ok) return;
     startTransition(async () => {
       await deleteDepartment(d.id, d.name);
-      show("Department removed");
+      show(t("dept.removed"));
     });
   }
 
@@ -73,10 +75,10 @@ export function DepartmentsView({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Departments" value={departments.length} />
-        <Stat label="Subjects offered" value={totalSubjects} />
-        <Stat label="Heads assigned" value={headsAssigned} />
-        <Stat label="Periods/wk" value={totalPeriods} />
+        <Stat label={t("dept.statDepartments")} value={departments.length} />
+        <Stat label={t("dept.statSubjectsOffered")} value={totalSubjects} />
+        <Stat label={t("dept.statHeads")} value={headsAssigned} />
+        <Stat label={t("subject.statPeriods")} value={totalPeriods} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
@@ -85,13 +87,13 @@ export function DepartmentsView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search departments…"
+            placeholder={t("dept.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
-          <Download size={15} /> Export
+          <Download size={15} /> {t("common.export")}
         </Button>
         <Button
           onClick={() => {
@@ -99,7 +101,7 @@ export function DepartmentsView({
             setModalOpen(true);
           }}
         >
-          <Plus size={15} /> Add Department
+          <Plus size={15} /> {t("dept.add")}
         </Button>
       </div>
 

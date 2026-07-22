@@ -6,10 +6,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createBackupSnapshot } from "@/lib/actions/backup";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 
 export function BackupPanel() {
   const [busy, setBusy] = useState(false);
   const { show } = useToast();
+  const t = useT();
 
   async function download() {
     setBusy(true);
@@ -22,7 +24,7 @@ export function BackupPanel() {
       a.download = `sh-asharow-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      show("Backup downloaded");
+      show(t("set.backupDownloaded"));
     } finally {
       setBusy(false);
     }
@@ -30,13 +32,10 @@ export function BackupPanel() {
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">System Backup</h3>
-      <p className="text-[12.5px] text-text-2 mb-4">
-        Download a full JSON snapshot of the database — students, teachers, classes, attendance,
-        exams, subjects, departments, fees, and expenses.
-      </p>
+      <h3 className="text-[15px] font-semibold tracking-tight mb-1">{t("set.systemBackup")}</h3>
+      <p className="text-[12.5px] text-text-2 mb-4">{t("set.systemBackupDesc")}</p>
       <Button onClick={download} disabled={busy} variant="secondary">
-        <DownloadCloud size={15} /> {busy ? "Preparing…" : "Download System Backup"}
+        <DownloadCloud size={15} /> {busy ? t("set.preparing") : t("set.downloadBackup")}
       </Button>
     </Card>
   );

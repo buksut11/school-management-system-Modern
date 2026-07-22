@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { recordFeePayment } from "@/lib/actions/fees";
 import { useToast } from "@/components/ui/toast";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import type { FeeRow } from "@/lib/data/fees";
 
 export function FeePaymentModal({
@@ -21,10 +22,11 @@ export function FeePaymentModal({
   const [state, formAction, pending] = useActionState(recordFeePayment, undefined);
   const { show } = useToast();
   const amountRef = useRef<HTMLInputElement>(null);
+  const t = useT();
 
   useEffect(() => {
     if (state?.success) {
-      show("Payment recorded — receipt issued");
+      show(t("fee.paymentRecorded"));
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -33,17 +35,17 @@ export function FeePaymentModal({
   if (!fee) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title={`Record Payment · ${fee.student_name}`}>
+    <Modal open={open} onClose={onClose} title={t("fee.recordTitle", { name: fee.student_name })}>
       <form key={fee.student_id} action={formAction} className="space-y-4">
         <input type="hidden" name="student_id" value={fee.student_id} />
 
         <div className="rounded-xl bg-card-2 px-4 py-3 text-[13px] flex justify-between">
-          <span className="text-text-2">Balance due</span>
+          <span className="text-text-2">{t("fee.balanceDue")}</span>
           <span className="font-semibold">{formatMoney(fee.balance)}</span>
         </div>
 
         <div>
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount">{t("field.amount")}</Label>
           <Input
             ref={amountRef}
             id="amount"
@@ -61,23 +63,23 @@ export function FeePaymentModal({
             }}
             className="text-[12.5px] text-blue hover:underline mt-1.5"
           >
-            Pay full balance
+            {t("fee.payFull")}
           </button>
         </div>
 
         <div>
-          <Label htmlFor="method">Method</Label>
+          <Label htmlFor="method">{t("field.method")}</Label>
           <Select id="method" name="method" defaultValue="cash">
-            <option value="cash">Cash</option>
-            <option value="mobile_money">Mobile Money</option>
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="other">Other</option>
+            <option value="cash">{t("method.cash")}</option>
+            <option value="mobile_money">{t("method.mobile_money")}</option>
+            <option value="bank_transfer">{t("method.bank_transfer")}</option>
+            <option value="other">{t("method.other")}</option>
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="note">Note (optional)</Label>
-          <Input id="note" name="note" placeholder="e.g. Term 1 installment" />
+          <Label htmlFor="note">{t("field.noteOptional")}</Label>
+          <Input id="note" name="note" placeholder={t("fee.notePlaceholder")} />
         </div>
 
         {state?.error && (
@@ -86,10 +88,10 @@ export function FeePaymentModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Recording…" : "Record Payment"}
+            {pending ? t("fee.recording") : t("fee.recordPayment")}
           </Button>
         </div>
       </form>

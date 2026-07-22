@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 import { loadPromotionPlan, promoteStudents } from "@/lib/actions/promotion";
+import { useT } from "@/lib/i18n/client";
 import type { PromotionPlan } from "@/lib/data/promotion";
 
 export function PromotionPanel() {
@@ -17,6 +18,7 @@ export function PromotionPanel() {
   const [loading, startLoad] = useTransition();
   const [saving, startSave] = useTransition();
   const { show } = useToast();
+  const t = useT();
 
   function openModal() {
     setHeld(new Set());
@@ -53,44 +55,32 @@ export function PromotionPanel() {
         show(result.error);
         return;
       }
-      show(`Promotion complete · ${result.promoted} advanced, ${result.graduated} graduated`);
+      show(t("set.promoteComplete", { promoted: result.promoted ?? 0, graduated: result.graduated ?? 0 }));
       setOpen(false);
     });
   }
 
   return (
     <Card className="p-5">
-      <h3 className="text-[15px] font-semibold tracking-tight mb-1">Promotion</h3>
-      <p className="text-[12.5px] text-text-2 mb-4">
-        At the end of the school year, move every class up to the next one in a single step —
-        Form&nbsp;1 to Form&nbsp;2, and so on — with final-year students graduating. Set each
-        class&apos;s <em>Promotes to</em> on the Classes page first, and run this{" "}
-        <strong>after</strong> switching to the new academic year.
-      </p>
+      <h3 className="text-[15px] font-semibold tracking-tight mb-1">{t("set.promotion")}</h3>
+      <p className="text-[12.5px] text-text-2 mb-4">{t("set.promotionDesc")}</p>
 
       <Button variant="secondary" onClick={openModal}>
-        <GraduationCap size={15} /> Review &amp; promote
+        <GraduationCap size={15} /> {t("set.reviewPromote")}
       </Button>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Promote students">
+      <Modal open={open} onClose={() => setOpen(false)} title={t("set.promoteStudents")}>
         {loading || !plan ? (
-          <p className="text-[13px] text-text-2 py-6 text-center">Loading…</p>
+          <p className="text-[13px] text-text-2 py-6 text-center">{t("set.loading")}</p>
         ) : !plan.currentYear ? (
-          <p className="text-[13px] text-text-2 py-6 text-center">
-            Add an academic year in Settings before promoting students.
-          </p>
+          <p className="text-[13px] text-text-2 py-6 text-center">{t("set.promoteNoYear")}</p>
         ) : classesWithStudents.length === 0 ? (
-          <p className="text-[13px] text-text-2 py-6 text-center">
-            No active students are assigned to a class yet.
-          </p>
+          <p className="text-[13px] text-text-2 py-6 text-center">{t("set.promoteNoStudents")}</p>
         ) : (
           <div className="space-y-4">
             <div className="flex items-start gap-2 rounded-xl bg-orange/10 px-3.5 py-3 text-[12.5px]">
               <AlertTriangle size={16} className="text-orange flex-none mt-0.5" />
-              <span>
-                Advancing students for <strong>{plan.currentYear}</strong>. Everyone stays checked
-                by default — uncheck anyone repeating the year. This can&apos;t be undone in bulk.
-              </span>
+              <span>{t("set.advancingFor", { year: plan.currentYear })}</span>
             </div>
 
             <div className="max-h-[46vh] overflow-y-auto space-y-4 pr-1">
@@ -102,7 +92,7 @@ export function PromotionPanel() {
                     {c.next_class_name ? (
                       <span>{c.next_class_name}</span>
                     ) : (
-                      <Badge tone="purple">Graduate</Badge>
+                      <Badge tone="purple">{t("set.graduate")}</Badge>
                     )}
                   </div>
                   <div className="space-y-1">
@@ -122,7 +112,7 @@ export function PromotionPanel() {
                           <span className={promoting ? "" : "text-text-2 line-through"}>
                             {s.full_name}
                           </span>
-                          {!promoting && <span className="text-[11.5px] text-text-2">holds</span>}
+                          {!promoting && <span className="text-[11.5px] text-text-2">{t("set.holds")}</span>}
                         </label>
                       );
                     })}
@@ -133,14 +123,14 @@ export function PromotionPanel() {
 
             <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
               <p className="text-[12.5px] text-text-2">
-                {willAdvance} advancing · {willGraduate} graduating · {held.size} held
+                {t("set.promoteSummary", { advance: willAdvance, graduate: willGraduate, held: held.size })}
               </p>
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => setOpen(false)}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button onClick={run} disabled={saving || willAdvance + willGraduate === 0}>
-                  {saving ? "Promoting…" : "Promote students"}
+                  {saving ? t("set.promoting") : t("set.promoteStudents")}
                 </Button>
               </div>
             </div>

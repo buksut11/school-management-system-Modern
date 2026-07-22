@@ -6,6 +6,7 @@ import { Input, Label, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { saveReceipt } from "@/lib/actions/invoices";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 import { EMPTY_PARTY, PartyFields, type PartyState, type TeacherOption } from "./party-fields";
 import type { StudentOption } from "@/lib/data/invoices";
 
@@ -26,11 +27,12 @@ export function ReceiptModal({
 }) {
   const [state, formAction, pending] = useActionState(saveReceipt, undefined);
   const { show } = useToast();
+  const t = useT();
   const [party, setParty] = useState<PartyState>(EMPTY_PARTY);
 
   useEffect(() => {
     if (state?.success) {
-      show("Receipt created");
+      show(t("receipt.created"));
       onSaved?.();
       onClose();
     }
@@ -38,17 +40,17 @@ export function ReceiptModal({
   }, [state]);
 
   return (
-    <Modal open={open} onClose={onClose} title="New Receipt">
+    <Modal open={open} onClose={onClose} title={t("receipt.new")}>
       <form action={formAction} className="space-y-4">
         <PartyFields party={party} onChange={setParty} students={students} teachers={teachers} />
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="amount">Amount ($)</Label>
+            <Label htmlFor="amount">{t("field.amountDollar")}</Label>
             <Input id="amount" name="amount" type="number" min={0.01} step="0.01" required />
           </div>
           <div>
-            <Label htmlFor="received_date">Date</Label>
+            <Label htmlFor="received_date">{t("field.date")}</Label>
             <Input
               id="received_date"
               name="received_date"
@@ -59,22 +61,22 @@ export function ReceiptModal({
         </div>
 
         <div>
-          <Label htmlFor="method">Method</Label>
+          <Label htmlFor="method">{t("field.method")}</Label>
           <Select id="method" name="method" defaultValue="cash">
-            <option value="cash">Cash</option>
-            <option value="mobile_money">Mobile Money</option>
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="other">Other</option>
+            <option value="cash">{t("method.cash")}</option>
+            <option value="mobile_money">{t("method.mobile_money")}</option>
+            <option value="bank_transfer">{t("method.bank_transfer")}</option>
+            <option value="other">{t("method.other")}</option>
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="note">Description (optional)</Label>
+          <Label htmlFor="note">{t("field.descOptional")}</Label>
           <Input
             id="note"
             name="note"
             placeholder={
-              party.type === "student" ? "e.g. Term 1 fees installment" : "e.g. June salary"
+              party.type === "student" ? t("receipt.notePlaceholderStudent") : t("receipt.notePlaceholderStaff")
             }
           />
         </div>
@@ -85,10 +87,10 @@ export function ReceiptModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Create Receipt"}
+            {pending ? t("common.saving") : t("receipt.create")}
           </Button>
         </div>
       </form>

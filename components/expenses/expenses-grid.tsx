@@ -4,6 +4,8 @@ import { Pencil, Trash2, CircleDollarSign } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, formatDate } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { ExpenseRow } from "@/lib/data/expenses";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
@@ -19,8 +21,9 @@ export function ExpensesGrid({
   onDelete: (e: ExpenseRow) => void;
   onPay: (e: ExpenseRow) => void;
 }) {
+  const t = useT();
   if (expenses.length === 0) {
-    return <Card className="py-12 text-center text-[13px] text-text-2">No expenses found.</Card>;
+    return <Card className="py-12 text-center text-[13px] text-text-2">{t("expense.notFound")}</Card>;
   }
 
   return (
@@ -32,19 +35,19 @@ export function ExpensesGrid({
               <div className="text-[13.5px] font-medium truncate">{e.payee}</div>
               <div className="text-[11.5px] text-text-2">{formatDate(e.date)}</div>
             </div>
-            <Badge tone={STATUS_TONE[e.status]}>{e.status[0].toUpperCase() + e.status.slice(1)}</Badge>
+            <Badge tone={STATUS_TONE[e.status]}>{t(`feeStatus.${e.status}` as MessageKey)}</Badge>
           </div>
           <div className="space-y-1.5 text-[12.5px] text-text-2 mb-3">
             <div className="flex justify-between">
-              <span>Category</span>
-              <span className="text-text font-medium">{e.category[0].toUpperCase() + e.category.slice(1)}</span>
+              <span>{t("col.category")}</span>
+              <span className="text-text font-medium">{t(`expenseCat.${e.category}` as MessageKey)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Amount</span>
+              <span>{t("field.amount")}</span>
               <span className="text-text font-medium">{formatMoney(e.amount)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Balance</span>
+              <span>{t("col.balance")}</span>
               <span className="text-text font-medium">{formatMoney(e.balance)}</span>
             </div>
           </div>
@@ -54,20 +57,20 @@ export function ExpensesGrid({
                 onClick={() => onPay(e)}
                 className="flex-1 h-8 rounded-lg bg-blue-soft hover:bg-blue/20 text-blue text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-colors"
               >
-                <CircleDollarSign size={13} /> Pay
+                <CircleDollarSign size={13} /> {t("expense.pay")}
               </button>
             )}
             <button
               onClick={() => onEdit(e)}
               className="flex-1 h-8 rounded-lg bg-card-2 hover:bg-hover text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-colors"
             >
-              <Pencil size={13} /> Edit
+              <Pencil size={13} /> {t("common.edit")}
             </button>
             <button
               onClick={() => onDelete(e)}
               className="flex-1 h-8 rounded-lg bg-red/10 hover:bg-red/20 text-red text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-colors"
             >
-              <Trash2 size={13} /> Delete
+              <Trash2 size={13} /> {t("common.delete")}
             </button>
           </div>
         </Card>

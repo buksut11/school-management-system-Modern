@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -14,7 +15,7 @@ function str(formData: FormData, key: string) {
 export async function saveClass(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const name = str(formData, "name");
-  if (!name) return { error: "Class name is required." };
+  if (!name) return { error: (await getT())("err.classNameRequired") };
 
   const supabase = await createClient();
   const teacherId = str(formData, "teacher_id");

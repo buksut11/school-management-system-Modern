@@ -17,6 +17,8 @@ import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { ExpenseRow } from "@/lib/data/expenses";
 
 const CATEGORIES = ["salaries", "rent", "utilities", "supplies", "maintenance", "transport"] as const;
@@ -34,6 +36,7 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
   const [, startTransition] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   const filtered = useMemo(() => {
     return expenses.filter((e) => {
@@ -50,11 +53,11 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
   const pending = expenses.filter((e) => e.status !== "paid").length;
 
   async function onDelete(e: ExpenseRow) {
-    const ok = await confirm({ title: `Remove the ${e.payee} expense?`, confirmLabel: "Remove" });
+    const ok = await confirm({ title: t("expense.removeTitle", { name: e.payee }), confirmLabel: t("common.remove") });
     if (!ok) return;
     startTransition(async () => {
       await deleteExpense(e.id, e.payee);
-      show("Expense removed");
+      show(t("expense.removed"));
     });
   }
 
@@ -76,10 +79,10 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Total expenses" value={formatMoney(total)} />
-        <Stat label="Paid out" value={formatMoney(paidOut)} color="var(--green)" />
-        <Stat label="Outstanding" value={formatMoney(outstanding)} color="var(--red)" />
-        <Stat label="Bills pending" value={String(pending)} />
+        <Stat label={t("expense.statTotal")} value={formatMoney(total)} />
+        <Stat label={t("expense.statPaidOut")} value={formatMoney(paidOut)} color="var(--green)" />
+        <Stat label={t("fees.statOutstanding")} value={formatMoney(outstanding)} color="var(--red)" />
+        <Stat label={t("expense.statPending")} value={String(pending)} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
@@ -87,18 +90,18 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
           value={category}
           onChange={setCategory}
           options={[
-            { value: "all", label: "All" },
-            ...CATEGORIES.map((c) => ({ value: c, label: c[0].toUpperCase() + c.slice(1) })),
+            { value: "all", label: t("common.all") },
+            ...CATEGORIES.map((c) => ({ value: c, label: t(`expenseCat.${c}` as MessageKey) })),
           ]}
         />
         <Segmented
           value={status}
           onChange={setStatus}
           options={[
-            { value: "all", label: "All" },
-            { value: "paid", label: "Paid" },
-            { value: "partial", label: "Partial" },
-            { value: "unpaid", label: "Unpaid" },
+            { value: "all", label: t("common.all") },
+            { value: "paid", label: t("feeStatus.paid") },
+            { value: "partial", label: t("feeStatus.partial") },
+            { value: "unpaid", label: t("feeStatus.unpaid") },
           ]}
         />
       </div>
@@ -108,13 +111,13 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search payees…"
+            placeholder={t("expense.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
-          <Download size={15} /> Export
+          <Download size={15} /> {t("common.export")}
         </Button>
         <Button
           onClick={() => {
@@ -122,7 +125,7 @@ export function ExpensesView({ expenses }: { expenses: ExpenseRow[] }) {
             setModalOpen(true);
           }}
         >
-          <Plus size={15} /> Add Expense
+          <Plus size={15} /> {t("expense.add")}
         </Button>
       </div>
 
