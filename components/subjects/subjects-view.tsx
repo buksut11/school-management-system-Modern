@@ -15,6 +15,7 @@ import { deleteSubject } from "@/lib/actions/academics";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
+import { useT } from "@/lib/i18n/client";
 import type { SubjectRow } from "@/lib/data/academics";
 
 export function SubjectsView({
@@ -36,6 +37,7 @@ export function SubjectsView({
   const [, startTransition] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -50,11 +52,11 @@ export function SubjectsView({
   const totalPeriods = subjects.reduce((sum, s) => sum + s.periods_per_week, 0);
 
   async function onDelete(s: SubjectRow) {
-    const ok = await confirm({ title: `Remove ${s.name}?`, confirmLabel: "Remove" });
+    const ok = await confirm({ title: t("subject.removeTitle", { name: s.name }), confirmLabel: t("common.remove") });
     if (!ok) return;
     startTransition(async () => {
       await deleteSubject(s.id, s.name);
-      show("Subject removed");
+      show(t("subject.removed"));
     });
   }
 
@@ -75,30 +77,30 @@ export function SubjectsView({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Subjects" value={subjects.length} />
-        <Stat label="Departments" value={departments.length} />
-        <Stat label="Core subjects" value={coreCount} />
-        <Stat label="Periods/wk" value={totalPeriods} />
+        <Stat label={t("subject.statSubjects")} value={subjects.length} />
+        <Stat label={t("subject.statDepartments")} value={departments.length} />
+        <Stat label={t("subject.statCore")} value={coreCount} />
+        <Stat label={t("subject.statPeriods")} value={totalPeriods} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
         <Segmented
           value={deptFilter}
           onChange={setDeptFilter}
-          options={[{ value: "all", label: "All" }, ...departments.map((d) => ({ value: d.id, label: d.name }))]}
+          options={[{ value: "all", label: t("common.all") }, ...departments.map((d) => ({ value: d.id, label: d.name }))]}
         />
         <div className="relative flex-1 min-w-[180px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search subjects or teachers…"
+            placeholder={t("subject.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         {!isCompact && <ViewToggle view={view} onChange={setView} />}
         <Button variant="secondary" size="md" onClick={exportCsv}>
-          <Download size={15} /> Export
+          <Download size={15} /> {t("common.export")}
         </Button>
         <Button
           onClick={() => {
@@ -106,7 +108,7 @@ export function SubjectsView({
             setModalOpen(true);
           }}
         >
-          <Plus size={15} /> Add Subject
+          <Plus size={15} /> {t("subject.add")}
         </Button>
       </div>
 

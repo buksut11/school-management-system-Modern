@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
 import { saveSubject } from "@/lib/actions/academics";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 import type { SubjectRow } from "@/lib/data/academics";
 
 export function SubjectModal({
@@ -24,32 +25,33 @@ export function SubjectModal({
 }) {
   const [state, formAction, pending] = useActionState(saveSubject, undefined);
   const { show } = useToast();
+  const t = useT();
   const [type, setType] = useState(subject?.type ?? "core");
 
   useEffect(() => {
     if (state?.success) {
-      show(subject ? "Subject updated" : "Subject created");
+      show(subject ? t("subject.updated") : t("subject.created"));
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   return (
-    <Modal open={open} onClose={onClose} title={subject ? "Edit Subject" : "Add Subject"}>
+    <Modal open={open} onClose={onClose} title={subject ? t("subject.edit") : t("subject.add")}>
       <form action={formAction} className="space-y-4">
         {subject && <input type="hidden" name="id" value={subject.id} />}
         <input type="hidden" name="type" value={type} />
 
         <div>
-          <Label htmlFor="name">Subject name</Label>
+          <Label htmlFor="name">{t("subject.name")}</Label>
           <Input id="name" name="name" defaultValue={subject?.name} placeholder="Biology" required />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="department_id">Department</Label>
+            <Label htmlFor="department_id">{t("field.department")}</Label>
             <Select id="department_id" name="department_id" defaultValue={subject?.department_id ?? ""}>
-              <option value="">— Select —</option>
+              <option value="">{t("select.choose")}</option>
               {departments.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -58,12 +60,12 @@ export function SubjectModal({
             </Select>
           </div>
           <div>
-            <Label htmlFor="teacher_id">Teacher</Label>
+            <Label htmlFor="teacher_id">{t("field.teacher")}</Label>
             <Select id="teacher_id" name="teacher_id" defaultValue={subject?.teacher_id ?? ""}>
-              <option value="">— Unassigned —</option>
-              {teachers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.full_name}
+              <option value="">{t("select.unassigned")}</option>
+              {teachers.map((tr) => (
+                <option key={tr.id} value={tr.id}>
+                  {tr.full_name}
                 </option>
               ))}
             </Select>
@@ -72,18 +74,18 @@ export function SubjectModal({
 
         <div className="grid grid-cols-2 gap-3 items-end">
           <div>
-            <Label>Type</Label>
+            <Label>{t("field.type")}</Label>
             <Segmented
               value={type}
               onChange={setType}
               options={[
-                { value: "core", label: "Core" },
-                { value: "elective", label: "Elective" },
+                { value: "core", label: t("type.core") },
+                { value: "elective", label: t("type.elective") },
               ]}
             />
           </div>
           <div>
-            <Label htmlFor="periods_per_week">Periods/week</Label>
+            <Label htmlFor="periods_per_week">{t("field.periodsPerWeek")}</Label>
             <Input
               id="periods_per_week"
               name="periods_per_week"
@@ -95,7 +97,7 @@ export function SubjectModal({
         </div>
 
         <div>
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t("field.description")}</Label>
           <Input id="description" name="description" defaultValue={subject?.description ?? ""} />
         </div>
 
@@ -105,10 +107,10 @@ export function SubjectModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Save"}
+            {pending ? t("common.saving") : t("common.save")}
           </Button>
         </div>
       </form>

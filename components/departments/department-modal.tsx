@@ -6,6 +6,7 @@ import { Input, Label, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { saveDepartment } from "@/lib/actions/academics";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n/client";
 import type { DepartmentRow } from "@/lib/data/academics";
 
 export function DepartmentModal({
@@ -21,32 +22,33 @@ export function DepartmentModal({
 }) {
   const [state, formAction, pending] = useActionState(saveDepartment, undefined);
   const { show } = useToast();
+  const t = useT();
 
   useEffect(() => {
     if (state?.success) {
-      show(department ? "Department updated" : "Department created");
+      show(department ? t("dept.updated") : t("dept.created"));
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   return (
-    <Modal open={open} onClose={onClose} title={department ? "Edit Department" : "Add Department"}>
+    <Modal open={open} onClose={onClose} title={department ? t("dept.edit") : t("dept.add")}>
       <form action={formAction} className="space-y-4">
         {department && <input type="hidden" name="id" value={department.id} />}
 
         <div>
-          <Label htmlFor="name">Department name</Label>
+          <Label htmlFor="name">{t("dept.name")}</Label>
           <Input id="name" name="name" defaultValue={department?.name} placeholder="Sciences" required />
         </div>
 
         <div>
-          <Label htmlFor="head_teacher_id">Head of department</Label>
+          <Label htmlFor="head_teacher_id">{t("dept.head")}</Label>
           <Select id="head_teacher_id" name="head_teacher_id" defaultValue={department?.head_teacher_id ?? ""}>
-            <option value="">— Unassigned —</option>
-            {teachers.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.full_name}
+            <option value="">{t("select.unassigned")}</option>
+            {teachers.map((tr) => (
+              <option key={tr.id} value={tr.id}>
+                {tr.full_name}
               </option>
             ))}
           </Select>
@@ -58,10 +60,10 @@ export function DepartmentModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={pending}>
-            {pending ? "Saving…" : "Save"}
+            {pending ? t("common.saving") : t("common.save")}
           </Button>
         </div>
       </form>
