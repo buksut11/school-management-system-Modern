@@ -9,6 +9,7 @@ import {
   listTeacherOptions,
 } from "@/lib/data/members";
 import { getIsPlatformAdmin, listPlatformSchools } from "@/lib/data/platform";
+import { getMfaState } from "@/lib/actions/mfa";
 import { SetupNotice } from "@/components/setup-notice";
 import { SettingsView } from "@/components/settings/settings-view";
 
@@ -22,17 +23,27 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [counts, years, school, members, invites, isPlatformAdmin, studentOptions, teacherOptions] =
-    await Promise.all([
-      getTableCounts(),
-      listAcademicYears(),
-      getSchool(),
-      listMembers(),
-      listOpenInvites(),
-      getIsPlatformAdmin(),
-      listStudentOptions(),
-      listTeacherOptions(),
-    ]);
+  const [
+    counts,
+    years,
+    school,
+    members,
+    invites,
+    isPlatformAdmin,
+    studentOptions,
+    teacherOptions,
+    { enabled: mfaEnabled },
+  ] = await Promise.all([
+    getTableCounts(),
+    listAcademicYears(),
+    getSchool(),
+    listMembers(),
+    listOpenInvites(),
+    getIsPlatformAdmin(),
+    listStudentOptions(),
+    listTeacherOptions(),
+    getMfaState(),
+  ]);
   const platformSchools = isPlatformAdmin ? await listPlatformSchools() : null;
 
   const currentUserId = user?.id ?? "";
@@ -50,6 +61,7 @@ export default async function SettingsPage() {
       platformSchools={platformSchools}
       studentOptions={studentOptions}
       teacherOptions={teacherOptions}
+      mfaEnabled={mfaEnabled}
     />
   );
 }

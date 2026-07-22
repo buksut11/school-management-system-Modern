@@ -6,7 +6,7 @@ import { createClient as createBareClient } from "@supabase/supabase-js";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/utils";
 
-export type LoginState = { error?: string } | undefined;
+export type LoginState = { error?: string; mfaRequired?: boolean; next?: string } | undefined;
 
 export async function login(
   _prevState: LoginState,
@@ -32,6 +32,13 @@ export async function login(
 
   if (error) {
     return { error: error.message };
+  }
+
+  // If this account has two-factor enabled, the password only gets them to
+  // AAL1 — hand off to the code step instead of completing the sign-in.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel === "aal1" && aal.nextLevel === "aal2") {
+    return { mfaRequired: true, next: safeNext(next) };
   }
 
   redirect(safeNext(next));

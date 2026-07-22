@@ -5,6 +5,7 @@ import { getSchool } from "@/lib/data/school";
 import { AppShell } from "@/components/layout/app-shell";
 import { SchoolOnboarding } from "@/components/onboarding/school-onboarding";
 import { PendingApproval } from "@/components/onboarding/pending-approval";
+import { MfaChallenge } from "@/components/onboarding/mfa-challenge";
 import type { Role } from "@/lib/types/database";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +29,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     } = await supabase.auth.getUser();
 
     if (!user) redirect("/login");
+
+    // Two-factor gate: if this account has an active authenticator but the
+    // session is still password-only (AAL1), require the code before the
+    // app renders — catches direct navigation, not just the login form.
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel === "aal1" && aal.nextLevel === "aal2") {
+      return <MfaChallenge />;
+    }
 
     const { data: profile } = await supabase
       .from("profiles")
