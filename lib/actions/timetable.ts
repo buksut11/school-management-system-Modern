@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -13,8 +14,9 @@ export async function saveLesson(input: {
   subjectId: string;
   teacherId: string | null;
 }): Promise<FormState> {
-  if (!input.classId || !input.slotId) return { error: "Missing class or period." };
-  if (!input.subjectId) return { error: "Pick a subject for this lesson." };
+  const t = await getT();
+  if (!input.classId || !input.slotId) return { error: t("err.missingClassPeriod") };
+  if (!input.subjectId) return { error: t("err.pickSubjectLesson") };
 
   const supabase = await createClient();
   // Upserts the grid cell in the database (migration 0039); a teacher

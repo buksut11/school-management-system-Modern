@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import {
   listInvoices,
@@ -51,9 +52,9 @@ type ParsedParty = {
   parent_phone: string | null;
 };
 
-function parseParty(formData: FormData): { error: string } | ParsedParty {
+async function parseParty(formData: FormData): Promise<{ error: string } | ParsedParty> {
   const partyType = str(formData, "party_type") as PartyType | null;
-  if (!partyType || !PARTY_TYPES.includes(partyType)) return { error: "Pick who this is for." };
+  if (!partyType || !PARTY_TYPES.includes(partyType)) return { error: (await getT())("err.pickWhoFor") };
   const partyName = str(formData, "party_name");
   if (!partyName) {
     return {
@@ -97,12 +98,12 @@ function parseItems(raw: string | null): InvoiceItem[] | null {
 
 export async function saveInvoice(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
-  const party = parseParty(formData);
+  const party = await parseParty(formData);
   if ("error" in party) return party;
 
   const items = parseItems(str(formData, "items"));
   if (!items || items.length === 0) {
-    return { error: "Add at least one line item with a description and a valid amount." };
+    return { error: (await getT())("err.addLineItem") };
   }
   const total = Math.round(items.reduce((sum, it) => sum + it.qty * it.unit_price, 0) * 100) / 100;
 
@@ -142,8 +143,9 @@ export async function deleteInvoice(id: string, partyName: string) {
 export async function recordInvoicePayment(_prev: FormState, formData: FormData): Promise<FormState> {
   const invoiceId = str(formData, "invoice_id");
   const amount = Number(str(formData, "amount") ?? 0);
-  if (!invoiceId) return { error: "Missing invoice." };
-  if (!(amount > 0)) return { error: "Enter an amount greater than zero." };
+  const t = await getT();
+  if (!invoiceId) return { error: t("err.missingInvoice") };
+  if (!(amount > 0)) return { error: t("err.amountPositive") };
 
   const supabase = await createClient();
   // Payment + snapshot receipt happen atomically in the database
@@ -168,11 +170,11 @@ export async function recordInvoicePayment(_prev: FormState, formData: FormData)
 }
 
 export async function saveReceipt(_prev: FormState, formData: FormData): Promise<FormState> {
-  const party = parseParty(formData);
+  const party = await parseParty(formData);
   if ("error" in party) return party;
 
   const amount = Number(str(formData, "amount") ?? 0);
-  if (!(amount > 0)) return { error: "Enter an amount greater than zero." };
+  if (!(amount > 0)) return { error: (await getT())("err.amountPositive") };
 
   const supabase = await createClient();
   const receivedDate = str(formData, "received_date");

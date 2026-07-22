@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -15,8 +16,9 @@ export async function saveHomework(_prev: FormState, formData: FormData): Promis
   const id = str(formData, "id");
   const classId = str(formData, "class_id");
   const title = str(formData, "title");
-  if (!classId) return { error: "Choose a class." };
-  if (!title) return { error: "A title is required." };
+  const t = await getT();
+  if (!classId) return { error: t("err.chooseClass") };
+  if (!title) return { error: t("err.titleRequired") };
 
   const supabase = await createClient();
   const record = {

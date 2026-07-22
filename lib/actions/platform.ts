@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -12,7 +13,7 @@ import type { FormState } from "@/lib/actions/students";
 export async function platformCreateSchool(_prev: FormState, formData: FormData): Promise<FormState> {
   const name = formData.get("name");
   const trimmed = typeof name === "string" ? name.trim() : "";
-  if (!trimmed) return { error: "Enter the school's name." };
+  if (!trimmed) return { error: (await getT())("err.enterSchoolName") };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("create_school", { p_name: trimmed });

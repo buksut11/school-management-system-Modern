@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import { normalizePhotoPath } from "@/lib/utils";
 import { removeReplacedPhoto } from "@/lib/photo-cleanup";
@@ -28,7 +29,7 @@ function str(formData: FormData, key: string) {
 export async function saveStudent(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const fullName = str(formData, "full_name");
-  if (!fullName) return { error: "Student name is required." };
+  if (!fullName) return { error: (await getT())("err.studentNameRequired") };
 
   const supabase = await createClient();
   const record = {
@@ -80,7 +81,7 @@ export async function deleteStudent(id: string, fullName: string): Promise<FormS
     // can't be hard-deleted — their financial records must survive.
     if (error.code === "23503") {
       return {
-        error: `${fullName} has fee payment history, which must be kept. Set their status to inactive instead.`,
+        error: (await getT())("err.studentHasHistory", { name: fullName }),
       };
     }
     return { error: friendlyError(error) };

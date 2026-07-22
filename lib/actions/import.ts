@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { Gender } from "@/lib/types/database";
 
@@ -22,10 +23,11 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function bulkImportStudents(rows: ImportStudentRow[]) {
   const validRows = rows.filter((r) => r.full_name?.trim());
-  if (validRows.length === 0) return { error: "No valid rows to import (a name is required)." };
+  const t = await getT();
+  if (validRows.length === 0) return { error: t("err.noValidRows") };
   if (validRows.length > MAX_IMPORT_ROWS) {
     return {
-      error: `That file has ${validRows.length} rows — imports are capped at ${MAX_IMPORT_ROWS} at a time. Split the file and try again.`,
+      error: t("err.tooManyRows", { rows: validRows.length, max: MAX_IMPORT_ROWS }),
     };
   }
 

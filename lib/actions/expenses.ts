@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
+import { getT } from "@/lib/i18n/server";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { ExpenseCategory, PaymentMethod } from "@/lib/types/database";
@@ -15,7 +16,7 @@ function str(formData: FormData, key: string) {
 export async function saveExpense(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const payee = str(formData, "payee");
-  if (!payee) return { error: "Payee is required." };
+  if (!payee) return { error: (await getT())("err.payeeRequired") };
 
   const supabase = await createClient();
   const record = {
@@ -47,8 +48,9 @@ export async function deleteExpense(id: string, payee: string) {
 export async function recordExpensePayment(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = str(formData, "id");
   const amount = Number(str(formData, "amount") ?? 0);
-  if (!id) return { error: "Missing expense." };
-  if (!(amount > 0)) return { error: "Enter an amount greater than zero." };
+  const t = await getT();
+  if (!id) return { error: t("err.missingExpense") };
+  if (!(amount > 0)) return { error: t("err.amountPositive") };
 
   const supabase = await createClient();
   // Ledger row, running total and (for salaries) the numbered staff

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getT } from "@/lib/i18n/server";
 import { safeNext } from "@/lib/utils";
 
 // Two-factor authentication (TOTP) — opt-in per user. A user turns it on
@@ -35,7 +36,7 @@ export async function startMfaEnrollment(): Promise<EnrollResult> {
   }
 
   const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp" });
-  if (error || !data) return { error: "Couldn't start two-factor setup. Please try again." };
+  if (error || !data) return { error: (await getT())("err.mfaStartFailed") };
   return { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret };
 }
 
@@ -49,7 +50,7 @@ export async function confirmMfaEnrollment(
   const clean = code.replace(/\D/g, "");
   const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: clean });
   if (error) {
-    return { error: "That code didn't match. Check your authenticator app and try again." };
+    return { error: (await getT())("err.mfaCodeNoMatchLong") };
   }
   return { success: true };
 }
@@ -60,7 +61,7 @@ export async function disableMfa(): Promise<{ error?: string; success?: boolean 
   const { data: factors } = await supabase.auth.mfa.listFactors();
   for (const f of factors?.totp ?? []) {
     const { error } = await supabase.auth.mfa.unenroll({ factorId: f.id });
-    if (error) return { error: "Couldn't turn off two-factor. Please try again." };
+    if (error) return { error: (await getT())("err.mfaTurnOffFailed") };
   }
   return { success: true };
 }
@@ -75,15 +76,16 @@ export async function verifyMfaChallenge(
   formData: FormData
 ): Promise<MfaChallengeState> {
   const code = String(formData.get("code") || "").replace(/\D/g, "");
-  if (!code) return { error: "Enter the 6-digit code." };
+  const t = await getT();
+  if (!code) return { error: t("err.enter6Digit") };
 
   const supabase = await createClient();
   const { data: factors } = await supabase.auth.mfa.listFactors();
   const totp = factors?.totp?.[0];
-  if (!totp) return { error: "No authenticator is set up on this account." };
+  if (!totp) return { error: t("err.noAuthenticator") };
 
   const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: totp.id, code });
-  if (error) return { error: "That code didn't match. Try again." };
+  if (error) return { error: t("err.mfaCodeNoMatch") };
   redirect("/");
 }
 
@@ -95,14 +97,15 @@ export async function verifyLoginMfa(
 ): Promise<MfaChallengeState> {
   const code = String(formData.get("code") || "").replace(/\D/g, "");
   const next = safeNext(String(formData.get("next") || "/"));
-  if (!code) return { error: "Enter the 6-digit code." };
+  const t = await getT();
+  if (!code) return { error: t("err.enter6Digit") };
 
   const supabase = await createClient();
   const { data: factors } = await supabase.auth.mfa.listFactors();
   const totp = factors?.totp?.[0];
-  if (!totp) return { error: "No authenticator is set up on this account." };
+  if (!totp) return { error: t("err.noAuthenticator") };
 
   const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: totp.id, code });
-  if (error) return { error: "That code didn't match. Try again." };
+  if (error) return { error: t("err.mfaCodeNoMatch") };
   redirect(next);
 }
