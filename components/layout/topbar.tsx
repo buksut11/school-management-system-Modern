@@ -17,6 +17,7 @@ const TITLES: Record<string, string> = {
   "/timetable": "Timetable",
   "/attendance": "Attendance",
   "/exams": "Exams & Grades",
+  "/homework": "Homework",
   "/academic-records": "Academic Records",
   "/fees": "Fees",
   "/expenses": "Expenses",

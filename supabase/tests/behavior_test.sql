@@ -445,6 +445,22 @@ call must_equal('invoice_summary counts only open invoices',
 call must_equal('invoice_summary totals what was invoiced',
   $q$ select invoiced::text from public.invoice_summary() $q$, '250.00');
 
+-- ---- 0043: homework board + completions ----
+insert into public.homework (id, school_id, class_id, title)
+values ('aaaa1111-0000-0000-0000-00000000f001', '11111111-1111-1111-1111-111111111111',
+        'aaaa1111-0000-0000-0000-00000000c1a1', 'Read chapter 3');
+call must_fail('homework cannot reference another school''s class',
+  $q$ insert into public.homework (class_id, title)
+      values ('bbbb2222-0000-0000-0000-00000000c1b1', 'cross-tenant') $q$);
+insert into public.homework_completions (homework_id, student_id)
+values ('aaaa1111-0000-0000-0000-00000000f001', 'aaaa1111-0000-0000-0000-0000000005a1');
+call must_equal('a homework completion is recorded',
+  $q$ select count(*)::text from public.homework_completions
+      where homework_id = 'aaaa1111-0000-0000-0000-00000000f001' $q$, '1');
+call must_fail('a completion cannot cross schools',
+  $q$ insert into public.homework_completions (homework_id, student_id)
+      values ('aaaa1111-0000-0000-0000-00000000f001', 'bbbb2222-0000-0000-0000-0000000005b1') $q$);
+
 -- ---- 0031: expense payment ledger ----
 insert into public.expenses (id, payee, category, amount)
 values ('aaaa1111-0000-0000-0000-000000000ea1', 'Teaching payroll', 'salaries', 100);

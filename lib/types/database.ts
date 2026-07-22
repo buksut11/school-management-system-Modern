@@ -349,6 +349,39 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["lessons"]["Row"]>;
         Relationships: [];
       };
+      homework: {
+        Row: {
+          id: string;
+          school_id: string;
+          class_id: string;
+          subject_id: string | null;
+          title: string;
+          details: string | null;
+          due_date: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["homework"]["Row"]> & {
+          class_id: string;
+          title: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["homework"]["Row"]>;
+        Relationships: [];
+      };
+      homework_completions: {
+        Row: {
+          homework_id: string;
+          student_id: string;
+          school_id: string;
+          completed_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["homework_completions"]["Row"]> & {
+          homework_id: string;
+          student_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["homework_completions"]["Row"]>;
+        Relationships: [];
+      };
       fee_installments: {
         Row: {
           id: string;
@@ -756,3 +789,4 @@ export type FeePayment = Database["public"]["Tables"]["fee_payments"]["Row"];
 export type Expense = Database["public"]["Tables"]["expenses"]["Row"];
 export type Invoice = Database["public"]["Tables"]["invoices"]["Row"];
 export type Receipt = Database["public"]["Tables"]["receipts"]["Row"];
+export type Homework = Database["public"]["Tables"]["homework"]["Row"];
