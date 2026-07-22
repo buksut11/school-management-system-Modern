@@ -4,10 +4,36 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
+import {
+  listInvoices,
+  listReceipts,
+  type InvoicesPage,
+  type ReceiptsPage,
+} from "@/lib/data/invoices";
 import type { FormState } from "@/lib/actions/students";
 import type { InvoiceItem, PartyType, PaymentMethod } from "@/lib/types/database";
 
 const PARTY_TYPES: PartyType[] = ["student", "teacher", "staff"];
+
+// Client-callable pagination/search for the two finance lists.
+export async function searchInvoices(opts: {
+  search: string;
+  offset: number;
+  limit?: number;
+  partyType?: string;
+  status?: string;
+}): Promise<InvoicesPage> {
+  return listInvoices(opts);
+}
+
+export async function searchReceipts(opts: {
+  search: string;
+  offset: number;
+  limit?: number;
+  partyType?: string;
+}): Promise<ReceiptsPage> {
+  return listReceipts(opts);
+}
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);

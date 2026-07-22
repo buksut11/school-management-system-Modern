@@ -18,12 +18,14 @@ const EMPTY_ITEM: ItemDraft = { description: "", qty: "1", unit_price: "" };
 export function InvoiceModal({
   open,
   onClose,
+  onSaved,
   invoice,
   students,
   teachers,
 }: {
   open: boolean;
   onClose: () => void;
+  onSaved?: () => void;
   invoice: InvoiceRow | null;
   students: StudentOption[];
   teachers: TeacherOption[];
@@ -58,6 +60,7 @@ export function InvoiceModal({
   useEffect(() => {
     if (state?.success) {
       show(invoice ? "Invoice updated" : "Invoice created");
+      onSaved?.();
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

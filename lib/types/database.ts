@@ -556,8 +556,24 @@ export interface Database {
         };
         Relationships: [];
       };
+      invoice_balances: {
+        Row: Database["public"]["Tables"]["invoices"]["Row"] & {
+          paid: number;
+          balance: number;
+          status: "paid" | "partial" | "unpaid";
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      invoice_summary: {
+        Args: Record<string, never>;
+        Returns: { invoiced: number; paid: number; outstanding: number; open_count: number }[];
+      };
+      receipt_summary: {
+        Args: Record<string, never>;
+        Returns: { count: number; money_in: number; money_out: number }[];
+      };
       create_invite: {
         Args: {
           p_role: Exclude<AssignableRole, "admin">;

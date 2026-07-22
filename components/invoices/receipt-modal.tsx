@@ -14,11 +14,13 @@ import type { StudentOption } from "@/lib/data/invoices";
 export function ReceiptModal({
   open,
   onClose,
+  onSaved,
   students,
   teachers,
 }: {
   open: boolean;
   onClose: () => void;
+  onSaved?: () => void;
   students: StudentOption[];
   teachers: TeacherOption[];
 }) {
@@ -29,6 +31,7 @@ export function ReceiptModal({
   useEffect(() => {
     if (state?.success) {
       show("Receipt created");
+      onSaved?.();
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

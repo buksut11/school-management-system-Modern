@@ -418,6 +418,33 @@ select public.record_invoice_payment('aaaa1111-0000-0000-0000-0000000009a1', 40)
 call must_fail('paying an already-settled invoice is rejected',
   $q$ select public.record_invoice_payment('aaaa1111-0000-0000-0000-0000000009a1', 1) $q$);
 
+-- ---- 0041: invoice_balances view + finance summaries ----
+-- A part-paid and an unpaid invoice alongside the settled 09a1 above.
+insert into public.invoices (id, party_type, party_name, items, total)
+values ('aaaa1111-0000-0000-0000-0000000009b1', 'staff', 'Guard Gary',
+        '[{"description":"April wages","qty":1,"unit_price":100}]'::jsonb, 100);
+select public.record_invoice_payment('aaaa1111-0000-0000-0000-0000000009b1', 30);
+insert into public.invoices (id, party_type, party_name, items, total)
+values ('aaaa1111-0000-0000-0000-0000000009c1', 'staff', 'Cook Kim',
+        '[{"description":"May wages","qty":1,"unit_price":50}]'::jsonb, 50);
+
+call must_equal('invoice_balances marks a fully-paid invoice paid',
+  $q$ select status from public.invoice_balances where id = 'aaaa1111-0000-0000-0000-0000000009a1' $q$,
+  'paid');
+call must_equal('invoice_balances marks a part-paid invoice partial',
+  $q$ select status from public.invoice_balances where id = 'aaaa1111-0000-0000-0000-0000000009b1' $q$,
+  'partial');
+call must_equal('invoice_balances marks an unpaid invoice unpaid',
+  $q$ select status from public.invoice_balances where id = 'aaaa1111-0000-0000-0000-0000000009c1' $q$,
+  'unpaid');
+call must_equal('invoice_balances computes the outstanding balance',
+  $q$ select balance::text from public.invoice_balances where id = 'aaaa1111-0000-0000-0000-0000000009b1' $q$,
+  '70.00');
+call must_equal('invoice_summary counts only open invoices',
+  $q$ select open_count::text from public.invoice_summary() $q$, '2');
+call must_equal('invoice_summary totals what was invoiced',
+  $q$ select invoiced::text from public.invoice_summary() $q$, '250.00');
+
 -- ---- 0031: expense payment ledger ----
 insert into public.expenses (id, payee, category, amount)
 values ('aaaa1111-0000-0000-0000-000000000ea1', 'Teaching payroll', 'salaries', 100);

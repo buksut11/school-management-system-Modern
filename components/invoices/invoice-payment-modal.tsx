@@ -12,10 +12,12 @@ import type { InvoiceRow } from "@/lib/data/invoices";
 export function InvoicePaymentModal({
   open,
   onClose,
+  onSaved,
   invoice,
 }: {
   open: boolean;
   onClose: () => void;
+  onSaved?: () => void;
   invoice: InvoiceRow | null;
 }) {
   const [state, formAction, pending] = useActionState(recordInvoicePayment, undefined);
@@ -25,6 +27,7 @@ export function InvoicePaymentModal({
   useEffect(() => {
     if (state?.success) {
       show("Payment recorded — receipt created");
+      onSaved?.();
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

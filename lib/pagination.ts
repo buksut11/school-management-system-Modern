@@ -3,3 +3,5 @@
 // can read them without pulling next/headers into the client bundle.
 export const STUDENTS_PAGE_SIZE = 24;
 export const TEACHERS_PAGE_SIZE = 24;
+export const INVOICES_PAGE_SIZE = 25;
+export const RECEIPTS_PAGE_SIZE = 25;
