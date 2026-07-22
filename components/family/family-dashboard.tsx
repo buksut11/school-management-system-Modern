@@ -4,37 +4,40 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { formatMoney } from "@/lib/utils";
+import { getT } from "@/lib/i18n/server";
 import type { FamilyChild } from "@/lib/data/family";
 
 const FEE_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
-const FEE_LABEL = { paid: "Fees paid", partial: "Partially paid", unpaid: "Fees due" } as const;
+const FEE_LABEL_KEY = {
+  paid: "family.feesPaid",
+  partial: "family.partiallyPaid",
+  unpaid: "family.feesDue",
+} as const;
 
-export function FamilyDashboard({
+export async function FamilyDashboard({
   children: kids,
   greetingName,
 }: {
   children: FamilyChild[];
   greetingName: string;
 }) {
+  const t = await getT();
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-[19px] font-semibold tracking-tight">
-          Welcome{greetingName ? `, ${greetingName}` : ""}
+          {greetingName ? t("family.welcomeName", { name: greetingName }) : t("family.welcome")}
         </h1>
         <p className="text-[13px] text-text-2">
           {kids.length === 1
-            ? "Here's how things are going at school."
-            : `An overview of your ${kids.length} children at school.`}
+            ? t("family.greeting")
+            : t("family.overview", { count: kids.length })}
         </p>
       </div>
 
       {kids.length === 0 && (
         <Card className="p-6 text-center">
-          <p className="text-[13.5px] text-text-2">
-            Your account isn&apos;t linked to a student record yet — ask the school office to link
-            it in Settings → Members.
-          </p>
+          <p className="text-[13.5px] text-text-2">{t("family.notLinked")}</p>
         </Card>
       )}
 
@@ -47,39 +50,39 @@ export function FamilyDashboard({
                 <div className="text-[15px] font-semibold tracking-tight truncate">
                   {kid.full_name}
                 </div>
-                <div className="text-[12px] text-text-2">{kid.class_name ?? "No class assigned"}</div>
+                <div className="text-[12px] text-text-2">{kid.class_name ?? t("family.noClass")}</div>
               </div>
-              <Badge tone={FEE_TONE[kid.fee_status]}>{FEE_LABEL[kid.fee_status]}</Badge>
+              <Badge tone={FEE_TONE[kid.fee_status]}>{t(FEE_LABEL_KEY[kid.fee_status])}</Badge>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-xl bg-card-2 px-3 py-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  <CalendarCheck size={12} /> 30 days
+                  <CalendarCheck size={12} /> {t("family.days30")}
                 </div>
                 <div className="mt-1 text-[13px] font-medium">
                   <span className="text-green">{kid.present}✓</span>{" "}
-                  <span className="text-orange">{kid.late} late</span>{" "}
-                  <span className="text-red">{kid.absent} abs</span>
+                  <span className="text-orange">{t("family.lateCount", { count: kid.late })}</span>{" "}
+                  <span className="text-red">{t("family.absCount", { count: kid.absent })}</span>
                 </div>
               </div>
               <div className="rounded-xl bg-card-2 px-3 py-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  <ClipboardList size={12} /> {kid.latest_term ?? "Exams"}
+                  <ClipboardList size={12} /> {kid.latest_term ?? t("family.exams")}
                 </div>
                 <div className="mt-1 text-[13px] font-medium">
                   {kid.latest_total !== null ? (
                     <>
-                      {kid.latest_total} · Grade {kid.latest_grade}
+                      {kid.latest_total} · {t("family.gradeLabel", { grade: kid.latest_grade ?? "" })}
                     </>
                   ) : (
-                    <span className="text-text-2">No results yet</span>
+                    <span className="text-text-2">{t("family.noResults")}</span>
                   )}
                 </div>
               </div>
               <div className="rounded-xl bg-card-2 px-3 py-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-                  <Wallet size={12} /> Balance
+                  <Wallet size={12} /> {t("col.balance")}
                 </div>
                 <div className="mt-1 text-[13px] font-medium">
                   {kid.balance > 0 ? (
@@ -93,10 +96,10 @@ export function FamilyDashboard({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <QuickLink href="/attendance" label="Attendance" />
-              <QuickLink href="/exams" label="Exam results" />
-              <QuickLink href="/academic-records" label="Report card" />
-              <QuickLink href="/fees" label="Fees & receipts" />
+              <QuickLink href="/attendance" label={t("family.attendance")} />
+              <QuickLink href="/exams" label={t("family.examResults")} />
+              <QuickLink href="/academic-records" label={t("family.reportCard")} />
+              <QuickLink href="/fees" label={t("family.feesReceipts")} />
             </div>
           </Card>
         ))}

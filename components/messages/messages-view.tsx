@@ -17,10 +17,13 @@ import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate, relativeTime } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { NotificationRow } from "@/lib/data/messages";
 
 const STATUS_TONE = { pending: "orange", sent: "green", failed: "red" } as const;
-const KIND_LABEL = { fee_reminder: "Fee reminder", absence: "Absence", general: "General" } as const;
+const STATUS_KEY = { pending: "msg.statusPending", sent: "msg.statusSent", failed: "msg.statusFailed" } as const;
+const KIND_KEY = { fee_reminder: "msg.kindFeeReminder", absence: "msg.kindAbsence", general: "msg.kindGeneral" } as const;
 
 export function MessagesView({
   notifications,
@@ -34,6 +37,7 @@ export function MessagesView({
   const [sending, startTransition] = useTransition();
   const { show } = useToast();
   const confirm = useConfirm();
+  const t = useT();
 
   const filtered = useMemo(
     () => notifications.filter((n) => statusFilter === "all" || n.status === statusFilter),
@@ -49,9 +53,9 @@ export function MessagesView({
         show(result.error);
         return;
       }
-      const parts = [`${result.sent} sent`];
-      if (result.failed) parts.push(`${result.failed} failed`);
-      if (result.remaining) parts.push(`${result.remaining} remaining — send again`);
+      const parts = [t("msg.nSent", { count: result.sent ?? 0 })];
+      if (result.failed) parts.push(t("msg.nFailed", { count: result.failed }));
+      if (result.remaining) parts.push(t("msg.nRemaining", { count: result.remaining }));
       show(parts.join(" · "));
     });
   }
@@ -59,7 +63,7 @@ export function MessagesView({
   function retryFailed() {
     startTransition(async () => {
       const result = await retryFailedNotifications();
-      show(result.error ?? `${result.retried} message${result.retried === 1 ? "" : "s"} queued again`);
+      show(result.error ?? t("msg.nQueuedAgain", { count: result.retried ?? 0 }));
     });
   }
 
@@ -72,23 +76,23 @@ export function MessagesView({
 
   async function markAllSent() {
     const ok = await confirm({
-      title: `Mark ${pending.length} pending message${pending.length === 1 ? "" : "s"} as sent?`,
-      message: "Do this after delivering them through your SMS portal.",
-      confirmLabel: "Mark sent",
+      title: t("msg.markAllTitle", { count: pending.length }),
+      message: t("msg.markSentHint"),
+      confirmLabel: t("msg.markSent"),
     });
     if (!ok) return;
     startTransition(async () => {
       const result = await markNotificationsSent(pending.map((n) => n.id));
-      show(result.error ?? `${result.marked} message${result.marked === 1 ? "" : "s"} marked as sent`);
+      show(result.error ?? t("msg.nMarked", { count: result.marked ?? 0 }));
     });
   }
 
   async function onDelete(n: NotificationRow) {
-    const ok = await confirm({ title: "Remove this message?", confirmLabel: "Remove" });
+    const ok = await confirm({ title: t("msg.removeTitle"), confirmLabel: t("common.remove") });
     if (!ok) return;
     startTransition(async () => {
       const result = await deleteNotification(n.id);
-      show(result.error ?? "Message removed");
+      show(result.error ?? t("msg.removed"));
     });
   }
 
@@ -96,54 +100,50 @@ export function MessagesView({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2.5">
         <Button onClick={() => setCompose("fees")}>
-          <Wallet size={15} /> Fee reminders
+          <Wallet size={15} /> {t("msg.feeReminders")}
         </Button>
         <Button onClick={() => setCompose("absence")}>
-          <CalendarX size={15} /> Absence alerts
+          <CalendarX size={15} /> {t("msg.absenceAlerts")}
         </Button>
         <div className="flex-1" />
         <Segmented
           value={statusFilter}
           onChange={setStatusFilter}
           options={[
-            { value: "all", label: "All" },
-            { value: "pending", label: `Pending${pending.length ? ` (${pending.length})` : ""}` },
-            { value: "sent", label: "Sent" },
+            { value: "all", label: t("common.all") },
+            { value: "pending", label: `${t("msg.filterPending")}${pending.length ? ` (${pending.length})` : ""}` },
+            { value: "sent", label: t("msg.filterSent") },
           ]}
         />
         {pending.length > 0 && gateway && (
           <Button size="md" onClick={sendNow} disabled={sending}>
-            <Send size={15} /> {sending ? "Sending…" : `Send via ${gateway}`}
+            <Send size={15} /> {sending ? t("msg.sending") : t("msg.sendVia", { gateway })}
           </Button>
         )}
         {pending.length > 0 && (
           <>
             <Button variant="secondary" size="md" onClick={exportPending}>
-              <Download size={15} /> Export pending
+              <Download size={15} /> {t("msg.exportPending")}
             </Button>
             <Button variant="secondary" size="md" onClick={markAllSent}>
-              <CheckCheck size={15} /> Mark sent
+              <CheckCheck size={15} /> {t("msg.markSent")}
             </Button>
           </>
         )}
         {failedCount > 0 && (
           <Button variant="secondary" size="md" onClick={retryFailed} disabled={sending}>
-            <RotateCcw size={15} /> Retry failed ({failedCount})
+            <RotateCcw size={15} /> {t("msg.retryFailed", { count: failedCount })}
           </Button>
         )}
       </div>
 
       <p className="text-[12.5px] text-text-2">
-        {gateway
-          ? `Messages queue here with the parent's number and the final text, then deliver through ${gateway} — press Send, or let the scheduled endpoint deliver them automatically.`
-          : "Messages queue here with the parent's number and the final text. Export the pending list as CSV for any bulk-SMS portal (Hormuud, Somtel, …), send it there, then mark them sent — or configure an SMS gateway (SMS_PROVIDER) to deliver directly."}
+        {gateway ? t("msg.gatewayHint", { gateway }) : t("msg.noGatewayHint")}
       </p>
 
       {filtered.length === 0 ? (
         <Card className="p-8 text-center">
-          <p className="text-[13.5px] text-text-2">
-            No messages yet — queue fee reminders or absence alerts above.
-          </p>
+          <p className="text-[13.5px] text-text-2">{t("msg.emptyList")}</p>
         </Card>
       ) : (
         <div className="rounded-2xl bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card overflow-hidden">
@@ -154,7 +154,7 @@ export function MessagesView({
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[13.5px] font-medium">{n.recipient}</span>
                     <span className="text-[12px] text-text-2">
-                      {n.student_name ?? "—"} · {KIND_LABEL[n.kind]}
+                      {n.student_name ?? "—"} · {t(KIND_KEY[n.kind] as MessageKey)}
                       {n.ref_date ? ` · ${formatDate(n.ref_date)}` : ""}
                     </span>
                   </div>
@@ -164,12 +164,12 @@ export function MessagesView({
                 <div className="flex items-center gap-2 flex-none">
                   <span className="text-[11.5px] text-text-2">{relativeTime(n.created_at)}</span>
                   <Badge tone={STATUS_TONE[n.status]}>
-                    {n.status[0].toUpperCase() + n.status.slice(1)}
+                    {t(STATUS_KEY[n.status] as MessageKey)}
                   </Badge>
                   <button
                     onClick={() => onDelete(n)}
                     className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-red/10 hover:text-red transition-colors"
-                    aria-label="Remove message"
+                    aria-label={t("msg.removeAria")}
                   >
                     <Trash2 size={13} />
                   </button>

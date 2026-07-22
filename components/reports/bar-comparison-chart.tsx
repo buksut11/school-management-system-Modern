@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Table2, ChartLine } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
 
 export type BarDatum = { label: string; value: number; color?: string };
 
@@ -10,7 +11,7 @@ export function BarComparisonChart({
   data,
   color = "var(--chart-1)",
   valueFormatter = (v: number) => String(v),
-  emptyMessage = "No data yet.",
+  emptyMessage,
 }: {
   title: string;
   data: BarDatum[];
@@ -20,6 +21,7 @@ export function BarComparisonChart({
 }) {
   const [showTable, setShowTable] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const t = useT();
   const max = Math.max(1, ...data.map((d) => d.value));
 
   return (
@@ -30,7 +32,7 @@ export function BarComparisonChart({
           <button
             onClick={() => setShowTable((v) => !v)}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-text transition-colors"
-            aria-label={showTable ? "Show chart" : "Show table"}
+            aria-label={showTable ? t("rep.showChart") : t("rep.showTable")}
           >
             {showTable ? <ChartLine size={14} /> : <Table2 size={14} />}
           </button>
@@ -38,7 +40,7 @@ export function BarComparisonChart({
       </div>
 
       {data.length === 0 ? (
-        <p className="text-[13px] text-text-2 py-6 text-center">{emptyMessage}</p>
+        <p className="text-[13px] text-text-2 py-6 text-center">{emptyMessage ?? t("rep.noData")}</p>
       ) : showTable ? (
         <table className="w-full text-[12.5px] border-collapse">
           <tbody className="divide-y divide-line/60">
