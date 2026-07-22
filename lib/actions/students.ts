@@ -5,9 +5,19 @@ import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
 import { normalizePhotoPath } from "@/lib/utils";
 import { removeReplacedPhoto } from "@/lib/photo-cleanup";
+import { listStudents, type StudentsPage } from "@/lib/data/students";
 import type { Gender, PersonStatus } from "@/lib/types/database";
 
 export type FormState = { error?: string; success?: boolean } | undefined;
+
+// Client-callable pagination/search for the students list.
+export async function searchStudents(opts: {
+  search: string;
+  offset: number;
+  limit?: number;
+}): Promise<StudentsPage> {
+  return listStudents(opts);
+}
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);

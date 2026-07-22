@@ -5,8 +5,18 @@ import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
 import { normalizePhotoPath } from "@/lib/utils";
 import { removeReplacedPhoto } from "@/lib/photo-cleanup";
+import { listTeachers, type TeachersPage } from "@/lib/data/teachers";
 import type { FormState } from "@/lib/actions/students";
 import type { Gender, PersonStatus } from "@/lib/types/database";
+
+// Client-callable pagination/search for the teachers list.
+export async function searchTeachers(opts: {
+  search: string;
+  offset: number;
+  limit?: number;
+}): Promise<TeachersPage> {
+  return listTeachers(opts);
+}
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);

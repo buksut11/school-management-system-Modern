@@ -8,7 +8,7 @@ export default async function StudentsPage() {
     return <SetupNotice what="students" />;
   }
 
-  const [students, classes] = await Promise.all([listStudents(), listClassOptions()]);
+  const [firstPage, classes] = await Promise.all([listStudents(), listClassOptions()]);
 
-  return <StudentsView students={students} classes={classes} />;
+  return <StudentsView initial={firstPage} classes={classes} />;
 }

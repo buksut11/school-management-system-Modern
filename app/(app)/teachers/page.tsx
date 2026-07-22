@@ -10,11 +10,11 @@ export default async function TeachersPage() {
     return <SetupNotice what="teachers" />;
   }
 
-  const [teachers, classes, subjects] = await Promise.all([
+  const [firstPage, classes, subjects] = await Promise.all([
     listTeachers(),
     listClassOptions(),
     listGradebookSubjects(),
   ]);
 
-  return <TeachersView teachers={teachers} classes={classes} subjects={subjects} />;
+  return <TeachersView initial={firstPage} classes={classes} subjects={subjects} />;
 }

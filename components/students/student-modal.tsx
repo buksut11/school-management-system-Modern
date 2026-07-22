@@ -31,11 +31,13 @@ function SegmentedField({
 export function StudentModal({
   open,
   onClose,
+  onSaved,
   student,
   classes,
 }: {
   open: boolean;
   onClose: () => void;
+  onSaved?: () => void;
   student: StudentWithClass | null;
   classes: { id: string; name: string; base_fees: number }[];
 }) {
@@ -46,6 +48,7 @@ export function StudentModal({
   useEffect(() => {
     if (state?.success) {
       show(student ? "Student updated" : "Student added");
+      onSaved?.();
       onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
