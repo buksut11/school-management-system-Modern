@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { SubjectType } from "@/lib/types/database";
@@ -23,7 +24,7 @@ export async function saveDepartment(_prev: FormState, formData: FormData): Prom
     ? supabase.from("departments").update(record).eq("id", id)
     : supabase.from("departments").insert(record);
   const { error } = await query;
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "department", `${id ? "Updated" : "New"} department · ${name}`);
   revalidatePath("/", "layout");
@@ -33,7 +34,7 @@ export async function saveDepartment(_prev: FormState, formData: FormData): Prom
 export async function deleteDepartment(id: string, name: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("departments").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
   await logActivity(supabase, "department", `Removed department · ${name}`);
   revalidatePath("/", "layout");
 }
@@ -57,7 +58,7 @@ export async function saveSubject(_prev: FormState, formData: FormData): Promise
     ? supabase.from("subjects").update(record).eq("id", id)
     : supabase.from("subjects").insert(record);
   const { error } = await query;
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "subject", `${id ? "Updated" : "New"} subject · ${name}`);
   revalidatePath("/", "layout");
@@ -67,7 +68,7 @@ export async function saveSubject(_prev: FormState, formData: FormData): Promise
 export async function deleteSubject(id: string, name: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("subjects").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
   await logActivity(supabase, "subject", `Removed subject · ${name}`);
   revalidatePath("/", "layout");
 }

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { ExpenseCategory, PaymentMethod } from "@/lib/types/database";
@@ -28,7 +29,7 @@ export async function saveExpense(_prev: FormState, formData: FormData): Promise
 
   const query = id ? supabase.from("expenses").update(record).eq("id", id) : supabase.from("expenses").insert({ ...record, paid: 0 });
   const { error } = await query;
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "expense", `${id ? "Updated" : "New"} expense · ${payee}`);
   revalidatePath("/", "layout");
@@ -38,7 +39,7 @@ export async function saveExpense(_prev: FormState, formData: FormData): Promise
 export async function deleteExpense(id: string, payee: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("expenses").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
   await logActivity(supabase, "expense", `Removed expense · ${payee}`);
   revalidatePath("/", "layout");
 }
@@ -59,7 +60,7 @@ export async function recordExpensePayment(_prev: FormState, formData: FormData)
     p_expense_id: id,
     p_amount: amount,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "expense", `Paid $${amount} · ${data?.payee ?? "payee"}`);
   revalidatePath("/", "layout");

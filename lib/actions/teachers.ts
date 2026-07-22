@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import { normalizePhotoPath } from "@/lib/utils";
 import { removeReplacedPhoto } from "@/lib/photo-cleanup";
@@ -72,13 +73,13 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
       .eq("id", id)
       .single();
     const { error } = await supabase.from("teachers").update(record).eq("id", id);
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyError(error) };
     await removeReplacedPhoto(supabase, existing?.photo_url, record.photo_url);
     await assignTeacherClass(supabase, id, classId);
     await logActivity(supabase, "teacher", `Updated teacher · ${fullName}`);
   } else {
     const { data: inserted, error } = await supabase.from("teachers").insert(record).select("id").single();
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyError(error) };
     teacherId = inserted.id;
     await assignTeacherClass(supabase, inserted.id, classId);
     await logActivity(supabase, "teacher", `New teacher added · ${fullName}`);
@@ -91,7 +92,7 @@ export async function saveTeacher(_prev: FormState, formData: FormData): Promise
       p_teacher_id: teacherId,
       p_subject_ids: subjectIds,
     });
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyError(error) };
   }
 
   revalidatePath("/", "layout");
@@ -106,7 +107,7 @@ export async function deleteTeacher(id: string, fullName: string) {
     .eq("id", id)
     .single();
   const { error } = await supabase.from("teachers").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
   await removeReplacedPhoto(supabase, existing?.photo_url, null);
   await logActivity(supabase, "teacher", `Removed teacher · ${fullName}`);
   revalidatePath("/", "layout");

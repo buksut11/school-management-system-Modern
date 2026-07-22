@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { PaymentMethod } from "@/lib/types/database";
@@ -37,7 +38,7 @@ export async function setFeeInstallments(
     p_year_id: yearId,
     p_items: cleaned,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(
     supabase,
@@ -67,7 +68,7 @@ export async function setStudentFee(_prev: FormState, formData: FormData): Promi
     p_discount: discount,
     p_discount_reason: str(formData, "discount_reason"),
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(
     supabase,
@@ -98,7 +99,7 @@ export async function recordFeePayment(_prev: FormState, formData: FormData): Pr
     p_method: method,
     p_note: note,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "fee", `Fee payment received · ${data?.student_name ?? "Student"} · $${amount}`);
 

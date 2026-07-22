@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 import type { InvoiceItem, PartyType, PaymentMethod } from "@/lib/types/database";
@@ -93,7 +94,7 @@ export async function saveInvoice(_prev: FormState, formData: FormData): Promise
     ? supabase.from("invoices").update(record).eq("id", id)
     : supabase.from("invoices").insert(record);
   const { error } = await query;
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(
     supabase,
@@ -107,7 +108,7 @@ export async function saveInvoice(_prev: FormState, formData: FormData): Promise
 export async function deleteInvoice(id: string, partyName: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("invoices").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
   await logActivity(supabase, "invoice", `Removed invoice · ${partyName}`);
   revalidatePath("/", "layout");
 }
@@ -129,7 +130,7 @@ export async function recordInvoicePayment(_prev: FormState, formData: FormData)
     p_method: (str(formData, "method") ?? "cash") as PaymentMethod,
     p_note: str(formData, "note"),
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(
     supabase,
@@ -156,7 +157,7 @@ export async function saveReceipt(_prev: FormState, formData: FormData): Promise
     note: str(formData, "note"),
     ...(receivedDate ? { received_at: new Date(`${receivedDate}T12:00:00`).toISOString() } : {}),
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "receipt", `Receipt issued · ${party.party_name} · $${amount}`);
   revalidatePath("/", "layout");
@@ -166,7 +167,7 @@ export async function saveReceipt(_prev: FormState, formData: FormData): Promise
 export async function deleteReceipt(id: string, partyName: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("receipts").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
   await logActivity(supabase, "receipt", `Removed receipt · ${partyName}`);
   revalidatePath("/", "layout");
 }

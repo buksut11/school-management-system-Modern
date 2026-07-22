@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database";
@@ -154,7 +155,7 @@ export async function restoreFromBackup(password: string, snapshot: BackupSnapsh
     p_data: snapshot.data as never,
     p_school_id: snapshot.school_id ?? null,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   await logActivity(supabase, "backup", "Restored system from backup");
   revalidatePath("/", "layout");

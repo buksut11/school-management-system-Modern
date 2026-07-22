@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 import { logActivity } from "@/lib/activity";
 import type { FormState } from "@/lib/actions/students";
 
@@ -34,11 +35,11 @@ export async function saveClass(_prev: FormState, formData: FormData): Promise<F
 
   if (id) {
     const { error } = await supabase.from("classes").update(record).eq("id", id);
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyError(error) };
     await logActivity(supabase, "class", `Updated class · ${name}`);
   } else {
     const { error } = await supabase.from("classes").insert(record);
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyError(error) };
     await logActivity(supabase, "class", `New class created · ${name}`);
   }
 
@@ -49,7 +50,7 @@ export async function saveClass(_prev: FormState, formData: FormData): Promise<F
 export async function deleteClass(id: string, name: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("classes").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error));
   await logActivity(supabase, "class", `Removed class · ${name}`);
   revalidatePath("/", "layout");
 }
