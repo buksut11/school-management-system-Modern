@@ -28,9 +28,11 @@ const TITLES: Record<string, string> = {
 
 export function Topbar({
   fullName,
+  schoolName,
   onMenuClick,
 }: {
   fullName: string;
+  schoolName: string;
   onMenuClick: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -38,7 +40,7 @@ export function Topbar({
   const title =
     TITLES[pathname] ??
     Object.entries(TITLES).find(([href]) => href !== "/" && pathname.startsWith(href))?.[1] ??
-    "Sh.Asharow";
+    schoolName;
 
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between gap-3 h-16 px-4 sm:px-6 bg-glass backdrop-blur-2xl backdrop-saturate-150 border-b border-line">

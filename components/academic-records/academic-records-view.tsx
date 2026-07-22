@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Segmented } from "@/components/ui/segmented";
 import { downloadCsv } from "@/lib/csv";
+import { useSchoolName } from "@/components/layout/school-context";
 import type { AcademicYear } from "@/lib/types/database";
 
 type AcademicRecordRow = {
@@ -46,6 +47,7 @@ export function AcademicRecordsView({
   years: AcademicYear[];
 }) {
   const router = useRouter();
+  const schoolName = useSchoolName();
   const [classFilter, setClassFilter] = useState("all");
   const [query, setQuery] = useState("");
 
@@ -146,7 +148,7 @@ export function AcademicRecordsView({
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       <button
-                        onClick={() => import("@/lib/pdf/report-card").then((m) => m.downloadReportCard(r))}
+                        onClick={() => import("@/lib/pdf/report-card").then((m) => m.downloadReportCard(r, schoolName))}
                         className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
                         aria-label="Download report card"
                       >

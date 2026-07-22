@@ -4,6 +4,7 @@ import { CircleDollarSign, Printer, Receipt, SlidersHorizontal } from "lucide-re
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, formatDate } from "@/lib/utils";
+import { useSchoolName } from "@/components/layout/school-context";
 import type { FeeRow } from "@/lib/data/fees";
 
 const STATUS_TONE = { paid: "green", partial: "orange", unpaid: "red" } as const;
@@ -17,12 +18,14 @@ export function FeesTable({
   onPay: (r: FeeRow) => void;
   onAdjust: (r: FeeRow) => void;
 }) {
+  const schoolName = useSchoolName();
+
   async function print(r: FeeRow) {
     const [{ buildFeeReceipt }, { printPdf }] = await Promise.all([
       import("@/lib/pdf/fee-receipt"),
       import("@/lib/pdf/print"),
     ]);
-    printPdf(buildFeeReceipt(r));
+    printPdf(buildFeeReceipt(r, schoolName));
   }
 
   return (
@@ -98,7 +101,7 @@ export function FeesTable({
                 <Printer size={14} />
               </button>
               <button
-                onClick={() => import("@/lib/pdf/fee-receipt").then((m) => m.downloadFeeReceipt(r))}
+                onClick={() => import("@/lib/pdf/fee-receipt").then((m) => m.downloadFeeReceipt(r, schoolName))}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-text-2 hover:bg-hover hover:text-blue transition-colors"
                 aria-label="Download receipt"
               >
