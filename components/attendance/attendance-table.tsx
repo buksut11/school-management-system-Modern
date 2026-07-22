@@ -2,6 +2,7 @@
 
 import { Avatar } from "@/components/ui/avatar";
 import { StatusPills } from "./status-pills";
+import { useT } from "@/lib/i18n/client";
 import type { AttendanceRow } from "@/lib/data/attendance";
 
 export function AttendanceTable({
@@ -13,12 +14,13 @@ export function AttendanceTable({
   onChange: (studentId: string, status: "present" | "late" | "absent") => void;
   pendingId: string | null;
 }) {
+  const t = useT();
   return (
     <div className="r-table att-table rounded-2xl bg-card backdrop-blur-2xl backdrop-saturate-150 border border-line shadow-card overflow-hidden">
       <div className="r-head flex items-center gap-3 px-5 py-3 border-b border-line text-[11px] font-semibold text-text-2 uppercase tracking-wide">
-        <div className="flex-1 min-w-[160px]">Student</div>
-        <div className="w-28 flex-none acol-date">Class</div>
-        <div className="w-[220px] flex-none text-right">Status</div>
+        <div className="flex-1 min-w-[160px]">{t("col.student")}</div>
+        <div className="w-28 flex-none acol-date">{t("col.class")}</div>
+        <div className="w-[220px] flex-none text-right">{t("col.status")}</div>
       </div>
 
       <div className="divide-y divide-line/60">
@@ -31,10 +33,10 @@ export function AttendanceTable({
                 <div className="text-[11.5px] text-text-2 truncate">{r.class_name ?? "—"}</div>
               </div>
             </div>
-            <div className="r-cell acol-date w-28 flex-none text-[13px] text-text-2" data-label="Class">
+            <div className="r-cell acol-date w-28 flex-none text-[13px] text-text-2" data-label={t("col.class")}>
               {r.class_name ?? "—"}
             </div>
-            <div className="r-cell w-[220px] flex-none flex justify-end" data-label="Status">
+            <div className="r-cell w-[220px] flex-none flex justify-end" data-label={t("col.status")}>
               <StatusPills
                 value={r.status}
                 onChange={(v) => onChange(r.student_id, v)}
@@ -44,7 +46,7 @@ export function AttendanceTable({
           </div>
         ))}
         {rows.length === 0 && (
-          <div className="py-12 text-center text-[13px] text-text-2">No students found.</div>
+          <div className="py-12 text-center text-[13px] text-text-2">{t("student.notFound")}</div>
         )}
       </div>
     </div>

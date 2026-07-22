@@ -234,6 +234,9 @@ const en = {
   "hw.emptyFamily": "No homework has been set yet.",
   "hw.markDone": "Mark done",
   "hw.due": "Due {date}",
+
+  // ---- attendance ----
+  "attendance.searchPlaceholder": "Search students…",
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -469,6 +472,9 @@ const so: Record<MessageKey, string> = {
   "hw.emptyFamily": "Weli shaqo lama dejin.",
   "hw.markDone": "Calaamadee dhammaystiran",
   "hw.due": "Waqtiga: {date}",
+
+  // ---- attendance ----
+  "attendance.searchPlaceholder": "Ku raadi ardayda…",
 };
 
 export const messages: Record<Locale, Record<MessageKey, string>> = { en, so };

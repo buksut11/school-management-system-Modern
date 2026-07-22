@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusPills } from "./status-pills";
+import { useT } from "@/lib/i18n/client";
 import type { AttendanceRow } from "@/lib/data/attendance";
 
 const BORDER = { present: "var(--green)", late: "var(--orange)", absent: "var(--red)" };
@@ -16,8 +17,9 @@ export function AttendanceGrid({
   onChange: (studentId: string, status: "present" | "late" | "absent") => void;
   pendingId: string | null;
 }) {
+  const t = useT();
   if (rows.length === 0) {
-    return <Card className="py-12 text-center text-[13px] text-text-2">No students found.</Card>;
+    return <Card className="py-12 text-center text-[13px] text-text-2">{t("student.notFound")}</Card>;
   }
 
   return (
