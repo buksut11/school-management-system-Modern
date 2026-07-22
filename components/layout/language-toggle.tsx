@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Languages, Check } from "lucide-react";
+import { Globe, Check } from "lucide-react";
 import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/config";
 import { useLocale, useT } from "@/lib/i18n/client";
 import { setLocale } from "@/lib/actions/locale";
@@ -24,10 +24,11 @@ export function LanguageToggle() {
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={pending}
-        className="w-9 h-9 rounded-full flex items-center justify-center text-text hover:bg-hover transition-colors"
+        className="h-9 pl-2 pr-2.5 rounded-full flex items-center gap-1.5 text-text hover:bg-hover transition-colors"
         aria-label={t("common.changeLanguage")}
       >
-        <Languages size={18} />
+        <Globe size={18} />
+        <span className="text-[13px] font-semibold leading-none">{locale.toUpperCase()}</span>
       </button>
       {open && (
         <>
