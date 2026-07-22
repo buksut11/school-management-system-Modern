@@ -12,6 +12,7 @@ import { StudentFeeModal } from "./student-fee-modal";
 import { InstallmentsModal } from "./installments-modal";
 import { downloadCsv } from "@/lib/csv";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import type { FeeRow, FeeInstallment } from "@/lib/data/fees";
 
 export function FeesView({
@@ -29,6 +30,7 @@ export function FeesView({
   const [payTarget, setPayTarget] = useState<FeeRow | null>(null);
   const [adjustTarget, setAdjustTarget] = useState<FeeRow | null>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const t = useT();
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -65,10 +67,10 @@ export function FeesView({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Expected" value={formatMoney(expected)} />
-        <Stat label="Collected" value={formatMoney(collected)} color="var(--green)" />
-        <Stat label="Outstanding" value={formatMoney(outstanding)} color="var(--red)" />
-        <Stat label="Collection rate" value={`${rate}%`} />
+        <Stat label={t("fees.statExpected")} value={formatMoney(expected)} />
+        <Stat label={t("fees.statCollected")} value={formatMoney(collected)} color="var(--green)" />
+        <Stat label={t("fees.statOutstanding")} value={formatMoney(outstanding)} color="var(--red)" />
+        <Stat label={t("fees.statRate")} value={`${rate}%`} />
       </div>
       <div className="h-1.5 rounded-full bg-card-2 overflow-hidden max-w-sm">
         <div className="h-full rounded-full bg-green" style={{ width: `${rate}%` }} />
@@ -78,16 +80,16 @@ export function FeesView({
         <Segmented
           value={classFilter}
           onChange={setClassFilter}
-          options={[{ value: "all", label: "All" }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
+          options={[{ value: "all", label: t("common.all") }, ...classes.map((c) => ({ value: c.id, label: c.name }))]}
         />
         <Segmented
           value={statusFilter}
           onChange={setStatusFilter}
           options={[
-            { value: "all", label: "All" },
-            { value: "paid", label: "Paid" },
-            { value: "partial", label: "Partial" },
-            { value: "unpaid", label: "Unpaid" },
+            { value: "all", label: t("common.all") },
+            { value: "paid", label: t("feeStatus.paid") },
+            { value: "partial", label: t("feeStatus.partial") },
+            { value: "unpaid", label: t("feeStatus.unpaid") },
           ]}
         />
         <div className="relative flex-1 min-w-[180px]">
@@ -95,17 +97,17 @@ export function FeesView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search students…"
+            placeholder={t("attendance.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         {schedule.year && (
           <Button variant="secondary" size="md" onClick={() => setScheduleOpen(true)}>
-            <CalendarClock size={15} /> Schedule
+            <CalendarClock size={15} /> {t("fees.schedule")}
           </Button>
         )}
         <Button variant="secondary" size="md" onClick={exportCsv}>
-          <Download size={15} /> Export
+          <Download size={15} /> {t("common.export")}
         </Button>
       </div>
 
