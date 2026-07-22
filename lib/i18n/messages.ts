@@ -813,6 +813,8 @@ const en = {
   "join.joinBtn": "Join {name}",
   "join.school": "school",
   "join.notYouSignOut": "Not you? Sign out",
+  "common.confirm": "Confirm",
+  "common.cannotUndo": "This action cannot be undone.",
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -1627,6 +1629,8 @@ const so: Record<MessageKey, string> = {
   "join.joinBtn": "Ku biir {name}",
   "join.school": "dugsi",
   "join.notYouSignOut": "Adiga ma tihid? Ka bax",
+  "common.confirm": "Xaqiiji",
+  "common.cannotUndo": "Ficilkan dib looma noqon karo.",
 };
 
 export const messages: Record<Locale, Record<MessageKey, string>> = { en, so };
